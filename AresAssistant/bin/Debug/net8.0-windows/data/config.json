@@ -1,0 +1,16 @@
+{
+  "AccentColor": "#fffff",
+  "OverlayOpacity": 0.85,
+  "FontSize": "medium",
+  "OverlayPosition": "bottom-right",
+  "OverlaySize": "normal",
+  "OllamaModel": "qwen2.5:32b",
+  "AssistantName": "ARES",
+  "Personality": "formal",
+  "ResponseLength": "normal",
+  "ShowHideHotkey": "Ctrl+Space",
+  "ToggleModeHotkey": "Ctrl+Shift+Space",
+  "LaunchWithWindows": false,
+  "SaveChatHistory": true,
+  "Language": "es"
+}

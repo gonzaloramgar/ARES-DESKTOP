@@ -1,0 +1,105 @@
+<h2>Nombre y logo del asistente</h2>
+<p class="subtitle">El nombre define la personalidad. El logo aparece en la splash screen, overlay y barra de título.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="nova" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:radial-gradient(ellipse at center, #0d1b3e 0%, #000 100%); height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+      <div style="width:60px; height:60px; position:relative; display:flex; align-items:center; justify-content:center;">
+        <div style="position:absolute; width:60px; height:60px; border-radius:50%; border:1px solid #00d4ff44;"></div>
+        <div style="position:absolute; width:46px; height:46px; border-radius:50%; border:1px solid #00d4ff88;"></div>
+        <div style="width:28px; height:28px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffffff, #00d4ff); box-shadow:0 0 20px #00d4ff, 0 0 40px #00d4ff44;"></div>
+      </div>
+      <div style="color:#00d4ff; font-family:'Courier New',monospace; font-size:18px; font-weight:bold; letter-spacing:6px;">NOVA</div>
+      <div style="color:#00d4ff66; font-family:monospace; font-size:9px; letter-spacing:3px;">NEURAL OPERATIVE VIRTUAL ASSISTANT</div>
+    </div>
+    <div class="card-body">
+      <h3>NOVA</h3>
+      <p>Neural Operative Virtual Assistant. Azul eléctrico, estética espacial/científica. Sensación de IA avanzada y precisa.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="axon" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:radial-gradient(ellipse at center, #0f0a1e 0%, #000 100%); height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+      <div style="width:60px; height:60px; position:relative; display:flex; align-items:center; justify-content:center;">
+        <!-- Hexagon shape -->
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <polygon points="30,4 54,17 54,43 30,56 6,43 6,17" fill="none" stroke="#c77dff" stroke-width="1.5" opacity="0.5"/>
+          <polygon points="30,12 46,21 46,39 30,48 14,39 14,21" fill="none" stroke="#c77dff" stroke-width="1" opacity="0.8"/>
+          <circle cx="30" cy="30" r="8" fill="#c77dff" opacity="0.9"/>
+          <circle cx="30" cy="30" r="12" fill="none" stroke="#c77dff" stroke-width="0.5" opacity="0.5"/>
+        </svg>
+        <div style="position:absolute; width:60px; height:60px; box-shadow:0 0 25px #c77dff66; border-radius:50%;"></div>
+      </div>
+      <div style="color:#c77dff; font-family:'Courier New',monospace; font-size:18px; font-weight:bold; letter-spacing:6px;">AXON</div>
+      <div style="color:#c77dff66; font-family:monospace; font-size:9px; letter-spacing:3px;">ADAPTIVE EXECUTIVE OPERATOR NODE</div>
+    </div>
+    <div class="card-body">
+      <h3>AXON</h3>
+      <p>Adaptive Executive Operator Node. Morado/violeta, logo hexagonal. Personalidad más técnica y ejecutiva, como un sistema nervioso digital.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="ares" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:radial-gradient(ellipse at center, #1a0505 0%, #000 100%); height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+      <div style="width:60px; height:60px; position:relative; display:flex; align-items:center; justify-content:center;">
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <!-- Diamond/rhombus -->
+          <polygon points="30,5 55,30 30,55 5,30" fill="none" stroke="#ff4444" stroke-width="1.5" opacity="0.6"/>
+          <polygon points="30,15 45,30 30,45 15,30" fill="none" stroke="#ff6666" stroke-width="1" opacity="0.8"/>
+          <!-- Cross inside -->
+          <line x1="30" y1="20" x2="30" y2="40" stroke="#ff4444" stroke-width="1.5" opacity="0.9"/>
+          <line x1="20" y1="30" x2="40" y2="30" stroke="#ff4444" stroke-width="1.5" opacity="0.9"/>
+          <circle cx="30" cy="30" r="4" fill="#ff4444"/>
+        </svg>
+        <div style="position:absolute; width:60px; height:60px; box-shadow:0 0 25px #ff444466; border-radius:50%;"></div>
+      </div>
+      <div style="color:#ff4444; font-family:'Courier New',monospace; font-size:18px; font-weight:bold; letter-spacing:6px;">ARES</div>
+      <div style="color:#ff444466; font-family:monospace; font-size:9px; letter-spacing:3px;">AUTONOMOUS RESPONSE ENGINE SYSTEM</div>
+    </div>
+    <div class="card-body">
+      <h3>ARES</h3>
+      <p>Autonomous Response Engine System. Rojo/naranja, logo en diamante. Más agresivo y directo, sensación de poder y control total.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="zen" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:radial-gradient(ellipse at center, #051a10 0%, #000 100%); height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+      <div style="width:60px; height:60px; position:relative; display:flex; align-items:center; justify-content:center;">
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <!-- Circle with scan lines -->
+          <circle cx="30" cy="30" r="26" fill="none" stroke="#00ff88" stroke-width="1" opacity="0.4"/>
+          <circle cx="30" cy="30" r="18" fill="none" stroke="#00ff88" stroke-width="1" opacity="0.6"/>
+          <!-- Scan line horizontal -->
+          <line x1="4" y1="30" x2="56" y2="30" stroke="#00ff88" stroke-width="0.5" opacity="0.5"/>
+          <!-- Triangle inside -->
+          <polygon points="30,18 42,38 18,38" fill="none" stroke="#00ff88" stroke-width="1.5" opacity="0.9"/>
+          <circle cx="30" cy="30" r="3" fill="#00ff88"/>
+        </svg>
+        <div style="position:absolute; width:60px; height:60px; box-shadow:0 0 25px #00ff8866; border-radius:50%;"></div>
+      </div>
+      <div style="color:#00ff88; font-family:'Courier New',monospace; font-size:18px; font-weight:bold; letter-spacing:6px;">ZEN</div>
+      <div style="color:#00ff8866; font-family:monospace; font-size:9px; letter-spacing:3px;">ZERO-EFFORT NAVIGATOR</div>
+    </div>
+    <div class="card-body">
+      <h3>ZEN</h3>
+      <p>Zero-Effort Navigator. Verde neón, logo con triángulo y círculos. Más tranquilo y eficiente, sensación de fluidez total.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="custom" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a; height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;">
+      <div style="width:60px; height:60px; border:2px dashed #ffffff33; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <span style="font-size:24px; opacity:0.4;">✏️</span>
+      </div>
+      <div style="color:#ffffff44; font-family:monospace; font-size:12px; letter-spacing:4px;">TÚ DECIDES</div>
+    </div>
+    <div class="card-body">
+      <h3>Nombre personalizado</h3>
+      <p>Dime el nombre que quieres y el color principal — diseño el logo a medida.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:1rem;">El color de acento del logo será el color principal de toda la UI (configurable después)</p>

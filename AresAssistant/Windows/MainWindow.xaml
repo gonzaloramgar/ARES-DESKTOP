@@ -1,0 +1,22 @@
+<Window x:Class="AresAssistant.Windows.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:AresAssistant.Controls"
+        Title="ARES"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        Topmost="True"
+        ShowInTaskbar="True">
+
+    <Grid>
+        <!-- Overlay mode control -->
+        <controls:OverlayModeControl x:Name="OverlayControl"
+                                     Visibility="Visible"/>
+
+        <!-- Full HUD mode control -->
+        <controls:FullHudModeControl x:Name="FullHudControl"
+                                     Visibility="Collapsed"/>
+    </Grid>
+</Window>

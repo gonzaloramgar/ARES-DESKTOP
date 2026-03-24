@@ -1,0 +1,99 @@
+<h2>Ideas más originales — ¿algo resuena?</h2>
+<p class="subtitle">Todas tienen UI futurista con transparencias y son genuinamente útiles</p>
+
+<div class="cards">
+  <div class="card" data-choice="nexus" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:radial-gradient(ellipse at center, #0d1b2a 0%, #000 100%); height:140px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+      <!-- Nodes -->
+      <div style="position:absolute; width:14px; height:14px; border-radius:50%; background:#00d4ff; box-shadow:0 0 10px #00d4ff; top:30px; left:80px;"></div>
+      <div style="position:absolute; width:10px; height:10px; border-radius:50%; background:#c77dff; box-shadow:0 0 8px #c77dff; top:55px; left:130px;"></div>
+      <div style="position:absolute; width:12px; height:12px; border-radius:50%; background:#00ff88; box-shadow:0 0 8px #00ff88; top:80px; left:70px;"></div>
+      <div style="position:absolute; width:8px; height:8px; border-radius:50%; background:#ffbe0b; box-shadow:0 0 6px #ffbe0b; top:40px; left:160px;"></div>
+      <div style="position:absolute; width:16px; height:16px; border-radius:50%; background:#ff6b6b; box-shadow:0 0 12px #ff6b6b; top:90px; left:170px;"></div>
+      <div style="position:absolute; width:9px; height:9px; border-radius:50%; background:#00d4ff; box-shadow:0 0 6px #00d4ff; top:100px; left:110px;"></div>
+      <!-- Lines between nodes -->
+      <svg style="position:absolute; width:100%; height:100%; opacity:0.4;">
+        <line x1="87" y1="37" x2="135" y2="59" stroke="#00d4ff" stroke-width="1"/>
+        <line x1="87" y1="37" x2="76" y2="86" stroke="#00ff88" stroke-width="1"/>
+        <line x1="135" y1="59" x2="164" y2="44" stroke="#c77dff" stroke-width="1"/>
+        <line x1="164" y1="44" x2="178" y2="97" stroke="#ff6b6b" stroke-width="1"/>
+        <line x1="76" y1="86" x2="115" y2="103" stroke="#00ff88" stroke-width="1"/>
+        <line x1="178" y1="97" x2="115" y2="103" stroke="#ff6b6b" stroke-width="1"/>
+      </svg>
+      <div style="position:absolute; bottom:8px; right:8px; color:#ffffff44; font-size:8px; font-family:monospace;">KNOWLEDGE GRAPH</div>
+    </div>
+    <div class="card-body">
+      <h3>NEXUS — Grafo de Conocimiento</h3>
+      <p>Tus ideas/notas como nodos flotantes interconectados en 3D. Creas relaciones arrastrando, buscas por proximidad visual, IA sugiere conexiones automáticas. Como Obsidian pero en una galaxia.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="forge" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0f; height:140px; display:flex; flex-direction:column; justify-content:center; padding:10px; gap:5px;">
+      <div style="display:flex; align-items:center; gap:6px; background:#ffffff08; border:1px solid #ffffff15; border-radius:4px; padding:5px 8px;">
+        <div style="width:8px; height:8px; border-radius:50%; background:#00ff88;"></div>
+        <span style="color:#00ff88; font-family:monospace; font-size:10px; flex:1;">my-project</span>
+        <span style="color:#ffffff44; font-family:monospace; font-size:9px;">main ↑2</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px; background:#ffffff08; border:1px solid #ffffff15; border-radius:4px; padding:5px 8px;">
+        <div style="width:8px; height:8px; border-radius:50%; background:#ffbe0b;"></div>
+        <span style="color:#ffbe0b; font-family:monospace; font-size:10px; flex:1;">localhost:3000</span>
+        <span style="color:#ffffff44; font-family:monospace; font-size:9px;">45ms</span>
+      </div>
+      <div style="display:flex; gap:4px; flex-wrap:wrap;">
+        <div style="background:#00d4ff22; border:1px solid #00d4ff44; border-radius:3px; padding:2px 6px; color:#00d4ff; font-size:9px; font-family:monospace;">npm run dev</div>
+        <div style="background:#c77dff22; border:1px solid #c77dff44; border-radius:3px; padding:2px 6px; color:#c77dff; font-size:9px; font-family:monospace;">git status</div>
+        <div style="background:#ff6b6b22; border:1px solid #ff6b6b44; border-radius:3px; padding:2px 6px; color:#ff6b6b; font-size:9px; font-family:monospace;">docker ps</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>FORGE — Dev Cockpit Flotante</h3>
+      <p>HUD flotante para programadores: repos git activos, servidores corriendo, historial de portapapeles con código, snippets con búsqueda, comandos rápidos, variables de entorno, logs en vivo.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="aura" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:radial-gradient(ellipse at 50% 120%, #1a0533 0%, #000 70%); height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+      <div style="width:70px; height:70px; border-radius:50%; border:2px solid #c77dff33; position:relative; display:flex; align-items:center; justify-content:center;">
+        <div style="width:50px; height:50px; border-radius:50%; border:2px solid #c77dff66; position:absolute; animation:none;"></div>
+        <div style="width:30px; height:30px; border-radius:50%; background:radial-gradient(#c77dff, #7b2fff); box-shadow:0 0 20px #c77dff;"></div>
+        <div style="position:absolute; top:-4px; right:8px; width:6px; height:6px; border-radius:50%; background:#00ff88; box-shadow:0 0 6px #00ff88;"></div>
+        <div style="position:absolute; bottom:2px; left:-4px; width:5px; height:5px; border-radius:50%; background:#00d4ff; box-shadow:0 0 6px #00d4ff;"></div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <span style="color:#c77dff; font-size:9px; font-family:monospace;">FOCUS 73%</span>
+        <span style="color:#00ff88; font-size:9px; font-family:monospace;">ENERGY ▓▓▓░</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>AURA — Life Analytics Personal</h3>
+      <p>Rastrea tus hábitos digitales automáticamente: tiempo por app, productividad por hora/día, patrones de trabajo, correlación con clima. Te muestra cuándo eres más productivo y por qué.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="echo" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#05080f; height:140px; display:flex; flex-direction:column; justify-content:center; padding:10px; gap:4px; overflow:hidden;">
+      <div style="color:#ffffff88; font-size:8px; font-family:monospace; margin-bottom:2px;">CLIPBOARD TIMELINE — 14:32</div>
+      <div style="background:linear-gradient(90deg, #00d4ff22, transparent); border-left:2px solid #00d4ff; padding:4px 6px; border-radius:0 4px 4px 0;">
+        <div style="color:#00d4ff; font-family:monospace; font-size:9px;">https://github.com/user/repo</div>
+      </div>
+      <div style="background:linear-gradient(90deg, #00ff8822, transparent); border-left:2px solid #00ff88; padding:4px 6px; border-radius:0 4px 4px 0;">
+        <div style="color:#00ff88; font-family:monospace; font-size:9px;">const handleClick = () => ...</div>
+      </div>
+      <div style="background:linear-gradient(90deg, #c77dff22, transparent); border-left:2px solid #c77dff; padding:4px 6px; border-radius:0 4px 4px 0;">
+        <div style="color:#c77dff; font-family:monospace; font-size:9px;">usuario@ejemplo.com</div>
+      </div>
+      <div style="display:flex; gap:4px; margin-top:3px;">
+        <div style="background:#ffffff11; border-radius:3px; padding:2px 5px; color:#ffffff66; font-size:8px; font-family:monospace;">→ snake_case</div>
+        <div style="background:#ffffff11; border-radius:3px; padding:2px 5px; color:#ffffff66; font-size:8px; font-family:monospace;">→ JSON</div>
+        <div style="background:#ffffff11; border-radius:3px; padding:2px 5px; color:#ffffff66; font-size:8px; font-family:monospace;">→ Base64</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>ECHO — Clipboard Intelligence</h3>
+      <p>Historial visual del portapapeles con línea de tiempo, categorías automáticas (URLs, código, texto, emails), búsqueda instantánea, y transformadores: JSON, base64, snake_case, mayúsculas, etc.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:1rem;">¿Alguna se acerca? También puedo combinar ideas o explorar otra dirección completamente diferente.</p>

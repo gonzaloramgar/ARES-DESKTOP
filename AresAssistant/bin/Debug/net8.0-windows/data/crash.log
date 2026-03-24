@@ -1,0 +1,82 @@
+[2026-03-24 20:13:19] [SplashWindow.OnLoaded]
+UnauthorizedAccessException: Access to the path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programas' is denied.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateRelativeDirectoryHandle(ReadOnlySpan`1 relativePath, String fullPath)
+   at System.IO.Enumeration.FileSystemEnumerator`1.MoveNext()
+   at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at AresAssistant.Scanner.AppScanner.ScanStartMenu(Dictionary`2 tools) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 72
+   at AresAssistant.Scanner.AppScanner.Scan() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 18
+   at AresAssistant.Scanner.SystemScanner.<ScanAsync>b__6_1() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at System.Threading.Tasks.Task`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at AresAssistant.Scanner.SystemScanner.ScanAsync() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at AresAssistant.Windows.SplashWindow.RunFirstLaunchScanAsync() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Windows\SplashWindow.xaml.cs:line 74
+   at AresAssistant.Windows.SplashWindow.OnLoaded(Object sender, RoutedEventArgs e) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Windows\SplashWindow.xaml.cs:line 26
+Inner: 
+------------------------------------------------------------
+[2026-03-24 20:13:58] [UI Thread]
+UnauthorizedAccessException: Access to the path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programas' is denied.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateRelativeDirectoryHandle(ReadOnlySpan`1 relativePath, String fullPath)
+   at System.IO.Enumeration.FileSystemEnumerator`1.MoveNext()
+   at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at AresAssistant.Scanner.AppScanner.ScanStartMenu(Dictionary`2 tools) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 72
+   at AresAssistant.Scanner.AppScanner.Scan() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 18
+   at AresAssistant.Scanner.SystemScanner.<ScanAsync>b__6_1() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at System.Threading.Tasks.Task`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at AresAssistant.Scanner.SystemScanner.ScanAsync() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at AresAssistant.Windows.SettingsWindow.Rescan_Click(Object sender, RoutedEventArgs e) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Windows\SettingsWindow.xaml.cs:line 42
+   at System.Threading.Tasks.Task.<>c.<ThrowAsync>b__128_0(Object state)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+Inner: 
+------------------------------------------------------------
+[2026-03-24 20:25:50] [SplashWindow.OnLoaded]
+UnauthorizedAccessException: Access to the path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programas' is denied.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateRelativeDirectoryHandle(ReadOnlySpan`1 relativePath, String fullPath)
+   at System.IO.Enumeration.FileSystemEnumerator`1.MoveNext()
+   at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at AresAssistant.Scanner.AppScanner.ScanStartMenu(Dictionary`2 tools) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 72
+   at AresAssistant.Scanner.AppScanner.Scan() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 18
+   at AresAssistant.Scanner.SystemScanner.<ScanAsync>b__6_1() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at System.Threading.Tasks.Task`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at AresAssistant.Scanner.SystemScanner.ScanAsync() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at AresAssistant.Windows.SplashWindow.RunFirstLaunchScanAsync() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Windows\SplashWindow.xaml.cs:line 74
+   at AresAssistant.Windows.SplashWindow.OnLoaded(Object sender, RoutedEventArgs e) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Windows\SplashWindow.xaml.cs:line 26
+Inner: 
+------------------------------------------------------------
+[2026-03-24 20:27:47] [SplashWindow.OnLoaded]
+UnauthorizedAccessException: Access to the path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programas' is denied.
+   at System.IO.Enumeration.FileSystemEnumerator`1.CreateRelativeDirectoryHandle(ReadOnlySpan`1 relativePath, String fullPath)
+   at System.IO.Enumeration.FileSystemEnumerator`1.MoveNext()
+   at System.Collections.Generic.List`1..ctor(IEnumerable`1 collection)
+   at System.IO.Directory.GetFiles(String path, String searchPattern, EnumerationOptions enumerationOptions)
+   at AresAssistant.Scanner.AppScanner.ScanStartMenu(Dictionary`2 tools) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 72
+   at AresAssistant.Scanner.AppScanner.Scan() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\AppScanner.cs:line 18
+   at AresAssistant.Scanner.SystemScanner.<ScanAsync>b__6_1() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at System.Threading.Tasks.Task`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at AresAssistant.Scanner.SystemScanner.ScanAsync() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Scanner\SystemScanner.cs:line 27
+   at AresAssistant.Windows.SplashWindow.RunFirstLaunchScanAsync() in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Windows\SplashWindow.xaml.cs:line 74
+   at AresAssistant.Windows.SplashWindow.OnLoaded(Object sender, RoutedEventArgs e) in C:\Users\grg30\Desktop\PROYECTOS\otraAppChula\AresAssistant\Windows\SplashWindow.xaml.cs:line 26
+Inner: 
+------------------------------------------------------------

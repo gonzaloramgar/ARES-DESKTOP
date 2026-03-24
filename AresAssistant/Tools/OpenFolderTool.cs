@@ -1,4 +1,4 @@
-using AresAssistant.Models;
+using AresAssistant.Core;
 using Newtonsoft.Json.Linq;
 
 namespace AresAssistant.Tools;

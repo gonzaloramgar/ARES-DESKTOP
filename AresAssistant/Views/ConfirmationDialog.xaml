@@ -1,0 +1,48 @@
+<Window x:Class="AresAssistant.Views.ConfirmationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ARES — Confirmación"
+        Width="420" Height="250"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+
+    <Border Background="{DynamicResource BackgroundBrush}" CornerRadius="10"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                <Path Data="M 8,0 L 16,11 L 8,22 L 0,11 Z"
+                      Fill="{DynamicResource AccentBrush}" Width="14" Height="20" Margin="0,0,8,0"/>
+                <TextBlock Text="Confirmación requerida"
+                           FontSize="15" FontWeight="Bold"
+                           Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"/>
+            </StackPanel>
+
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="12">
+                <StackPanel>
+                    <TextBlock Foreground="{DynamicResource SubtextBrush}" FontSize="12" Margin="0,0,0,6">
+                        <Run Text="Herramienta: "/>
+                        <Run x:Name="ToolNameRun" FontWeight="Bold" Foreground="{DynamicResource TextBrush}"/>
+                    </TextBlock>
+                    <TextBlock x:Name="ArgsText" Foreground="{DynamicResource SubtextBrush}" FontSize="11"
+                               TextWrapping="Wrap" FontFamily="Consolas"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal"
+                        HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Content="Cancelar" Style="{StaticResource GhostButton}"
+                        Width="90" Click="Cancel_Click" Margin="0,0,8,0"/>
+                <Button Content="Aprobar" Style="{StaticResource AresButton}"
+                        Width="90" Click="Approve_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

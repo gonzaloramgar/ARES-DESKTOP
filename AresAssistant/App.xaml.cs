@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using AresAssistant.Config;
-using AresAssistant.Windows;
+using AresAssistant.Views;
 
 namespace AresAssistant;
 

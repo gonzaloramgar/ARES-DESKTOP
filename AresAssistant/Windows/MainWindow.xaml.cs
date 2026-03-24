@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
@@ -176,10 +177,22 @@ public partial class MainWindow : Window
         return result;
     }
 
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        if (App.ConfigManager.Config.CloseToTray && !App.IsExiting)
+        {
+            e.Cancel = true;
+            Hide();
+            return;
+        }
+        base.OnClosing(e);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _hotkeyManager.Dispose();
         base.OnClosed(e);
+        ((App)Application.Current).CleanupTray();
         Application.Current.Shutdown();
     }
 }

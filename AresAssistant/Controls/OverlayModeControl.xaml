@@ -10,7 +10,7 @@
                 <RowDefinition Height="44"/>     <!-- Header -->
                 <RowDefinition Height="*"/>       <!-- Chat -->
                 <RowDefinition Height="Auto"/>    <!-- Status -->
-                <RowDefinition Height="56"/>      <!-- Input -->
+                <RowDefinition Height="Auto"/>    <!-- Input -->
             </Grid.RowDefinitions>
 
             <!-- Header -->
@@ -98,14 +98,18 @@
                              Style="{StaticResource AresTextBox}"
                              Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
                              KeyDown="Input_KeyDown"
-                             VerticalAlignment="Center"
+                             TextWrapping="Wrap"
                              AcceptsReturn="False"
+                             MinHeight="36" MaxHeight="120"
+                             VerticalAlignment="Stretch"
+                             VerticalScrollBarVisibility="Auto"
                              MaxLength="4000"/>
 
                     <Button Grid.Column="1" Content="→"
                             Style="{StaticResource AresButton}"
                             Width="38" Height="34" Margin="6,0,0,0"
                             FontSize="16"
+                            VerticalAlignment="Bottom"
                             Click="Send_Click"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"/>
                 </Grid>

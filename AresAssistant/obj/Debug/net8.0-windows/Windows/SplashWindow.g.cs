@@ -100,7 +100,7 @@ namespace AresAssistant.Windows {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/AresAssistant;V1.0.0.0;component/windows/splashwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/AresAssistant;component/windows/splashwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Windows\SplashWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

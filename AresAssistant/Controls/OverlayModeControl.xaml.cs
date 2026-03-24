@@ -51,7 +51,12 @@ public partial class OverlayModeControl : UserControl
 
     private void Close_Click(object sender, RoutedEventArgs e)
     {
-        Window.GetWindow(this)?.Hide();
+        var win = Window.GetWindow(this);
+        if (win == null) return;
+        if (App.ConfigManager.Config.CloseToTray)
+            win.Hide();
+        else
+            win.Close();
     }
 
     private void ScrollToBottom()

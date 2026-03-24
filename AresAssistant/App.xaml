@@ -111,7 +111,9 @@
                                     Padding="{TemplateBinding Padding}">
                                 <ScrollViewer x:Name="PART_ContentHost"
                                               Background="Transparent"
-                                              Focusable="False"/>
+                                              Focusable="False"
+                                              HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                              VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsFocused" Value="True">
@@ -248,7 +250,7 @@
             </Style>
 
             <!-- CheckBox dark theme -->
-            <Style TargetType="CheckBox">
+            <Style x:Key="AresCheckBox" TargetType="CheckBox">
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>

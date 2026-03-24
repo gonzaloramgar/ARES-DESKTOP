@@ -1,5 +1,5 @@
 ﻿AresAssistant
-1.0.0.0
+
 
 winexe
 C#
@@ -12,9 +12,9 @@ TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR
 C:\Users\grg30\Desktop\PROYECTOS\Ares\AresAssistant\App.xaml
 6-1863508838
 
-531154462337
+51-168970636
 215-208548118
 Controls\ConfirmationDialog.xaml;Controls\FullHudModeControl.xaml;Controls\OverlayModeControl.xaml;Windows\MainWindow.xaml;Windows\SettingsWindow.xaml;Windows\SplashWindow.xaml;
 
-True
+False
 

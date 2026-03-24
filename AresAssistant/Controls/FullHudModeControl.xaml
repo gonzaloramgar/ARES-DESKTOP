@@ -10,7 +10,7 @@
                 <RowDefinition Height="48"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="60"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220"/>
@@ -149,17 +149,23 @@
                              Style="{StaticResource AresTextBox}"
                              Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
                              KeyDown="Input_KeyDown"
-                             VerticalAlignment="Center" Height="36"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="False"
+                             MinHeight="36" MaxHeight="120"
+                             VerticalAlignment="Stretch"
+                             VerticalScrollBarVisibility="Auto"
                              MaxLength="4000"/>
 
                     <Button Grid.Column="1" Content="Exportar"
                             Style="{StaticResource GhostButton}"
                             Margin="8,0,0,0" Height="36"
+                            VerticalAlignment="Bottom"
                             Click="Export_Click"/>
 
                     <Button Grid.Column="2" Content="Enviar →"
                             Style="{StaticResource AresButton}"
                             Margin="6,0,0,0" Height="36"
+                            VerticalAlignment="Bottom"
                             Click="Send_Click"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"/>
                 </Grid>

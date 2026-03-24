@@ -27,6 +27,7 @@ public partial class SettingsWindow : Window
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         _vm.Save();
+        ((App)Application.Current).UpdateTrayIcon();
         Close();
     }
 
@@ -35,17 +36,25 @@ public partial class SettingsWindow : Window
 
     private async void Rescan_Click(object sender, RoutedEventArgs e)
     {
-        var scanner = new Scanner.SystemScanner();
-        scanner.StatusChanged += msg =>
-            Dispatcher.Invoke(() => Title = $"ARES — {msg}");
+        Title = "ARES — Escaneando...";
+        try
+        {
+            var scanner = new Scanner.SystemScanner();
+            scanner.StatusChanged += msg =>
+                Dispatcher.Invoke(() => Title = $"ARES — {msg}");
 
-        var tools = await scanner.ScanAsync();
-        Scanner.SystemScanner.SaveToJson(tools, "data/tools.json");
+            var tools = await scanner.ScanAsync();
+            Scanner.SystemScanner.SaveToJson(tools, "data/tools.json");
+            MainWindow.ToolRegistry.LoadFromJson("data/tools.json");
 
-        // Reload tools into current registry
-        MainWindow.ToolRegistry.LoadFromJson("data/tools.json");
-
-        Title = "ARES — Ajustes";
-        MessageBox.Show("Escaneo completado. Las herramientas han sido actualizadas.", "ARES");
+            Title = "ARES — Ajustes";
+            MessageBox.Show($"Escaneo completado. {tools.Count} herramientas cargadas.", "ARES");
+        }
+        catch (Exception ex)
+        {
+            Title = "ARES — Ajustes";
+            MessageBox.Show($"Error durante el escaneo:\n{ex.Message}", "ARES — Error",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 }

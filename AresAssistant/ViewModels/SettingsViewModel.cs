@@ -21,6 +21,7 @@ public class SettingsViewModel : ViewModelBase
     private string _toggleModeHotkey;
     private bool _launchWithWindows;
     private bool _saveChatHistory;
+    private bool _closeToTray;
     private bool _ollamaAvailable;
     private string _ollamaStatus = "";
 
@@ -38,6 +39,7 @@ public class SettingsViewModel : ViewModelBase
     public string ToggleModeHotkey { get => _toggleModeHotkey; set => SetField(ref _toggleModeHotkey, value); }
     public bool LaunchWithWindows { get => _launchWithWindows; set => SetField(ref _launchWithWindows, value); }
     public bool SaveChatHistory { get => _saveChatHistory; set => SetField(ref _saveChatHistory, value); }
+    public bool CloseToTray { get => _closeToTray; set => SetField(ref _closeToTray, value); }
     public bool OllamaAvailable { get => _ollamaAvailable; set => SetField(ref _ollamaAvailable, value); }
     public string OllamaStatus { get => _ollamaStatus; set => SetField(ref _ollamaStatus, value); }
 
@@ -59,6 +61,7 @@ public class SettingsViewModel : ViewModelBase
         _toggleModeHotkey = cfg.ToggleModeHotkey;
         _launchWithWindows = cfg.LaunchWithWindows;
         _saveChatHistory = cfg.SaveChatHistory;
+        _closeToTray = cfg.CloseToTray;
     }
 
     public AppConfig BuildConfig() => new()
@@ -74,7 +77,8 @@ public class SettingsViewModel : ViewModelBase
         ShowHideHotkey = ShowHideHotkey,
         ToggleModeHotkey = ToggleModeHotkey,
         LaunchWithWindows = LaunchWithWindows,
-        SaveChatHistory = SaveChatHistory
+        SaveChatHistory = SaveChatHistory,
+        CloseToTray = CloseToTray
     };
 
     public void Save()

@@ -32,7 +32,7 @@
                                    VerticalAlignment="Center"/>
                         <TextBlock Text=" — HUD COMPLETO"
                                    FontFamily="Consolas" FontSize="11"
-                                   Foreground="#555555" VerticalAlignment="Center"/>
+                                   Foreground="#777777" VerticalAlignment="Center"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
@@ -63,15 +63,41 @@
                     Padding="12">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="HERRAMIENTAS" FontSize="10"
-                               Foreground="{DynamicResource SubtextBrush}"
-                               FontFamily="Consolas" Margin="0,0,0,8"/>
+                               Foreground="{DynamicResource AccentBrush}"
+                               FontFamily="Consolas" FontWeight="Bold" Margin="0,0,0,6"/>
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="{Binding ToolNames.Count, StringFormat='{}{0} disponibles'}"
+                               FontSize="10" FontFamily="Consolas"
+                               Foreground="#555555" Margin="0,0,0,10"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding ToolNames}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding}" FontSize="11"
-                                               FontFamily="Consolas" Foreground="#666666"
-                                               Margin="0,2"/>
+                                    <Border CornerRadius="3" Padding="5,3" Margin="0,1">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#1f1f1f"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding}" FontSize="11"
+                                                   FontFamily="Consolas">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#777777"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Border}, Path=IsMouseOver}" Value="True">
+                                                            <Setter Property="Foreground" Value="#aaaaaa"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -86,30 +112,43 @@
                 <ItemsControl ItemsSource="{Binding Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- User message on right -->
-                                <Border Grid.Column="1"
-                                        Visibility="{Binding IsUser, Converter={StaticResource BoolToVisibilityConverter}}"
-                                        Background="#2a1010" CornerRadius="8,8,2,8"
-                                        Padding="12,8" HorizontalAlignment="Right">
+                            <StackPanel Margin="0,5"
+                                        HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}">
+                                <!-- Role label -->
+                                <TextBlock FontSize="10" FontFamily="Consolas"
+                                           Margin="6,0,6,2"
+                                           Foreground="{DynamicResource SubtextBrush}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="ARES"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                    <Setter Property="Text" Value="TÚ"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <!-- Bubble -->
+                                <Border MaxWidth="600" Padding="12,8">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#1a1a1a"/>
+                                            <Setter Property="CornerRadius" Value="8,8,8,2"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                    <Setter Property="Background" Value="#2a1010"/>
+                                                    <Setter Property="CornerRadius" Value="8,8,2,8"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextBrush}"/>
+                                               FontSize="{DynamicResource FontSizeNormal}"
+                                               Foreground="{DynamicResource TextBrush}"
+                                               MaxWidth="580"/>
                                 </Border>
-
-                                <!-- Assistant message on left -->
-                                <Border Grid.Column="0"
-                                        Visibility="{Binding IsAssistant, Converter={StaticResource BoolToVisibilityConverter}}"
-                                        Background="#1a1a1a" CornerRadius="8,8,8,2"
-                                        Padding="12,8" HorizontalAlignment="Left">
-                                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextBrush}"/>
-                                </Border>
-                            </Grid>
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -119,14 +158,17 @@
             <Border Grid.Row="1" Grid.RowSpan="3" Grid.Column="2"
                     Background="#0f0f0f" BorderBrush="#222222" BorderThickness="1,0,0,0"
                     Padding="12">
-                <StackPanel>
-                    <TextBlock Text="ESTADO DEL SISTEMA" FontSize="10" Foreground="#555555"
-                               FontFamily="Consolas" Margin="0,0,0,8"/>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="ESTADO" FontSize="10"
+                               Foreground="{DynamicResource AccentBrush}"
+                               FontFamily="Consolas" FontWeight="Bold" Margin="0,0,0,6"/>
+                    <Rectangle DockPanel.Dock="Top" Height="1" Fill="#222222" Margin="0,0,0,10"/>
                     <TextBlock x:Name="SystemStatus"
-                               Text="Actualizando..." FontSize="11"
-                               FontFamily="Consolas" Foreground="#666666"
+                               Text="{Binding StatusText, FallbackValue='Esperando...'}"
+                               FontSize="11" DockPanel.Dock="Top"
+                               FontFamily="Consolas" Foreground="#888888"
                                TextWrapping="Wrap"/>
-                </StackPanel>
+                </DockPanel>
             </Border>
 
             <!-- Status bar -->

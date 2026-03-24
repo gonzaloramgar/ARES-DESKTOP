@@ -30,10 +30,16 @@
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                 VerticalAlignment="Center">
-                        <Button Content="⊞" ToolTip="Modo completo"
+                        <Button ToolTip="Cambiar a modo HUD completo"
                                 Click="ToggleMode_Click"
                                 Style="{DynamicResource GhostButton}"
-                                Width="28" Height="28" Padding="0" FontSize="14" Margin="0,0,4,0"/>
+                                Height="26" Padding="6,0" FontSize="11" Margin="0,0,4,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="⊞" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="HUD" FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SubtextBrush}"/>
+                            </StackPanel>
+                        </Button>
                         <Button Content="⚙" ToolTip="Ajustes"
                                 Click="Settings_Click"
                                 Style="{DynamicResource GhostButton}"

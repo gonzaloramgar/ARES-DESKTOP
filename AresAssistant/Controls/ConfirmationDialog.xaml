@@ -8,8 +8,8 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
 
-    <Border Background="#0d0d0d" CornerRadius="10"
-            BorderBrush="#ff2222" BorderThickness="2">
+    <Border Background="{DynamicResource BackgroundBrush}" CornerRadius="10"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2">
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -19,19 +19,19 @@
 
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
                 <Path Data="M 8,0 L 16,11 L 8,22 L 0,11 Z"
-                      Fill="#ff2222" Width="14" Height="20" Margin="0,0,8,0"/>
+                      Fill="{DynamicResource AccentBrush}" Width="14" Height="20" Margin="0,0,8,0"/>
                 <TextBlock Text="Confirmación requerida"
                            FontSize="15" FontWeight="Bold"
-                           Foreground="#ff2222" FontFamily="Consolas"/>
+                           Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="#1a1a1a" CornerRadius="6" Padding="12">
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="12">
                 <StackPanel>
-                    <TextBlock Foreground="#aaaaaa" FontSize="12" Margin="0,0,0,6">
+                    <TextBlock Foreground="{DynamicResource SubtextBrush}" FontSize="12" Margin="0,0,0,6">
                         <Run Text="Herramienta: "/>
-                        <Run x:Name="ToolNameRun" FontWeight="Bold" Foreground="#e0e0e0"/>
+                        <Run x:Name="ToolNameRun" FontWeight="Bold" Foreground="{DynamicResource TextBrush}"/>
                     </TextBlock>
-                    <TextBlock x:Name="ArgsText" Foreground="#888888" FontSize="11"
+                    <TextBlock x:Name="ArgsText" Foreground="{DynamicResource SubtextBrush}" FontSize="11"
                                TextWrapping="Wrap" FontFamily="Consolas"/>
                 </StackPanel>
             </Border>

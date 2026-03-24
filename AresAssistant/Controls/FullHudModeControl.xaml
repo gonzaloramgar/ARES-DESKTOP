@@ -61,10 +61,11 @@
             <Border Grid.Row="1" Grid.RowSpan="3" Grid.Column="0"
                     Background="#0f0f0f" BorderBrush="#222222" BorderThickness="0,0,1,0"
                     Padding="12">
-                <StackPanel>
-                    <TextBlock Text="HERRAMIENTAS" FontSize="10" Foreground="#555555"
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="HERRAMIENTAS" FontSize="10"
+                               Foreground="{DynamicResource SubtextBrush}"
                                FontFamily="Consolas" Margin="0,0,0,8"/>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="650">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding ToolNames}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -75,7 +76,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-                </StackPanel>
+                </DockPanel>
             </Border>
 
             <!-- Center: Chat messages -->

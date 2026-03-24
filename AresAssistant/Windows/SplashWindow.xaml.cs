@@ -42,13 +42,12 @@ public partial class SplashWindow : Window
             App.WriteCrash("SplashWindow.OnLoaded", ex);
             UpdateStatus($"Error: {ex.Message}", 0);
             await Task.Delay(3000);
-            // Try to open main window anyway
             try { OpenMainWindow(); }
             catch (Exception ex2)
             {
                 App.WriteCrash("OpenMainWindow", ex2);
                 System.Windows.MessageBox.Show(
-                    $"Error crítico al iniciar ARES:\n\n{ex2.Message}\n\nRevisa data/crash.log",
+                    $"Error crítico al iniciar ARES:\n\n{ex2.Message}\n\nRevisa los archivos crash_*.log en la carpeta data/",
                     "ARES - Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 Application.Current.Shutdown(1);
             }
@@ -65,9 +64,9 @@ public partial class SplashWindow : Window
         {
             Dispatcher.Invoke(() =>
             {
-                StatusText.Text = msg;
+                _vm.StatusText = msg;
                 if (step < steps.Length)
-                    ProgressBar.Value = steps[step++];
+                    _vm.Progress = steps[step++];
             });
         };
 
@@ -82,8 +81,8 @@ public partial class SplashWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            StatusText.Text = text;
-            ProgressBar.Value = progress;
+            _vm.StatusText = text;
+            _vm.Progress = progress;
         });
     }
 

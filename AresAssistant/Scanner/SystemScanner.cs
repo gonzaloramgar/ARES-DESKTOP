@@ -24,14 +24,26 @@ public class SystemScanner
         StatusChanged?.Invoke("Inicializando ARES...");
         await Task.Delay(300);
 
-        var apps = await Task.Run(() => _appScanner.Scan());
-        foreach (var (k, v) in apps) all[k] = v;
+        try
+        {
+            var apps = await Task.Run(() => _appScanner.Scan());
+            foreach (var (k, v) in apps) all[k] = v;
+        }
+        catch { StatusChanged?.Invoke("Advertencia: escaneo de apps incompleto."); }
 
-        var folders = await Task.Run(() => _folderScanner.Scan());
-        foreach (var (k, v) in folders) all[k] = v;
+        try
+        {
+            var folders = await Task.Run(() => _folderScanner.Scan());
+            foreach (var (k, v) in folders) all[k] = v;
+        }
+        catch { StatusChanged?.Invoke("Advertencia: escaneo de carpetas incompleto."); }
 
-        var browsers = await Task.Run(() => _browserScanner.Scan());
-        foreach (var (k, v) in browsers) all[k] = v;
+        try
+        {
+            var browsers = await Task.Run(() => _browserScanner.Scan());
+            foreach (var (k, v) in browsers) all[k] = v;
+        }
+        catch { StatusChanged?.Invoke("Advertencia: escaneo de navegadores incompleto."); }
 
         StatusChanged?.Invoke("Generando base de herramientas...");
         await Task.Delay(200);

@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
 
-    <Border Background="#0d0d0d" CornerRadius="10"
+    <Border Background="{DynamicResource BackgroundBrush}" CornerRadius="10"
             BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
@@ -39,7 +39,7 @@
                     <TextBlock Text="APARIENCIA" FontFamily="Consolas" FontSize="10"
                                Foreground="{DynamicResource AccentBrush}"/>
 
-                    <Grid>
+                    <Grid Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
@@ -47,21 +47,19 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8">
-                            <TextBlock Text="Color de acento" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
+                            <TextBlock Text="Color de acento" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                             <TextBox Style="{StaticResource AresTextBox}"
                                      Text="{Binding AccentColor, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,0,8">
-                            <TextBlock Text="Tamaño de fuente" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
-                            <ComboBox Background="#1a1a1a" Foreground="{DynamicResource TextBrush}"
-                                      SelectedValue="{Binding FontSize}"
-                                      SelectedValuePath="Tag">
+                            <TextBlock Text="Tamaño de fuente" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                            <ComboBox SelectedValue="{Binding FontSize}" SelectedValuePath="Tag">
                                 <ComboBoxItem Content="Pequeño" Tag="small"/>
                                 <ComboBoxItem Content="Normal" Tag="medium"/>
                                 <ComboBoxItem Content="Grande" Tag="large"/>
@@ -69,17 +67,17 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,8">
-                            <TextBlock Text="Opacidad" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
+                            <TextBlock Text="Opacidad" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                             <Slider Minimum="0.3" Maximum="1.0"
                                     Value="{Binding OverlayOpacity}"
                                     Foreground="{DynamicResource AccentBrush}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,0,8">
-                            <TextBlock Text="Posición del overlay" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
-                            <ComboBox Background="#1a1a1a" Foreground="{DynamicResource TextBrush}"
-                                      SelectedValue="{Binding OverlayPosition}"
-                                      SelectedValuePath="Tag">
+                            <TextBlock Text="Posición del overlay" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                            <ComboBox SelectedValue="{Binding OverlayPosition}" SelectedValuePath="Tag">
                                 <ComboBoxItem Content="Abajo-derecha" Tag="bottom-right"/>
                                 <ComboBoxItem Content="Abajo-izquierda" Tag="bottom-left"/>
                                 <ComboBoxItem Content="Arriba-derecha" Tag="top-right"/>
@@ -92,7 +90,7 @@
                     <TextBlock Text="INTELIGENCIA ARTIFICIAL" FontFamily="Consolas" FontSize="10"
                                Foreground="{DynamicResource AccentBrush}" Margin="0,8,0,0"/>
 
-                    <Grid>
+                    <Grid Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
@@ -104,24 +102,24 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8">
-                            <TextBlock Text="Modelo de Ollama" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
-                            <ComboBox Background="#1a1a1a" Foreground="{DynamicResource TextBrush}"
-                                      Text="{Binding OllamaModel}"
+                            <TextBlock Text="Modelo de Ollama" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                            <ComboBox Text="{Binding OllamaModel}"
                                       IsEditable="True"
                                       ItemsSource="{Binding AvailableModels}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,0,8">
-                            <TextBlock Text="Nombre del asistente" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
+                            <TextBlock Text="Nombre del asistente" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                             <TextBox Style="{StaticResource AresTextBox}"
                                      Text="{Binding AssistantName, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,8">
-                            <TextBlock Text="Personalidad" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
-                            <ComboBox Background="#1a1a1a" Foreground="{DynamicResource TextBrush}"
-                                      SelectedValue="{Binding Personality}"
-                                      SelectedValuePath="Tag">
+                            <TextBlock Text="Personalidad" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                            <ComboBox SelectedValue="{Binding Personality}" SelectedValuePath="Tag">
                                 <ComboBoxItem Content="Formal" Tag="formal"/>
                                 <ComboBoxItem Content="Casual" Tag="casual"/>
                                 <ComboBoxItem Content="Sarcástico" Tag="sarcastico"/>
@@ -130,10 +128,9 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,0,8">
-                            <TextBlock Text="Longitud de respuesta" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
-                            <ComboBox Background="#1a1a1a" Foreground="{DynamicResource TextBrush}"
-                                      SelectedValue="{Binding ResponseLength}"
-                                      SelectedValuePath="Tag">
+                            <TextBlock Text="Longitud de respuesta" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                            <ComboBox SelectedValue="{Binding ResponseLength}" SelectedValuePath="Tag">
                                 <ComboBoxItem Content="Conciso" Tag="conciso"/>
                                 <ComboBoxItem Content="Normal" Tag="normal"/>
                                 <ComboBoxItem Content="Detallado" Tag="detallado"/>
@@ -141,9 +138,10 @@
                         </StackPanel>
 
                         <!-- Ollama status -->
-                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
+                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="{Binding OllamaStatus}" FontSize="12"
-                                       Foreground="#888888" VerticalAlignment="Center"/>
+                                       Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
                             <Button Content="Verificar conexión" Style="{StaticResource GhostButton}"
                                     Height="30" Click="CheckOllama_Click"/>
                         </StackPanel>
@@ -153,20 +151,22 @@
                     <TextBlock Text="TECLAS RÁPIDAS" FontFamily="Consolas" FontSize="10"
                                Foreground="{DynamicResource AccentBrush}" Margin="0,8,0,0"/>
 
-                    <Grid>
+                    <Grid Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Mostrar/ocultar" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
+                            <TextBlock Text="Mostrar/ocultar" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                             <TextBox Style="{StaticResource AresTextBox}"
                                      Text="{Binding ShowHideHotkey, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="Cambiar modo" FontSize="12" Foreground="#888888" Margin="0,0,0,4"/>
+                            <TextBlock Text="Cambiar modo" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                             <TextBox Style="{StaticResource AresTextBox}"
                                      Text="{Binding ToggleModeHotkey, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
@@ -176,13 +176,13 @@
                     <TextBlock Text="SISTEMA" FontFamily="Consolas" FontSize="10"
                                Foreground="{DynamicResource AccentBrush}" Margin="0,8,0,0"/>
 
-                    <StackPanel>
+                    <StackPanel Margin="0,8,0,0">
                         <CheckBox Content="Iniciar con Windows"
                                   IsChecked="{Binding LaunchWithWindows}"
                                   Foreground="{DynamicResource TextBrush}"/>
                         <CheckBox Content="Guardar historial del chat"
                                   IsChecked="{Binding SaveChatHistory}"
-                                  Foreground="{DynamicResource TextBrush}"/>
+                                  Foreground="{DynamicResource TextBrush}" Margin="0,4,0,0"/>
 
                         <Button Content="Reescanear sistema" Style="{StaticResource GhostButton}"
                                 HorizontalAlignment="Left" Margin="0,8,0,0"

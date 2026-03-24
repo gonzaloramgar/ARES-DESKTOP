@@ -7,8 +7,8 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
 
-    <Border Background="#0d0d0d" CornerRadius="12"
-            BorderBrush="#ff2222" BorderThickness="1">
+    <Border Background="{DynamicResource BackgroundBrush}" CornerRadius="12"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
         <Grid>
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
@@ -18,7 +18,7 @@
                     <!-- Outer glow ring (pulse) -->
                     <Ellipse x:Name="Ring1" Width="130" Height="130"
                              Canvas.Left="5" Canvas.Top="5"
-                             Stroke="#22ff2222" StrokeThickness="8"
+                             Stroke="{DynamicResource AccentGlowBrush}" StrokeThickness="8"
                              RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform>
                             <ScaleTransform x:Name="Ring1Scale" ScaleX="1" ScaleY="1"/>
@@ -28,7 +28,7 @@
                     <!-- Mid ring -->
                     <Ellipse x:Name="Ring2" Width="104" Height="104"
                              Canvas.Left="18" Canvas.Top="18"
-                             Stroke="#55ff2222" StrokeThickness="1"
+                             Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.33"
                              RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform>
                             <ScaleTransform x:Name="Ring2Scale" ScaleX="1" ScaleY="1"/>
@@ -38,32 +38,28 @@
                     <!-- Inner ring -->
                     <Ellipse Width="76" Height="76"
                              Canvas.Left="32" Canvas.Top="32"
-                             Stroke="#88ff2222" StrokeThickness="1"/>
+                             Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.53"/>
 
-                    <!-- Crosshair lines (fixed, behind diamond) -->
-                    <Line X1="0" Y1="70" X2="42" Y2="70"
-                          Stroke="#ff2222" StrokeThickness="1" Opacity="0.6"/>
-                    <Line X1="98" Y1="70" X2="140" Y2="70"
-                          Stroke="#ff2222" StrokeThickness="1" Opacity="0.6"/>
-                    <Line X1="70" Y1="0" X2="70" Y2="42"
-                          Stroke="#ff2222" StrokeThickness="1" Opacity="0.6"/>
-                    <Line X1="70" Y1="98" X2="70" Y2="140"
-                          Stroke="#ff2222" StrokeThickness="1" Opacity="0.6"/>
+                    <!-- Crosshair lines -->
+                    <Line X1="0" Y1="70" X2="42" Y2="70" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.6"/>
+                    <Line X1="98" Y1="70" X2="140" Y2="70" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.6"/>
+                    <Line X1="70" Y1="0" X2="70" Y2="42" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.6"/>
+                    <Line X1="70" Y1="98" X2="70" Y2="140" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" Opacity="0.6"/>
 
                     <!-- Corner tick marks -->
-                    <Line X1="0" Y1="0" X2="12" Y2="0" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
-                    <Line X1="0" Y1="0" X2="0" Y2="12" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
-                    <Line X1="128" Y1="0" X2="140" Y2="0" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
-                    <Line X1="140" Y1="0" X2="140" Y2="12" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
-                    <Line X1="0" Y1="128" X2="0" Y2="140" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
-                    <Line X1="0" Y1="140" X2="12" Y2="140" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
-                    <Line X1="140" Y1="128" X2="140" Y2="140" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
-                    <Line X1="128" Y1="140" X2="140" Y2="140" Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="0" Y1="0" X2="12" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="0" Y1="0" X2="0" Y2="12" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="128" Y1="0" X2="140" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="140" Y1="0" X2="140" Y2="12" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="0" Y1="128" X2="0" Y2="140" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="0" Y1="140" X2="12" Y2="140" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="140" Y1="128" X2="140" Y2="140" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
+                    <Line X1="128" Y1="140" X2="140" Y2="140" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
 
                     <!-- Diamond outer (border only) — rotates -->
                     <Path Canvas.Left="42" Canvas.Top="28"
                           Fill="Transparent"
-                          Stroke="#ff2222" StrokeThickness="1.5" Opacity="0.6"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.6"
                           Data="M 28,0 L 56,42 L 28,84 L 0,42 Z">
                         <Path.RenderTransform>
                             <RotateTransform x:Name="DiamondOuterRotate" Angle="0" CenterX="28" CenterY="42"/>
@@ -72,8 +68,7 @@
 
                     <!-- Diamond inner (filled) — rotates opposite -->
                     <Path Canvas.Left="54" Canvas.Top="42"
-                          Stroke="#ff2222" StrokeThickness="1"
-                          Opacity="1"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1"
                           Data="M 16,0 L 32,24 L 16,48 L 0,24 Z">
                         <Path.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -92,7 +87,7 @@
                     <!-- Center dot -->
                     <Ellipse Width="6" Height="6"
                              Canvas.Left="67" Canvas.Top="67"
-                             Fill="#ff2222">
+                             Fill="{DynamicResource AccentBrush}">
                         <Ellipse.Effect>
                             <DropShadowEffect Color="#ff2222" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
                         </Ellipse.Effect>
@@ -101,23 +96,23 @@
 
                 <!-- ARES Title -->
                 <TextBlock Text="ARES" FontSize="32" FontWeight="Bold"
-                           Foreground="#ff2222" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"
                            FontFamily="Consolas" Margin="0,0,0,8"/>
 
                 <TextBlock Text="Autonomous Response Engine System"
-                           FontSize="11" Foreground="#666666"
+                           FontSize="11" Foreground="{DynamicResource SubtextBrush}"
                            HorizontalAlignment="Center" FontFamily="Segoe UI"/>
 
                 <!-- Status -->
-                <TextBlock x:Name="StatusText"
-                           Text="Inicializando..."
-                           FontSize="13" Foreground="#aaaaaa"
+                <TextBlock Text="{Binding StatusText}"
+                           FontSize="13" Foreground="{DynamicResource TextBrush}"
                            HorizontalAlignment="Center" FontFamily="Segoe UI"
                            Margin="0,8,0,0"/>
 
                 <!-- Progress bar -->
-                <ProgressBar x:Name="ProgressBar" Width="300" Height="3"
-                             Background="#1a1a1a" Foreground="#ff2222"
+                <ProgressBar Value="{Binding Progress}" Width="300" Height="3"
+                             Background="{DynamicResource SurfaceBrush}"
+                             Foreground="{DynamicResource AccentBrush}"
                              BorderThickness="0" Minimum="0" Maximum="100"
                              Margin="0,4,0,0"/>
             </StackPanel>
@@ -128,15 +123,12 @@
         <EventTrigger RoutedEvent="Loaded">
             <BeginStoryboard>
                 <Storyboard RepeatBehavior="Forever">
-                    <!-- Inner diamond slow rotation -->
                     <DoubleAnimation Storyboard.TargetName="DiamondRotate"
                                      Storyboard.TargetProperty="Angle"
                                      From="0" To="360" Duration="0:0:6"/>
-                    <!-- Outer diamond border rotates opposite, faster -->
                     <DoubleAnimation Storyboard.TargetName="DiamondOuterRotate"
                                      Storyboard.TargetProperty="Angle"
                                      From="360" To="0" Duration="0:0:10"/>
-                    <!-- Ring1 outer glow pulse -->
                     <DoubleAnimation Storyboard.TargetName="Ring1Scale"
                                      Storyboard.TargetProperty="ScaleX"
                                      From="0.85" To="1.1" Duration="0:0:2"
@@ -145,7 +137,6 @@
                                      Storyboard.TargetProperty="ScaleY"
                                      From="0.85" To="1.1" Duration="0:0:2"
                                      AutoReverse="True"/>
-                    <!-- Ring2 mid pulse (offset phase) -->
                     <DoubleAnimation Storyboard.TargetName="Ring2Scale"
                                      Storyboard.TargetProperty="ScaleX"
                                      From="1.0" To="1.08" Duration="0:0:1.5"

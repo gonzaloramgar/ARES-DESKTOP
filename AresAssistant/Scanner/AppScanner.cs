@@ -69,12 +69,19 @@ public class AppScanner
         {
             if (!Directory.Exists(startMenu)) continue;
 
-            var enumOpts = new EnumerationOptions
+            string[] lnkFiles;
+            try
             {
-                IgnoreInaccessible = true,
-                RecurseSubdirectories = true
-            };
-            foreach (var lnk in Directory.GetFiles(startMenu, "*.lnk", enumOpts))
+                var enumOpts = new EnumerationOptions
+                {
+                    IgnoreInaccessible = true,
+                    RecurseSubdirectories = true
+                };
+                lnkFiles = Directory.GetFiles(startMenu, "*.lnk", enumOpts);
+            }
+            catch { continue; } // skip this start menu path if inaccessible
+
+            foreach (var lnk in lnkFiles)
             {
                 try
                 {

@@ -92,11 +92,10 @@ La configuración se guarda en `data/config.json` y se puede modificar desde el 
 ```
 AresAssistant/
 ├── App.xaml / App.xaml.cs       # Entrada, recursos globales y crash handling
-├── Windows/
+├── Views/                       # Toda la UI (Windows + Controls unificados)
 │   ├── MainWindow               # Shell principal, hotkeys, animaciones
 │   ├── SettingsWindow           # Panel de ajustes
-│   └── SplashWindow             # Pantalla de carga / primer arranque
-├── Controls/
+│   ├── SplashWindow             # Pantalla de carga / primer arranque
 │   ├── OverlayModeControl       # UI modo compacto
 │   ├── FullHudModeControl       # UI modo HUD completo
 │   └── ConfirmationDialog       # Diálogo de confirmación de herramientas
@@ -105,14 +104,17 @@ AresAssistant/
 │   ├── AppConfig.cs             # Record de configuración
 │   ├── ConfigManager.cs         # Serialización JSON
 │   └── ThemeEngine.cs           # Aplicación dinámica del tema
-├── Core/
+├── Core/                        # Toda la lógica de negocio y servicios
 │   ├── AgentLoop.cs             # Bucle principal de conversación con el modelo
 │   ├── OllamaClient.cs          # Cliente HTTP para la API de Ollama
-│   └── ConversationHistory.cs   # Gestión del historial
-├── Tools/                       # Implementaciones de herramientas (ITool)
-├── Scanner/                     # Escaneo de sistema en primer arranque
-├── Safety/                      # PermissionManager, ActionLogger
-└── Helpers/                     # Converters, hotkeys, P/Invoke
+│   ├── ConversationHistory.cs   # Gestión del historial
+│   ├── OllamaMessage.cs / OllamaResponse.cs  # Modelos de datos
+│   ├── ToolDefinition.cs / ToolResult.cs     # Modelos de herramientas
+│   ├── SystemScanner.cs / AppScanner.cs      # Escaneo de sistema
+│   ├── BrowserScanner.cs / FolderScanner.cs  # Escaneo de sistema
+│   ├── PermissionManager.cs / ActionLogger.cs # Seguridad y logging
+│   └── Converters.cs / GlobalHotkeyManager.cs / WindowNativeMethods.cs
+└── Tools/                       # Implementaciones de herramientas (ITool)
 ```
 
 ## Datos en tiempo de ejecución

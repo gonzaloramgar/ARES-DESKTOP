@@ -12,6 +12,8 @@
             <!-- Dynamic accent resources — set by ThemeEngine at runtime -->
             <SolidColorBrush x:Key="AccentBrush" Color="#ff2222"/>
             <SolidColorBrush x:Key="AccentGlowBrush" Color="#66ff2222"/>
+            <!-- OverlayBackgroundBrush alpha = OverlayOpacity (default 0.85 = 0xD9) -->
+            <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#D90d0d0d"/>
             <SolidColorBrush x:Key="BackgroundBrush" Color="#0d0d0d"/>
             <SolidColorBrush x:Key="SurfaceBrush" Color="#1a1a1a"/>
             <SolidColorBrush x:Key="SurfaceLightBrush" Color="#222222"/>

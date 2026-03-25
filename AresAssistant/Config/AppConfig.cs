@@ -6,7 +6,6 @@ public record AppConfig
     public double OverlayOpacity { get; init; } = 0.85;
     public string FontSize { get; init; } = "medium";
     public string OverlayPosition { get; init; } = "bottom-right";
-    public string OverlaySize { get; init; } = "normal";
     public string OllamaModel { get; init; } = "qwen2.5:32b";
     public string AssistantName { get; init; } = "ARES";
     public string Personality { get; init; } = "formal";

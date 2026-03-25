@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Width="1200" Height="800">
 
-    <Border Background="#CC0d0d0d" CornerRadius="12"
+    <Border Background="{DynamicResource OverlayBackgroundBrush}" CornerRadius="12"
             BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
@@ -27,7 +27,7 @@
                         <Path Data="M 10,0 L 20,14 L 10,28 L 0,14 Z"
                               Fill="{DynamicResource AccentBrush}" Width="20" Height="28"
                               Margin="0,0,10,0"/>
-                        <TextBlock Text="ARES" FontFamily="Consolas" FontSize="18"
+                        <TextBlock Text="{Binding AssistantName, FallbackValue='ARES'}" FontFamily="Consolas" FontSize="18"
                                    FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
                                    VerticalAlignment="Center"/>
                         <TextBlock Text=" — HUD COMPLETO"

@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private readonly GlobalHotkeyManager _hotkeyManager = new();
     private readonly MainViewModel _vm = new();
     private bool _isVisible = true;
+    private readonly List<int> _hotkeyIds = new();
 
     // Inactivity timer — unloads the model from Ollama RAM after idle period
     private DispatcherTimer? _idleTimer;
@@ -105,16 +106,24 @@ public partial class MainWindow : Window
         try
         {
             var (mods1, key1) = GlobalHotkeyManager.ParseHotkey(cfg.ShowHideHotkey);
-            _hotkeyManager.Register(mods1, key1, ToggleVisibility);
+            _hotkeyIds.Add(_hotkeyManager.Register(mods1, key1, ToggleVisibility));
         }
         catch { /* ignore invalid hotkey string */ }
 
         try
         {
             var (mods2, key2) = GlobalHotkeyManager.ParseHotkey(cfg.ToggleModeHotkey);
-            _hotkeyManager.Register(mods2, key2, ToggleMode);
+            _hotkeyIds.Add(_hotkeyManager.Register(mods2, key2, ToggleMode));
         }
         catch { /* ignore */ }
+    }
+
+    public void ReregisterHotkeys()
+    {
+        foreach (var id in _hotkeyIds)
+            _hotkeyManager.Unregister(id);
+        _hotkeyIds.Clear();
+        RegisterHotkeys();
     }
 
     private void ToggleVisibility()

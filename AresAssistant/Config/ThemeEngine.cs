@@ -23,6 +23,10 @@ public static class ThemeEngine
             "large" => 17.0,
             _ => 15.0
         };
+
+        // Overlay window background — driven by the OverlayOpacity setting
+        var alpha = (byte)(Math.Clamp(config.OverlayOpacity, 0.0, 1.0) * 255);
+        resources["OverlayBackgroundBrush"] = new SolidColorBrush(Color.FromArgb(alpha, 0x0d, 0x0d, 0x0d));
     }
 
     private static bool TryParseColor(string hex, out Color color)

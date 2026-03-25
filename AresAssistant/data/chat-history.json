@@ -157,5 +157,61 @@
   {
     "role": "assistant",
     "content": "La carpeta 'patata' en tu escritorio ha sido eliminada y movida a la papelera. Su ubicación era C:\\Users\\grg30\\Desktop\\patata. Si necesitas recuperarla, puedes hacerlo desde la papelera de reciclaje antes de vaciarla."
+  },
+  {
+    "role": "user",
+    "content": "crea una carpeta en escritorio llamada patata"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "call_ybwmo2a1",
+        "function": {
+          "name": "create_folder",
+          "arguments": {
+            "path": "Desktop/patata"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "content": "Carpeta creada: C:\\Users\\grg30\\Desktop\\patata",
+    "tool_call_id": "call_ybwmo2a1"
+  },
+  {
+    "role": "assistant",
+    "content": "He creado la carpeta 'patata' en tu escritorio. Su ruta es C:\\Users\\grg30\\Desktop\\patata."
+  },
+  {
+    "role": "user",
+    "content": "elimina la carpeta patata del escritorio"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "call_xzyd27pc",
+        "function": {
+          "name": "delete_folder",
+          "arguments": {
+            "path": "Desktop/patata"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "content": "Carpeta movida a la papelera: C:\\Users\\grg30\\Desktop\\patata",
+    "tool_call_id": "call_xzyd27pc"
+  },
+  {
+    "role": "assistant",
+    "content": "La carpeta 'patata' en tu escritorio ha sido eliminada y movida a la papelera. Su ubicación era C:\\Users\\grg30\\Desktop\\patata. Si necesitas recuperarla, puedes hacerlo desde la papelera de reciclaje antes de vaciarla."
   }
 ]

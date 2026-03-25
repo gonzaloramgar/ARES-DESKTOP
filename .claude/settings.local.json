@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//c/Users/grg30/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.5/skills/writing-plans/**)"
-    ]
-  }
-}

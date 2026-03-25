@@ -1,6 +1,6 @@
+using System.Text;
 using AresAssistant.Config;
 using AresAssistant.Tools;
-using Newtonsoft.Json.Linq;
 
 namespace AresAssistant.Core;
 
@@ -49,7 +49,7 @@ public class AgentLoop
         var downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
         var userName  = Environment.UserName;
 
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
         sb.AppendLine($"Eres {_config.AssistantName}, un asistente de IA integrado en el sistema operativo del usuario.");
         sb.AppendLine("Respondes siempre en español. Eres directo, eficiente y ligeramente formal.");
         sb.AppendLine();

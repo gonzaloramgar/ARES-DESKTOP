@@ -37,7 +37,9 @@ public class OllamaClient
             Formatting = Formatting.None
         });
 
+#if DEBUG
         WriteDebug("REQUEST", json);
+#endif
 
         var response = await _http.PostAsync(
             $"{BaseUrl}/api/chat",
@@ -46,7 +48,9 @@ public class OllamaClient
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
 
+#if DEBUG
         WriteDebug("RESPONSE", body);
+#endif
 
         return JsonConvert.DeserializeObject<OllamaResponse>(body) ?? new OllamaResponse();
     }

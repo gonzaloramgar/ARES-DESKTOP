@@ -16,5 +16,4 @@ public record AppConfig
     public bool LaunchWithWindows { get; init; } = false;
     public bool SaveChatHistory { get; init; } = true;
     public bool CloseToTray { get; init; } = true;
-    public string Language { get; init; } = "es";
 }

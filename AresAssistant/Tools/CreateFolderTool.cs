@@ -17,8 +17,6 @@ public class CreateFolderTool : ITool
         Required = new() { "path" }
     };
 
-    // Path resolution delegated to the shared PathResolver
-
     public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
         var rawPath = args.TryGetValue("path", out var p) ? p.ToString().Trim() : "";
@@ -42,6 +40,4 @@ public class CreateFolderTool : ITool
             return Task.FromResult(new ToolResult(false, $"Error al crear carpeta: {ex.Message}"));
         }
     }
-
-
 }

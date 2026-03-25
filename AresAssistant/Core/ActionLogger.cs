@@ -37,10 +37,21 @@ public class ActionLogger
         if (!File.Exists(_logPath)) return;
 
         var info = new FileInfo(_logPath);
-        if (info.Length > MaxLogBytes)
-        {
-            var archive = _logPath + $".{DateTime.Now:yyyyMMddHHmmss}.bak";
-            File.Move(_logPath, archive);
-        }
+        if (info.Length <= MaxLogBytes) return;
+
+        var archive = _logPath + $".{DateTime.Now:yyyyMMddHHmmss}.bak";
+        File.Move(_logPath, archive);
+        PruneOldBackups();
+    }
+
+    private void PruneOldBackups(int keep = 3)
+    {
+        var dir = Path.GetDirectoryName(_logPath)!;
+        var prefix = Path.GetFileName(_logPath) + ".";
+        var backups = Directory.GetFiles(dir, prefix + "*.bak")
+            .OrderByDescending(f => f)
+            .Skip(keep);
+        foreach (var old in backups)
+            try { File.Delete(old); } catch { }
     }
 }

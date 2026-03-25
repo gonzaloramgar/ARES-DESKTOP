@@ -72,7 +72,7 @@
   "open_copilot": {
     "type": "open_app",
     "display_name": "Copilot",
-    "path": "C:\\Program Files (x86)\\Microsoft\\Copilot\\Application\\146.0.3856.77\\mscopilot.exe"
+    "path": "C:\\Program Files (x86)\\Microsoft\\Copilot\\Application\\146.0.3856.80\\mscopilot.exe"
   },
   "open_microsoft_edge": {
     "type": "open_app",

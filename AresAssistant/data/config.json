@@ -1,5 +1,5 @@
 {
-  "AccentColor": "#FF2121",
+  "AccentColor": "#ff2222",
   "OverlayOpacity": 0.783844580777096,
   "FontSize": "medium",
   "OverlayPosition": "bottom-right",
@@ -13,5 +13,6 @@
   "SaveChatHistory": true,
   "CloseToTray": false,
   "ConfirmationAlertsEnabled": true,
-  "ModelKeepAliveMinutes": 5
+  "ModelKeepAliveMinutes": 5,
+  "SetupCompleted": true
 }

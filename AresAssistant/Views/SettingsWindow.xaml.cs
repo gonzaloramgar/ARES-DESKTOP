@@ -28,6 +28,13 @@ public partial class SettingsWindow : Window
     {
         _vm.Save();
         ((App)Application.Current).UpdateTrayIcon();
+
+        // Apply new hotkeys immediately without requiring restart
+        foreach (Window win in Application.Current.Windows)
+        {
+            if (win is MainWindow mw) { mw.ReregisterHotkeys(); break; }
+        }
+
         Close();
     }
 

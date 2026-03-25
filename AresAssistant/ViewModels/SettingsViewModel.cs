@@ -63,7 +63,8 @@ public class SettingsViewModel : ViewModelBase
         _responseLength = cfg.ResponseLength;
         _showHideHotkey = cfg.ShowHideHotkey;
         _toggleModeHotkey = cfg.ToggleModeHotkey;
-        _launchWithWindows = cfg.LaunchWithWindows;
+        // Always read from actual registry state so the checkbox reflects reality
+        _launchWithWindows = StartupManager.IsEnabled;
         _saveChatHistory = cfg.SaveChatHistory;
         _closeToTray = cfg.CloseToTray;
         _confirmationAlertsEnabled = cfg.ConfirmationAlertsEnabled;
@@ -94,6 +95,7 @@ public class SettingsViewModel : ViewModelBase
         var config = BuildConfig();
         _configManager.Save(config);
         ThemeEngine.Apply(config);
+        StartupManager.SetEnabled(LaunchWithWindows);
     }
 
     public async Task CheckOllamaAsync()

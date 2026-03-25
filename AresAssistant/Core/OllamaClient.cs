@@ -11,6 +11,10 @@ public class OllamaClient
     private const string BaseUrl = "http://localhost:11434";
     private static readonly string DebugLogPath = Path.Combine("data", "logs", "ollama_debug.log");
 
+    /// <summary>
+    /// Standard request (no streaming). Used for tool-call iterations
+    /// where we need the complete response before acting.
+    /// </summary>
     public async Task<OllamaResponse> ChatAsync(
         List<OllamaMessage> messages,
         List<ToolDefinition> tools,
@@ -28,7 +32,7 @@ public class OllamaClient
                 tool_call_id = m.ToolCallId
             }),
             tools,
-            options = new { num_ctx = 16384 }
+            options = new { num_ctx = 8192 }
         };
 
         var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
@@ -53,6 +57,76 @@ public class OllamaClient
 #endif
 
         return JsonConvert.DeserializeObject<OllamaResponse>(body) ?? new OllamaResponse();
+    }
+
+    /// <summary>
+    /// Streaming request. Yields text tokens incrementally for real-time display.
+    /// Falls back to non-streaming if the first response contains tool_calls.
+    /// </summary>
+    public async IAsyncEnumerable<StreamChunk> ChatStreamAsync(
+        List<OllamaMessage> messages,
+        List<ToolDefinition> tools,
+        string model)
+    {
+        var payload = new
+        {
+            model,
+            stream = true,
+            messages = messages.Select(m => new
+            {
+                role = m.Role,
+                content = m.Content,
+                tool_calls = m.ToolCalls,
+                tool_call_id = m.ToolCallId
+            }),
+            tools,
+            options = new { num_ctx = 8192 }
+        };
+
+        var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+            Formatting = Formatting.None
+        });
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/api/chat")
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+
+        using var stream = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+
+        while (!reader.EndOfStream)
+        {
+            var line = await reader.ReadLineAsync();
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            JObject chunk;
+            try { chunk = JObject.Parse(line); }
+            catch { continue; }
+
+            var msg = chunk["message"];
+            if (msg == null) continue;
+
+            // If tool_calls present in any chunk → yield the full parsed response
+            var toolCalls = msg["tool_calls"];
+            if (toolCalls != null && toolCalls.HasValues)
+            {
+                var fullResp = JsonConvert.DeserializeObject<OllamaResponse>(line);
+                yield return new StreamChunk { ToolResponse = fullResp };
+                yield break;
+            }
+
+            var token = msg["content"]?.ToString();
+            if (!string.IsNullOrEmpty(token))
+                yield return new StreamChunk { Token = token };
+
+            if (chunk["done"]?.Value<bool>() == true) yield break;
+        }
     }
 
     private static void WriteDebug(string tag, string content)
@@ -113,4 +187,12 @@ public class OllamaClient
             return new List<string>();
         }
     }
+}
+
+/// <summary>One chunk from the streaming response — either a text token or a full tool-call response.</summary>
+public class StreamChunk
+{
+    public string? Token { get; init; }
+    public OllamaResponse? ToolResponse { get; init; }
+    public bool IsToolCall => ToolResponse != null;
 }

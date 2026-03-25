@@ -57,6 +57,7 @@ public class ChatViewModel : ViewModelBase
 
         _agentLoop.ResponseReceived += OnResponseReceived;
         _agentLoop.StatusChanged += OnStatusChanged;
+        _agentLoop.TokenReceived += OnTokenReceived;
 
         _agentLoop.InitSystemPrompt();
 
@@ -74,6 +75,7 @@ public class ChatViewModel : ViewModelBase
 
         InputText = "";
         IsBusy = true;
+        _streamingMessage = null;
 
         Messages.Add(new ChatMessage { Role = "user", Content = text });
 
@@ -85,11 +87,51 @@ public class ChatViewModel : ViewModelBase
         IsBusy = false;
     }
 
+    private ChatMessage? _streamingMessage;
+
+    private void OnTokenReceived(string token)
+    {
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_streamingMessage == null)
+            {
+                _streamingMessage = new ChatMessage { Role = "assistant", Content = token };
+                Messages.Add(_streamingMessage);
+            }
+            else
+            {
+                _streamingMessage.Content += token;
+                // Force UI refresh by replacing the item
+                var idx = Messages.IndexOf(_streamingMessage);
+                if (idx >= 0)
+                {
+                    Messages.RemoveAt(idx);
+                    Messages.Insert(idx, _streamingMessage);
+                }
+            }
+        });
+    }
+
     private void OnResponseReceived(string response)
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
-            Messages.Add(new ChatMessage { Role = "assistant", Content = response });
+            if (_streamingMessage != null)
+            {
+                // Streaming already added the message — just ensure final text matches
+                _streamingMessage.Content = response;
+                var idx = Messages.IndexOf(_streamingMessage);
+                if (idx >= 0)
+                {
+                    Messages.RemoveAt(idx);
+                    Messages.Insert(idx, _streamingMessage);
+                }
+                _streamingMessage = null;
+            }
+            else
+            {
+                Messages.Add(new ChatMessage { Role = "assistant", Content = response });
+            }
             StatusText = "";
         });
     }

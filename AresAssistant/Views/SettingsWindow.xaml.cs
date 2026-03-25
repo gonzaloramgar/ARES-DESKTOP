@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using AresAssistant.Core;
 using AresAssistant.ViewModels;
+using AresAssistant.Views;
 
 namespace AresAssistant.Views;
 
@@ -15,6 +17,16 @@ public partial class SettingsWindow : Window
         _vm = new SettingsViewModel(App.ConfigManager, new OllamaClient());
         DataContext = _vm;
         Loaded += async (_, _) => await _vm.CheckOllamaAsync();
+    }
+
+    private void PresetColor_Click(object sender, RoutedEventArgs e)
+        => _vm.AccentColor = (string)((FrameworkElement)sender).Tag;
+
+    private void PickColor_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new ColorPickerWindow(_vm.AccentColor, this);
+        if (picker.ShowDialog() == true)
+            _vm.AccentColor = picker.SelectedColor;
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

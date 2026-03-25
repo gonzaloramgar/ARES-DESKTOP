@@ -57,10 +57,7 @@ public class SystemInfoTool : ITool
     {
         try
         {
-            var counter = new PerformanceCounter("Memory", "Available Bytes");
-            var available = (long)counter.NextValue();
-            // Use WMI or GC for total
-            return GC.GetGCMemoryInfo().TotalAvailableMemoryBytes + available;
+            return GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
         }
         catch { return 0; }
     }

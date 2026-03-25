@@ -28,11 +28,11 @@ public partial class SplashWindow : Window
             else
             {
                 UpdateStatus("Cargando ARES...", 20);
-                await Task.Delay(800);
+                await Task.Delay(1200);
                 UpdateStatus("Verificando conexión con Ollama...", 60);
-                await Task.Delay(700);
+                await Task.Delay(1400);
                 UpdateStatus("ARES listo.", 100);
-                await Task.Delay(500);
+                await Task.Delay(900);
             }
 
             OpenMainWindow();

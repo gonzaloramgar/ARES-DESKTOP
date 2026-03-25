@@ -23,15 +23,20 @@ public class RunCommandTool : ITool
         "ipconfig", "ping", "tracert", "nslookup", "netstat",
         "dir", "echo", "type", "tasklist", "systeminfo",
         "whoami", "hostname", "ver", "date", "time",
-        "mkdir", "cd", "cls", "tree", "where", "wmic"
+        "mkdir", "cd", "cls", "tree", "where", "wmic",
+        "powershell", "python", "pip", "node", "npm", "npx",
+        "git", "dotnet", "curl", "wget", "choco", "winget",
+        "findstr", "more", "robocopy", "xcopy", "ren", "move",
+        "copy", "attrib", "set ", "start", "notepad", "code"
     };
 
     private static readonly string[] BlockedPatterns =
     {
         "del ", "rmdir", " rd ", "/rd", "format ", "reg add", "reg delete", "reg import",
         "net user", "net localgroup", "sc delete", "sc stop", "bcdedit",
-        "shutdown", "restart", "powershell -enc", "curl ", "wget ",
-        "invoke-expression", "iex "
+        "shutdown", "restart", "powershell -enc", "powershell -e ",
+        "invoke-expression", "iex ", "invoke-webrequest",
+        "remove-item", "rm -rf", "rm -r", "del /f", "del /s"
     };
 
     public async Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)

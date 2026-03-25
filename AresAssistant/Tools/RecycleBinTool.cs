@@ -1,11 +1,14 @@
 using AresAssistant.Core;
 using Newtonsoft.Json.Linq;
+using System.Security.Principal;
+using System.Text;
 
 namespace AresAssistant.Tools;
 
 /// <summary>
 /// Lists, restores one item, or restores all items from the Windows Recycle Bin
-/// using Shell32 COM (no extra packages needed).
+/// by directly reading $Recycle.Bin metadata files ($I* / $R*).
+/// Does not use Shell32 COM, so it works reliably from any thread.
 /// </summary>
 public class RecycleBinTool : ITool
 {
@@ -47,31 +50,102 @@ public class RecycleBinTool : ITool
         };
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    // ── data model ───────────────────────────────────────────────────────────
 
-    private static dynamic GetShellBinItems()
+    private sealed record RecycleItem(string MetaFile, string DataFile, string OriginalPath)
     {
-        var shellType = Type.GetTypeFromProgID("Shell.Application")
-            ?? throw new InvalidOperationException("Shell.Application no disponible en este sistema.");
-        dynamic shell = Activator.CreateInstance(shellType)!;
-        return shell.NameSpace(10).Items(); // 10 = CSIDL_BITBUCKET (Recycle Bin)
+        public string Name => Path.GetFileName(OriginalPath);
     }
+
+    // ── discovery ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Enumerates all items in the current user's Recycle Bin across all fixed drives
+    /// by reading $I metadata files in $Recycle.Bin\{SID}\.
+    /// </summary>
+    private static List<RecycleItem> GetRecycleItems()
+    {
+        var sid  = WindowsIdentity.GetCurrent().User?.Value ?? "";
+        var list = new List<RecycleItem>();
+
+        foreach (var drive in DriveInfo.GetDrives())
+        {
+            if (!drive.IsReady || drive.DriveType != DriveType.Fixed) continue;
+
+            var binPath = Path.Combine(drive.Name, "$Recycle.Bin", sid);
+            if (!Directory.Exists(binPath)) continue;
+
+            foreach (var metaFile in Directory.GetFiles(binPath, "$I*"))
+            {
+                var originalPath = ReadOriginalPath(metaFile);
+                if (originalPath is null) continue;
+
+                // $IXXXXXX.ext  →  $RXXXXXX.ext
+                var dataFile = Path.Combine(
+                    Path.GetDirectoryName(metaFile)!,
+                    "$R" + Path.GetFileName(metaFile)[2..]);
+
+                list.Add(new RecycleItem(metaFile, dataFile, originalPath));
+            }
+        }
+
+        return list;
+    }
+
+    /// <summary>
+    /// Parses a $I metadata file and returns the original path.
+    ///
+    /// Layout (Windows Vista+):
+    ///   [0..7]   version (int64) — 1 = Vista/7, 2 = Win8+
+    ///   [8..15]  original size  (int64)
+    ///   [16..23] deletion time  (FILETIME)
+    ///   Version 1: [24..543]  path, null-terminated UTF-16, 260 wchars fixed
+    ///   Version 2: [24..27]   char count (int32); [28..] path UTF-16
+    /// </summary>
+    private static string? ReadOriginalPath(string metaFile)
+    {
+        try
+        {
+            var bytes = File.ReadAllBytes(metaFile);
+            if (bytes.Length < 28) return null;
+
+            var version = BitConverter.ToInt64(bytes, 0);
+
+            if (version == 1)
+            {
+                if (bytes.Length < 26) return null;
+                return Encoding.Unicode
+                    .GetString(bytes, 24, Math.Min(520, bytes.Length - 24))
+                    .TrimEnd('\0');
+            }
+
+            if (version == 2)
+            {
+                var charCount = BitConverter.ToInt32(bytes, 24);
+                var byteCount = charCount * 2;
+                if (bytes.Length < 28 + byteCount) return null;
+                return Encoding.Unicode
+                    .GetString(bytes, 28, byteCount)
+                    .TrimEnd('\0');
+            }
+
+            return null;
+        }
+        catch { return null; }
+    }
+
+    // ── operations ───────────────────────────────────────────────────────────
 
     private static ToolResult ListBin()
     {
         try
         {
-            var items = GetShellBinItems();
-            int count = items.Count;
-            if (count == 0) return new ToolResult(true, "La papelera está vacía.");
-
-            var names = new List<string>();
-            for (int i = 0; i < count; i++)
-                names.Add((string)items.Item(i).Name);
+            var items = GetRecycleItems();
+            if (items.Count == 0) return new ToolResult(true, "La papelera está vacía.");
 
             return new ToolResult(true,
-                $"Papelera ({count} elemento{(count == 1 ? "" : "s")}):\n" +
-                string.Join("\n", names.Select(nm => $"  • {nm}")));
+                $"Papelera ({items.Count} elemento{(items.Count == 1 ? "" : "s")}):\n" +
+                string.Join("\n", items.Select(i => $"  • {i.Name}  ← {i.OriginalPath}")));
         }
         catch (Exception ex)
         {
@@ -83,19 +157,22 @@ public class RecycleBinTool : ITool
     {
         try
         {
-            var items = GetShellBinItems();
-            int count = items.Count;
-            if (count == 0) return new ToolResult(true, "La papelera ya estaba vacía.");
+            var items = GetRecycleItems();
+            if (items.Count == 0) return new ToolResult(true, "La papelera ya estaba vacía.");
 
-            // Collect references before restoring (restoring removes items from the collection)
-            var toRestore = new List<dynamic>();
-            for (int i = 0; i < count; i++)
-                toRestore.Add(items.Item(i));
+            var errors = new List<string>();
+            var ok     = 0;
 
-            foreach (var item in toRestore)
-                item.InvokeVerb("restore");
+            foreach (var item in items)
+            {
+                var r = RestoreItem(item);
+                if (r.Success) ok++;
+                else errors.Add($"  {item.Name}: {r.Message}");
+            }
 
-            return new ToolResult(true, $"Restaurados {count} elemento{(count == 1 ? "" : "s")} de la papelera.");
+            var msg = $"Restaurados {ok} de {items.Count} elemento{(items.Count == 1 ? "" : "s")}.";
+            if (errors.Count > 0) msg += "\nErrores:\n" + string.Join("\n", errors);
+            return new ToolResult(errors.Count == 0, msg);
         }
         catch (Exception ex)
         {
@@ -110,30 +187,73 @@ public class RecycleBinTool : ITool
 
         try
         {
-            var items = GetShellBinItems();
-            int count = items.Count;
-
-            var matches = new List<(string Name, dynamic Item)>();
-            for (int i = 0; i < count; i++)
-            {
-                dynamic item = items.Item(i);
-                string itemName = (string)item.Name;
-                if (itemName.Contains(query, StringComparison.OrdinalIgnoreCase))
-                    matches.Add((itemName, item));
-            }
+            var matches = GetRecycleItems()
+                .Where(i => i.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                         || i.OriginalPath.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
             if (matches.Count == 0)
                 return new ToolResult(false, $"No se encontró '{query}' en la papelera.");
 
-            foreach (var (_, item) in matches)
-                item.InvokeVerb("restore");
+            var errors = new List<string>();
+            var ok     = 0;
 
-            var restored = string.Join(", ", matches.Select(m => $"'{m.Name}'"));
-            return new ToolResult(true, $"Restaurado: {restored}");
+            foreach (var item in matches)
+            {
+                var r = RestoreItem(item);
+                if (r.Success) ok++;
+                else errors.Add($"  {item.Name}: {r.Message}");
+            }
+
+            var names = string.Join(", ", matches.Select(m => $"'{m.Name}'"));
+            var msg   = $"Restaurado{(ok == 1 ? "" : "s")}: {names}";
+            if (errors.Count > 0) msg += "\nErrores:\n" + string.Join("\n", errors);
+            return new ToolResult(errors.Count == 0, msg);
         }
         catch (Exception ex)
         {
             return new ToolResult(false, $"Error al restaurar '{query}': {ex.Message}");
+        }
+    }
+
+    /// <summary>Moves the $R data file/folder back to its original path and deletes the $I metadata.</summary>
+    private static ToolResult RestoreItem(RecycleItem item)
+    {
+        try
+        {
+            // Recreate original parent directory if it no longer exists
+            var originalDir = Path.GetDirectoryName(item.OriginalPath);
+            if (!string.IsNullOrEmpty(originalDir) && !Directory.Exists(originalDir))
+                Directory.CreateDirectory(originalDir);
+
+            if (File.Exists(item.DataFile))
+            {
+                if (File.Exists(item.OriginalPath))
+                    return new ToolResult(false,
+                        $"Ya existe un archivo en la ruta de destino: {item.OriginalPath}");
+                File.Move(item.DataFile, item.OriginalPath);
+            }
+            else if (Directory.Exists(item.DataFile))
+            {
+                if (Directory.Exists(item.OriginalPath))
+                    return new ToolResult(false,
+                        $"Ya existe una carpeta en la ruta de destino: {item.OriginalPath}");
+                Directory.Move(item.DataFile, item.OriginalPath);
+            }
+            else
+            {
+                return new ToolResult(false,
+                    $"No se encontró el archivo de datos en la papelera ({item.DataFile}). " +
+                    "Es posible que ya haya sido restaurado manualmente.");
+            }
+
+            try { File.Delete(item.MetaFile); } catch { /* metadata deletion is non-critical */ }
+
+            return new ToolResult(true, $"Restaurado: '{item.Name}' → {item.OriginalPath}");
+        }
+        catch (Exception ex)
+        {
+            return new ToolResult(false, $"Error restaurando '{item.Name}': {ex.Message}");
         }
     }
 }

@@ -14,8 +14,14 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Border Grid.Row="0" Background="#0a0a0a" CornerRadius="10,10,0,0"
+            <Border Grid.Row="0" CornerRadius="10,10,0,0"
                     MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#141414" Offset="0"/>
+                        <GradientStop Color="#080808" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
                 <Grid Margin="12,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Diamond logo mini -->
@@ -60,36 +66,140 @@
                 <ItemsControl ItemsSource="{Binding Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Margin="0,4"
-                                    HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}"
-                                    MaxWidth="300">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Background" Value="#1a1a1a"/>
-                                        <Setter Property="CornerRadius" Value="8,8,8,2"/>
-                                        <Setter Property="Padding" Value="10,7"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsUser}" Value="True">
-                                                <Setter Property="Background" Value="#2a1010"/>
-                                                <Setter Property="CornerRadius" Value="8,8,2,8"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock Text="{Binding Content}"
-                                           TextWrapping="Wrap"
-                                           FontSize="{DynamicResource FontSizeNormal}"
-                                           Foreground="{DynamicResource TextBrush}"/>
-                            </Border>
+                            <StackPanel Margin="0,4,0,0">
+                                <StackPanel.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="0" To="1" Duration="0:0:0.22"/>
+                                                <ThicknessAnimation Storyboard.TargetProperty="Margin"
+                                                                    From="0,12,0,0" To="0,4,0,0" Duration="0:0:0.2"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </StackPanel.Triggers>
+
+                                <!-- Bubble -->
+                                <Border HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}"
+                                        MaxWidth="310" Margin="4,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#181818"/>
+                                            <Setter Property="CornerRadius" Value="12,12,12,3"/>
+                                            <Setter Property="Padding" Value="12,9"/>
+                                            <Setter Property="BorderBrush" Value="#252525"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                    <Setter Property="Background" Value="#1e0909"/>
+                                                    <Setter Property="CornerRadius" Value="12,12,3,12"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentGlowBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="0" Opacity="0"/>
+                                    </Border.Effect>
+                                    <TextBlock Text="{Binding Content}"
+                                               TextWrapping="Wrap"
+                                               FontSize="{DynamicResource FontSizeNormal}"
+                                               Foreground="{DynamicResource TextBrush}"
+                                               LineHeight="20"/>
+                                </Border>
+
+                                <!-- Timestamp -->
+                                <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
+                                           HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}"
+                                           FontSize="9" Foreground="#383838"
+                                           Margin="8,2,8,0"/>
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Status -->
-            <TextBlock Grid.Row="2" Text="{Binding StatusText}"
-                       Foreground="{DynamicResource SubtextBrush}"
-                       FontSize="11" Margin="14,2" FontStyle="Italic"/>
+            <!-- Status / Thinking indicator -->
+            <Grid Grid.Row="2" Height="22">
+                <!-- Status text when idle -->
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="{DynamicResource SubtextBrush}"
+                           FontSize="11" FontStyle="Italic"
+                           Margin="14,0" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Spinning arc when thinking -->
+                <StackPanel Orientation="Horizontal" Margin="14,0" VerticalAlignment="Center"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Canvas Width="18" Height="18" VerticalAlignment="Center">
+                        <Canvas.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="OverlaySpinArc"
+                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                            From="0" To="360" Duration="0:0:0.8"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Canvas.Triggers>
+                        <Ellipse Width="18" Height="18"
+                                 Stroke="#2a2a2a" StrokeThickness="2.5" Fill="Transparent"/>
+                        <Path x:Name="OverlaySpinArc"
+                              Data="M 9,1.5 A 7.5,7.5 0 1 1 1.5,9"
+                              Stroke="{DynamicResource AccentBrush}"
+                              StrokeThickness="2.5"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                            <Path.RenderTransform>
+                                <RotateTransform CenterX="9" CenterY="9"/>
+                            </Path.RenderTransform>
+                            <Path.Effect>
+                                <DropShadowEffect ShadowDepth="0" BlurRadius="6" Opacity="0.7" Color="#ff2222"/>
+                            </Path.Effect>
+                        </Path>
+                    </Canvas>
+                    <TextBlock Text="Pensando" Margin="8,0,0,0"
+                               Foreground="{DynamicResource SubtextBrush}"
+                               FontFamily="Consolas"
+                               FontSize="11" VerticalAlignment="Center" FontStyle="Italic"/>
+                    <!-- Animated dots -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="1,2,0,0">
+                        <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Margin="0,0,2.5,0" Opacity="0.15">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0"/>
+                                </Storyboard></BeginStoryboard></EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Margin="0,0,2.5,0" Opacity="0.15">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0.15"/>
+                                </Storyboard></BeginStoryboard></EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                        <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Opacity="0.15">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0.3"/>
+                                </Storyboard></BeginStoryboard></EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
 
             <!-- Input row -->
             <Border Grid.Row="3" Background="#0a0a0a" CornerRadius="0,0,10,10"
@@ -117,7 +227,11 @@
                             FontSize="16"
                             VerticalAlignment="Bottom"
                             Click="Send_Click"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}"/>
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}">
+                        <Button.Effect>
+                            <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.5" Color="#ff2222"/>
+                        </Button.Effect>
+                    </Button>
                 </Grid>
             </Border>
         </Grid>

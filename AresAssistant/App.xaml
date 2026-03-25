@@ -9,6 +9,8 @@
             <helpers:BoolToAlignmentConverter x:Key="BoolToAlignConverter"/>
             <helpers:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <helpers:InvertBoolConverter x:Key="InvertBoolConverter"/>
+            <helpers:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter"/>
+            <helpers:HexToColorBrushConverter x:Key="HexToColorBrushConverter"/>
             <!-- Dynamic accent resources — set by ThemeEngine at runtime -->
             <SolidColorBrush x:Key="AccentBrush" Color="#ff2222"/>
             <SolidColorBrush x:Key="AccentGlowBrush" Color="#66ff2222"/>
@@ -76,7 +78,7 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="4" Padding="{TemplateBinding Padding}">
@@ -84,7 +86,11 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentGlowBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -299,6 +305,88 @@
                                     <Setter TargetName="Box" Property="Opacity" Value="0.4"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Slider — accent track + dot thumb -->
+            <Style TargetType="Slider">
+                <Setter Property="MinHeight" Value="20"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Slider">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto" MinHeight="{TemplateBinding MinHeight}"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Track x:Name="PART_Track" Grid.Row="1">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="Slider.DecreaseLarge">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Height="4" CornerRadius="2"
+                                                            Background="{DynamicResource AccentBrush}"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="Slider.IncreaseLarge">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Height="4" CornerRadius="2" Background="#222222"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Ellipse x:Name="Dot" Width="14" Height="14"
+                                                             Fill="{DynamicResource AccentBrush}"
+                                                             Stroke="#0a0a0a" StrokeThickness="2"/>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Dot" Property="Width" Value="17"/>
+                                                            <Setter TargetName="Dot" Property="Height" Value="17"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsDragging" Value="True">
+                                                            <Setter TargetName="Dot" Property="Width" Value="17"/>
+                                                            <Setter TargetName="Dot" Property="Height" Value="17"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ProgressBar — glowing accent fill -->
+            <Style TargetType="ProgressBar">
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ProgressBar">
+                            <Grid>
+                                <Border x:Name="PART_Track" Background="#111111" CornerRadius="3"/>
+                                <Border x:Name="PART_Indicator" HorizontalAlignment="Left"
+                                        CornerRadius="3"
+                                        Background="{DynamicResource AccentBrush}">
+                                    <Border.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="10"
+                                                          Opacity="0.6" Color="#ff2222"/>
+                                    </Border.Effect>
+                                </Border>
+                            </Grid>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

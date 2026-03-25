@@ -21,4 +21,5 @@ public record AppConfig
     /// 0 = never auto-unload.
     /// </summary>
     public int ModelKeepAliveMinutes { get; init; } = 5;
+    public bool SetupCompleted { get; init; } = false;
 }

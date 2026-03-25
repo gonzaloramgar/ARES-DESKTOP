@@ -29,7 +29,7 @@ public static class ThemeEngine
         resources["OverlayBackgroundBrush"] = new SolidColorBrush(Color.FromArgb(alpha, 0x0d, 0x0d, 0x0d));
     }
 
-    private static bool TryParseColor(string hex, out Color color)
+    public static bool TryParseColor(string hex, out Color color)
     {
         color = Colors.Red;
         try

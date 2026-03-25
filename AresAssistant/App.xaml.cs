@@ -36,10 +36,18 @@ public partial class App : Application
             if (ConfigManager.Config.CloseToTray)
                 InitTrayIcon();
 
-            bool isFirstLaunch = !File.Exists("data/tools.json");
-
-            var splash = new SplashWindow(isFirstLaunch);
-            splash.Show();
+            // First time? Show the onboarding setup screen
+            if (!ConfigManager.Config.SetupCompleted)
+            {
+                var setup = new SetupWindow();
+                setup.Show();
+            }
+            else
+            {
+                bool isFirstLaunch = !File.Exists("data/tools.json");
+                var splash = new SplashWindow(isFirstLaunch);
+                splash.Show();
+            }
         }
         catch (Exception ex)
         {

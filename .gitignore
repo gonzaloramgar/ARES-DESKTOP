@@ -16,3 +16,5 @@ Thumbs.db
 
 # Superpowers internals
 .superpowers/
+
+.claude/

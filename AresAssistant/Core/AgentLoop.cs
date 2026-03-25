@@ -108,6 +108,8 @@ public class AgentLoop
     public async Task RunAsync(string userMessage)
     {
         _history.Add(new OllamaMessage("user", userMessage));
+        // Keep context window lean: system prompt + last 30 messages
+        _history.TrimToLast(30);
 
         int iterations = 0;
 

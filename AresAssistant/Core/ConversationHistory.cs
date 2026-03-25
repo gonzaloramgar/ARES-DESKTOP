@@ -50,4 +50,22 @@ public class ConversationHistory
         var json = JsonConvert.SerializeObject(_messages, Formatting.Indented);
         File.WriteAllText(path, json);
     }
+
+    /// <summary>
+    /// Keeps only the system message plus the most recent <paramref name="maxMessages"/> messages.
+    /// Prevents the context window from growing unboundedly over long conversations.
+    /// </summary>
+    public void TrimToLast(int maxMessages)
+    {
+        OllamaMessage? systemMsg = _messages.Count > 0 && _messages[0].Role == "system"
+            ? _messages[0]
+            : null;
+
+        var nonSystem = _messages.Skip(systemMsg != null ? 1 : 0).ToList();
+        if (nonSystem.Count <= maxMessages) return;
+
+        _messages.Clear();
+        if (systemMsg != null) _messages.Add(systemMsg);
+        _messages.AddRange(nonSystem.TakeLast(maxMessages));
+    }
 }

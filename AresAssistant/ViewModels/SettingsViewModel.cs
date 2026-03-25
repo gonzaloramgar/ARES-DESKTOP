@@ -22,6 +22,8 @@ public class SettingsViewModel : ViewModelBase
     private bool _launchWithWindows;
     private bool _saveChatHistory;
     private bool _closeToTray;
+    private bool _confirmationAlertsEnabled;
+    private int _modelKeepAliveMinutes;
     private bool _ollamaAvailable;
     private string _ollamaStatus = "";
 
@@ -40,6 +42,8 @@ public class SettingsViewModel : ViewModelBase
     public bool LaunchWithWindows { get => _launchWithWindows; set => SetField(ref _launchWithWindows, value); }
     public bool SaveChatHistory { get => _saveChatHistory; set => SetField(ref _saveChatHistory, value); }
     public bool CloseToTray { get => _closeToTray; set => SetField(ref _closeToTray, value); }
+    public bool ConfirmationAlertsEnabled { get => _confirmationAlertsEnabled; set => SetField(ref _confirmationAlertsEnabled, value); }
+    public int ModelKeepAliveMinutes { get => _modelKeepAliveMinutes; set => SetField(ref _modelKeepAliveMinutes, value); }
     public bool OllamaAvailable { get => _ollamaAvailable; set => SetField(ref _ollamaAvailable, value); }
     public string OllamaStatus { get => _ollamaStatus; set => SetField(ref _ollamaStatus, value); }
 
@@ -62,6 +66,8 @@ public class SettingsViewModel : ViewModelBase
         _launchWithWindows = cfg.LaunchWithWindows;
         _saveChatHistory = cfg.SaveChatHistory;
         _closeToTray = cfg.CloseToTray;
+        _confirmationAlertsEnabled = cfg.ConfirmationAlertsEnabled;
+        _modelKeepAliveMinutes = cfg.ModelKeepAliveMinutes;
     }
 
     public AppConfig BuildConfig() => new()
@@ -78,7 +84,9 @@ public class SettingsViewModel : ViewModelBase
         ToggleModeHotkey = ToggleModeHotkey,
         LaunchWithWindows = LaunchWithWindows,
         SaveChatHistory = SaveChatHistory,
-        CloseToTray = CloseToTray
+        CloseToTray = CloseToTray,
+        ConfirmationAlertsEnabled = ConfirmationAlertsEnabled,
+        ModelKeepAliveMinutes = ModelKeepAliveMinutes
     };
 
     public void Save()

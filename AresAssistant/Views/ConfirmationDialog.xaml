@@ -27,11 +27,14 @@
 
             <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="12">
                 <StackPanel>
-                    <TextBlock Foreground="{DynamicResource SubtextBrush}" FontSize="12" Margin="0,0,0,6">
+                    <TextBlock x:Name="QuestionText"
+                               Foreground="{DynamicResource TextBrush}" FontSize="13"
+                               TextWrapping="Wrap" Margin="0,0,0,10"/>
+                    <TextBlock Foreground="{DynamicResource SubtextBrush}" FontSize="11" Margin="0,0,0,3">
                         <Run Text="Herramienta: "/>
                         <Run x:Name="ToolNameRun" FontWeight="Bold" Foreground="{DynamicResource TextBrush}"/>
                     </TextBlock>
-                    <TextBlock x:Name="ArgsText" Foreground="{DynamicResource SubtextBrush}" FontSize="11"
+                    <TextBlock x:Name="ArgsText" Foreground="{DynamicResource SubtextBrush}" FontSize="10"
                                TextWrapping="Wrap" FontFamily="Consolas"/>
                 </StackPanel>
             </Border>

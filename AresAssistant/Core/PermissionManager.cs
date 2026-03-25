@@ -13,7 +13,7 @@ public class PermissionManager
 {
     private static readonly HashSet<string> ConfirmTools = new()
     {
-        "close_app", "write_file", "run_command", "clipboard_write", "type_text"
+        "close_app", "write_file", "run_command", "clipboard_write", "type_text", "delete_folder"
     };
 
     private static readonly string[] BlockedPathPrefixes =

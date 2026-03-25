@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using AresAssistant.Config;
 using AresAssistant.Core;
 using AresAssistant.Tools;
@@ -14,6 +15,10 @@ public partial class MainWindow : Window
     private readonly GlobalHotkeyManager _hotkeyManager = new();
     private readonly MainViewModel _vm = new();
     private bool _isVisible = true;
+
+    // Inactivity timer — unloads the model from Ollama RAM after idle period
+    private DispatcherTimer? _idleTimer;
+    private OllamaClient? _ollamaClient;
 
     public static ChatViewModel ChatViewModel { get; private set; } = null!;
     public static AgentLoop AgentLoop { get; private set; } = null!;
@@ -35,6 +40,7 @@ public partial class MainWindow : Window
         var config = App.ConfigManager.Config;
 
         var ollamaClient = new OllamaClient();
+        _ollamaClient = ollamaClient;
         var history = new ConversationHistory();
         var registry = new ToolRegistry();
         var permManager = new PermissionManager();
@@ -57,6 +63,8 @@ public partial class MainWindow : Window
         registry.Register(new MaximizeWindowTool());
         registry.Register(new TypeTextTool());
         registry.Register(new CreateFolderTool());
+        registry.Register(new DeleteFolderTool());
+        registry.Register(new RecycleBinTool());
 
         // Load auto-generated tools from scan
         registry.LoadFromJson("data/tools.json");
@@ -76,6 +84,10 @@ public partial class MainWindow : Window
 
         OverlayControl.DataContext = ChatViewModel;
         FullHudControl.DataContext = ChatViewModel;
+
+        // Reset inactivity timer every time the agent produces a response
+        AgentLoop.ResponseReceived += _ => ResetIdleTimer();
+        ResetIdleTimer();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -166,6 +178,9 @@ public partial class MainWindow : Window
 
     private async Task<bool> ShowConfirmationDialogAsync(string toolName, Dictionary<string, Newtonsoft.Json.Linq.JToken> args)
     {
+        if (!App.ConfigManager.Config.ConfirmationAlertsEnabled)
+            return true;
+
         bool result = false;
         await Dispatcher.InvokeAsync(() =>
         {
@@ -188,9 +203,28 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _idleTimer?.Stop();
+        // Unload the model so Ollama releases RAM when ARES exits
+        _ = _ollamaClient?.UnloadModelAsync(App.ConfigManager.Config.OllamaModel);
         _hotkeyManager.Dispose();
         base.OnClosed(e);
         ((App)Application.Current).CleanupTray();
         Application.Current.Shutdown();
+    }
+
+    private void ResetIdleTimer()
+    {
+        var minutes = App.ConfigManager.Config.ModelKeepAliveMinutes;
+        if (minutes <= 0) return;
+
+        _idleTimer?.Stop();
+        _idleTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(minutes) };
+        _idleTimer.Tick += async (_, _) =>
+        {
+            _idleTimer.Stop();
+            await (_ollamaClient?.UnloadModelAsync(App.ConfigManager.Config.OllamaModel)
+                   ?? Task.CompletedTask);
+        };
+        _idleTimer.Start();
     }
 }

@@ -13,5 +13,5 @@
   "LaunchWithWindows": false,
   "SaveChatHistory": true,
   "CloseToTray": false,
-  "Language": "es"
+  "ConfirmationAlertsEnabled": true
 }

@@ -12,6 +12,7 @@
     "content": "",
     "tool_calls": [
       {
+        "id": null,
         "function": {
           "name": "create_folder",
           "arguments": {
@@ -28,5 +29,133 @@
   {
     "role": "assistant",
     "content": "Se ha creado la carpeta 'patata' en tu escritorio. Su ruta es C:\\Users\\grg30\\Desktop\\patata."
+  },
+  {
+    "role": "user",
+    "content": "hola, borra la carpeta llamada patata de mi escritorio"
+  },
+  {
+    "role": "assistant",
+    "content": "Lo siento, pero no tengo una función directa para borrar carpetas. Sin embargo, puedes hacerlo manualmente yendo a tu escritorio y eliminando la carpeta 'patata'. Para futuras referencias, asegúrate de que las solicitudes estén dentro de los límites establecidos."
+  },
+  {
+    "role": "user",
+    "content": "y crear una carpeta llamada patatas fritas dentro de la carpeta patata?"
+  },
+  {
+    "role": "assistant",
+    "content": ""
+  },
+  {
+    "role": "user",
+    "content": "lo haces?"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "call_czgjtnys",
+        "function": {
+          "name": "create_folder",
+          "arguments": {
+            "path": "Desktop/patata/patatas fritas"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "content": "Carpeta creada: C:\\Users\\grg30\\Desktop\\patata\\patatas fritas",
+    "tool_call_id": "call_czgjtnys"
+  },
+  {
+    "role": "assistant",
+    "content": "He creado la carpeta 'patatas fritas' dentro de la carpeta 'patata' en tu escritorio. Su ruta es C:\\Users\\grg30\\Desktop\\patata\\patatas fritas."
+  },
+  {
+    "role": "user",
+    "content": "elimina la carpeta patata del escritorio"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "call_f8a8071n",
+        "function": {
+          "name": "delete_folder",
+          "arguments": {
+            "path": "Desktop/patata"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "content": "Carpeta eliminada: C:\\Users\\grg30\\Desktop\\patata",
+    "tool_call_id": "call_f8a8071n"
+  },
+  {
+    "role": "assistant",
+    "content": "La carpeta 'patata' en tu escritorio ha sido eliminada junto con su contenido, incluyendo la carpeta 'patatas fritas'. Su ubicación era C:\\Users\\grg30\\Desktop\\patata. Recuerda que esta acción es permanente y no se puede deshacer directamente desde el sistema."
+  },
+  {
+    "role": "user",
+    "content": "crea la carpeta patata en el escritorio"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "call_7rinkmtc",
+        "function": {
+          "name": "create_folder",
+          "arguments": {
+            "path": "Desktop/patata"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "content": "Carpeta creada: C:\\Users\\grg30\\Desktop\\patata",
+    "tool_call_id": "call_7rinkmtc"
+  },
+  {
+    "role": "assistant",
+    "content": "He creado la carpeta 'patata' en tu escritorio. Su ruta es C:\\Users\\grg30\\Desktop\\patata."
+  },
+  {
+    "role": "user",
+    "content": "elimina la carpeta patata del escritorio"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "call_labidi0x",
+        "function": {
+          "name": "delete_folder",
+          "arguments": {
+            "path": "Desktop/patata"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "content": "Carpeta movida a la papelera: C:\\Users\\grg30\\Desktop\\patata",
+    "tool_call_id": "call_labidi0x"
+  },
+  {
+    "role": "assistant",
+    "content": "La carpeta 'patata' en tu escritorio ha sido eliminada y movida a la papelera. Su ubicación era C:\\Users\\grg30\\Desktop\\patata. Si necesitas recuperarla, puedes hacerlo desde la papelera de reciclaje antes de vaciarla."
   }
 ]

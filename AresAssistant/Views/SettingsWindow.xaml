@@ -186,6 +186,25 @@
                         <CheckBox Style="{StaticResource AresCheckBox}"
                                   Content="Minimizar a la bandeja al cerrar"
                                   IsChecked="{Binding CloseToTray}" Margin="0,4,0,0"/>
+                        <CheckBox Style="{StaticResource AresCheckBox}"
+                                  Content="Pedir confirmación en acciones peligrosas"
+                                  IsChecked="{Binding ConfirmationAlertsEnabled}" Margin="0,4,0,0"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <TextBlock Text="Descargar modelo de RAM tras" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <ComboBox SelectedValue="{Binding ModelKeepAliveMinutes}" SelectedValuePath="Tag" Width="120">
+                                <ComboBoxItem Content="Nunca" Tag="0"/>
+                                <ComboBoxItem Content="1 minuto" Tag="1"/>
+                                <ComboBoxItem Content="5 minutos" Tag="5"/>
+                                <ComboBoxItem Content="10 minutos" Tag="10"/>
+                                <ComboBoxItem Content="30 minutos" Tag="30"/>
+                            </ComboBox>
+                            <TextBlock Text="de inactividad" FontSize="12"
+                                       Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"
+                                       Margin="8,0,0,0"/>
+                        </StackPanel>
 
                         <Button Content="Reescanear sistema" Style="{StaticResource GhostButton}"
                                 HorizontalAlignment="Left" Margin="0,8,0,0"

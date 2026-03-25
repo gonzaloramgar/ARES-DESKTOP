@@ -16,4 +16,10 @@ public record AppConfig
     public bool LaunchWithWindows { get; init; } = false;
     public bool SaveChatHistory { get; init; } = true;
     public bool CloseToTray { get; init; } = true;
+    public bool ConfirmationAlertsEnabled { get; init; } = true;
+    /// <summary>
+    /// Minutes of inactivity before telling Ollama to unload the model from RAM.
+    /// 0 = never auto-unload.
+    /// </summary>
+    public int ModelKeepAliveMinutes { get; init; } = 5;
 }

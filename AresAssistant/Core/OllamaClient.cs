@@ -28,7 +28,7 @@ public class OllamaClient
                 tool_call_id = m.ToolCallId
             }),
             tools,
-            options = new { num_ctx = 32768 }
+            options = new { num_ctx = 16384 }
         };
 
         var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
@@ -77,6 +77,22 @@ public class OllamaClient
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Tells Ollama to unload <paramref name="model"/> from RAM immediately.
+    /// Uses keep_alive=0 per the Ollama API spec.
+    /// </summary>
+    public async Task UnloadModelAsync(string model)
+    {
+        try
+        {
+            var payload = JsonConvert.SerializeObject(new { model, keep_alive = 0 });
+            await _http.PostAsync(
+                $"{BaseUrl}/api/generate",
+                new StringContent(payload, Encoding.UTF8, "application/json"));
+        }
+        catch { /* best-effort — Ollama may not be running */ }
     }
 
     public async Task<List<string>> GetInstalledModelsAsync()

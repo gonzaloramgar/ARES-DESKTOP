@@ -17,15 +17,7 @@ public class CreateFolderTool : ITool
         Required = new() { "path" }
     };
 
-    private static readonly Dictionary<string, string> KnownAliases = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Desktop"]   = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-        ["Documents"] = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-        ["Downloads"] = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
-        ["Pictures"]  = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-        ["Music"]     = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
-        ["Videos"]    = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
-    };
+    // Path resolution delegated to the shared PathResolver
 
     public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
@@ -33,7 +25,7 @@ public class CreateFolderTool : ITool
         if (string.IsNullOrEmpty(rawPath))
             return Task.FromResult(new ToolResult(false, "Ruta no especificada."));
 
-        var resolved = ResolvePath(rawPath);
+        var resolved = PathResolver.Resolve(rawPath);
 
         // Safety: never create inside Windows or System32
         var blocked = new[] { @"C:\Windows", @"C:\System", Environment.GetFolderPath(Environment.SpecialFolder.System) };
@@ -51,16 +43,5 @@ public class CreateFolderTool : ITool
         }
     }
 
-    private static string ResolvePath(string input)
-    {
-        // Replace forward slashes with backslashes
-        input = input.Replace('/', Path.DirectorySeparatorChar);
 
-        // Check if starts with a known alias
-        var parts = input.Split(Path.DirectorySeparatorChar, 2);
-        if (KnownAliases.TryGetValue(parts[0], out var basePath))
-            return parts.Length > 1 ? Path.Combine(basePath, parts[1]) : basePath;
-
-        return input;
-    }
 }

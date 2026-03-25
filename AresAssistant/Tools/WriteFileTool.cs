@@ -20,7 +20,8 @@ public class WriteFileTool : ITool
 
     public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
-        var path = args.TryGetValue("path", out var p) ? p.ToString() : "";
+        var rawPath = args.TryGetValue("path", out var p) ? p.ToString() : "";
+        var path = PathResolver.Resolve(rawPath);
         var content = args.TryGetValue("content", out var c) ? c.ToString() : "";
 
         try

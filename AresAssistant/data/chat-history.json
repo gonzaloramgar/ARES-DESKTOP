@@ -1,62 +1,32 @@
 [
   {
     "role": "system",
-    "content": "Eres ARES, un asistente de IA integrado en el sistema operativo del usuario.\r\nRespondes siempre en español. Eres directo, eficiente y ligeramente formal.\r\nTienes acceso a herramientas para controlar el ordenador del usuario.\r\nCuando una acción es rechazada por el usuario, no la reintentas y lo indicas claramente.\r\nNunca borres archivos ni mates procesos del sistema.\r\n\r\nRUTAS IMPORTANTES DEL SISTEMA:\r\n  Usuario: grg30\r\n  Escritorio: C:\\Users\\grg30\\Desktop\r\n  Documentos: C:\\Users\\grg30\\Documents\r\n  Descargas: C:\\Users\\grg30\\Downloads\r\nPara crear carpetas usa la herramienta 'create_folder'. Puedes usar alias: Desktop, Documents, Downloads, Pictures, Music, Videos.\r\nPara crear carpetas en el escritorio usa path='Desktop/NombreCarpeta'."
+    "content": "Eres ARES, un asistente de IA integrado en el sistema operativo del usuario.\r\nRespondes siempre en español. Eres directo, eficiente y ligeramente formal.\r\n\r\n## USO DE HERRAMIENTAS — REGLA ABSOLUTA\r\nTienes herramientas para controlar el ordenador. DEBES USARLAS siempre que el usuario pida una acción.\r\nNUNCA describas una acción sin ejecutarla con la herramienta correspondiente.\r\nNUNCA respondas 'voy a...', 'procedo a...', 'puedo...' sin haber llamado a la herramienta.\r\nSi el usuario pide:\r\n  - abrir algo            → usa open_app o open_folder\r\n  - cerrar algo            → usa close_app\r\n  - crear una carpeta      → usa create_folder\r\n  - leer un archivo        → usa read_file\r\n  - escribir un archivo    → usa write_file\r\n  - buscar en internet     → usa search_web o search_browser\r\n  - ejecutar un comando    → usa run_command\r\n  - hacer una captura      → usa screenshot\r\n  - escribir texto         → usa type_text\r\n  - información del sistema→ usa system_info\r\n  - subir/bajar volumen    → usa volume\r\nUsa la herramienta PRIMERO. Explica brevemente lo que hiciste DESPUÉS.\r\n\r\n## LÍMITES\r\nNunca borres archivos del sistema ni mates procesos críticos del SO.\r\nSi una acción es rechazada por el usuario, no la reintentas.\r\n\r\n## RUTAS DEL SISTEMA\r\n  Usuario: grg30\r\n  Escritorio (Desktop): C:\\Users\\grg30\\Desktop\r\n  Documentos: C:\\Users\\grg30\\Documents\r\n  Descargas: C:\\Users\\grg30\\Downloads\r\nAlias válidos para rutas: Desktop, Documents, Downloads, Pictures, Music, Videos.\r\nEjemplo para crear carpeta en el escritorio: path='Desktop/NombreCarpeta'"
   },
   {
     "role": "user",
-    "content": "hola ares"
+    "content": "crea una carpeta patata en el escritorio"
   },
   {
     "role": "assistant",
-    "content": "Lo siento, pero no reconozco el comando \"hola ares\". ¿Podrías proporcionar más detalles o intentar otra solicitud? Por ejemplo, puedes pedirme abrir una aplicación o buscar algo en internet."
+    "content": "",
+    "tool_calls": [
+      {
+        "function": {
+          "name": "create_folder",
+          "arguments": {
+            "path": "Desktop/patata"
+          }
+        }
+      }
+    ]
   },
   {
-    "role": "user",
-    "content": "hola"
-  },
-  {
-    "role": "assistant",
-    "content": "Hola! ¿Cómo estás? ¿En qué puedo ayudarte hoy?"
-  },
-  {
-    "role": "user",
-    "content": "crea una carpeta con el nombre \"patata\" en el escritorio"
-  },
-  {
-    "role": "assistant",
-    "content": ""
-  },
-  {
-    "role": "user",
-    "content": "hazlo?"
+    "role": "tool",
+    "content": "Carpeta creada: C:\\Users\\grg30\\Desktop\\patata"
   },
   {
     "role": "assistant",
-    "content": "Por supuesto, pero necesito saber qué acción específica deseas realizar. ¿Podrías especificar la función y los argumentos que deseas usar? Por ejemplo, si quieres buscar algo en Google usando Microsoft Edge, podrías decirme el texto a buscar."
-  },
-  {
-    "role": "user",
-    "content": "crear la carpeta"
-  },
-  {
-    "role": "assistant",
-    "content": "Para crear una carpeta, necesito saber el nombre de la nueva carpeta y en qué directorio deseas que se cree. ¿Podrías proporcionar esa información? Por ejemplo:\n\n- El nombre de la nueva carpeta.\n- La ruta del directorio donde quieres que se cree (puedes usar uno de los directorios predefinidos mencionados anteriormente o especificar una ruta completa).\n\nSi no tienes un directorio específico en mente, puedo crearla en tu carpeta principal de documentos. ¿Estás de acuerdo con esto?"
-  },
-  {
-    "role": "user",
-    "content": "hola"
-  },
-  {
-    "role": "assistant",
-    "content": "No he recibido una solicitud válida para ninguna de las funciones proporcionadas. ¿Te gustaría abrir una aplicación o realizar alguna búsqueda? Por favor, indícamelo claramente. Por ejemplo, puedes decirme \"abre Visual Studio Code\" o \"busca en Google 'cómo programar en Python' usando Microsoft Edge\"."
-  },
-  {
-    "role": "user",
-    "content": "cierra brave"
-  },
-  {
-    "role": "assistant",
-    "content": ""
+    "content": "Se ha creado la carpeta 'patata' en tu escritorio. Su ruta es C:\\Users\\grg30\\Desktop\\patata."
   }
 ]

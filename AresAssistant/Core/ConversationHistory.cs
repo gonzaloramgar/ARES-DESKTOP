@@ -37,6 +37,14 @@ public class ConversationHistory
         catch { /* ignore corrupt history */ }
     }
 
+    public void ReplaceSystemPrompt(string content)
+    {
+        if (_messages.Count > 0 && _messages[0].Role == "system")
+            _messages[0] = new OllamaMessage("system", content);
+        else
+            _messages.Insert(0, new OllamaMessage("system", content));
+    }
+
     public void SaveToJson(string path)
     {
         var json = JsonConvert.SerializeObject(_messages, Formatting.Indented);

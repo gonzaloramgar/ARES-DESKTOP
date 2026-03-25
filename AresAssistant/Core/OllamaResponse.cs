@@ -17,6 +17,9 @@ public class OllamaResponse
 
 public class OllamaToolCall
 {
+    [JsonProperty("id")]
+    public string? Id { get; set; }
+
     [JsonProperty("function")]
     public OllamaToolCallFunction Function { get; set; } = new();
 }

@@ -7,8 +7,9 @@ obj/
 *.suo
 .vs/
 
-# Runtime data (no subir al repo)
-AresAssistant/data/
+# Runtime data generada al iniciar la app (no subir al repo)
+AresAssistant/data/logs/
+AresAssistant/data/chat-history.json
 
 # OS
 .DS_Store

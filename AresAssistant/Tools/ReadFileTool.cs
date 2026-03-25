@@ -20,7 +20,8 @@ public class ReadFileTool : ITool
 
     public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
-        var path = args.TryGetValue("path", out var p) ? p.ToString() : "";
+        var rawPath = args.TryGetValue("path", out var p) ? p.ToString() : "";
+        var path = PathResolver.Resolve(rawPath);
         var maxLines = args.TryGetValue("max_lines", out var m) ? m.Value<int>() : 200;
 
         if (!File.Exists(path))

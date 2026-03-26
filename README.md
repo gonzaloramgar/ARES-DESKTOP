@@ -17,7 +17,7 @@ ARES puede leer sus respuestas en voz alta con un sistema de TTS de 3 niveles co
 | 2 | **Edge TTS** | Neural online | Requiere conexión a internet |
 | 3 | **Windows OneCore** | Local del sistema | Siempre disponible como último recurso |
 
-- **Selección de género de voz** — Masculino (Piper → Edge Álvaro → Local Pablo) o Femenino (Edge Elvira → Local Elvira, omite Piper por falta de voz femenina española de calidad)
+- **Selección de género de voz** — Masculino (Piper `davefx` → Edge Álvaro → WinRT Pablo) o Femenino (Piper `sharvard` speaker F → Edge Dalia/Elvira → SAPI femenino)
 - **Control de volumen** en tiempo real desde Ajustes
 - **Botón de prueba** para escuchar la voz configurada
 - Configurable desde el asistente de configuración inicial y desde Ajustes
@@ -107,13 +107,15 @@ ARES usa la API nativa de herramientas de Ollama. Solo ciertos modelos generan `
 
 | Modelo | Tool calling | Tamaño aprox. | Notas |
 |---|---|---|---|
-| `qwen2.5:7b` | ✅ Muy bueno | ~5 GB | **Default** — Mejor relación calidad/tamaño para tool-calling |
-| `qwen2.5:14b` | ✅ Muy bueno | ~9 GB | |
+| `qwen2.5:7b` | ✅ Muy bueno | ~5 GB | **Recomendado** — Mejor relación calidad/velocidad. Default |
+| `qwen2.5:14b` | ✅ Muy bueno | ~9 GB | **Recomendado** — Mejor calidad de respuesta, más lento. Requiere ~16 GB RAM |
 | `qwen2.5:32b` | ✅ Excelente | ~20 GB | Requiere GPU potente |
 | `llama3.1:8b` | ✅ Bueno | ~5 GB | |
 | `llama3.2:3b` | ✅ Funcional | ~2 GB | Tool-calling poco fiable |
 | `mistral-nemo` | ✅ Bueno | ~7 GB | |
-| `phi4`, `gemma`, `deepseek-r1` | ❌ No soportado | — | |
+| `phi4`, `gemma`, `deepseek-r1` | ❌ No soportado | — | No generan `tool_calls` |
+
+> **qwen2.5:7b** es el modelo por defecto y el más probado con ARES. **qwen2.5:14b** ofrece respuestas notablemente mejores y más fiables en tool-calling si el hardware lo permite (recomendado con 16+ GB de RAM o GPU con 10+ GB VRAM).
 
 ## Instalación
 
@@ -126,8 +128,8 @@ cd ares
 ### 2. Instalar Ollama y un modelo
 ```bash
 # Instalar Ollama desde https://ollama.ai
-ollama pull qwen2.5:7b      # opción por defecto y recomendada
-ollama pull qwen2.5:32b     # opción pesada (requiere ~20 GB RAM/VRAM)
+ollama pull qwen2.5:7b      # recomendado — rápido, ~5 GB, funciona en cualquier PC
+ollama pull qwen2.5:14b     # mejor calidad — ~9 GB, recomendado con 16+ GB RAM
 ```
 
 ### 3. Compilar y ejecutar
@@ -256,7 +258,8 @@ data/
 - **NAudio 2.2.1** — Control de volumen del sistema + reproducción de audio TTS
 - **Piper TTS** — Motor de síntesis neural offline (descarga automática)
 - **Edge TTS** — Síntesis neural online vía WebSocket (voces de Microsoft Edge)
-- **Windows.Media.SpeechSynthesis** — WinRT OneCore como fallback local
+- **Windows.Media.SpeechSynthesis** — WinRT OneCore como fallback local (voz masculina)
+- **System.Speech** — SAPI 5 como fallback local femenino (`SelectVoiceByHints`)
 - **System.Windows.Forms** — NotifyIcon para la bandeja del sistema
 - **Microsoft.VisualBasic.FileIO** — Operaciones de papelera de reciclaje
 - **System.Management** — Detección de hardware (CPU, RAM) para modos de rendimiento

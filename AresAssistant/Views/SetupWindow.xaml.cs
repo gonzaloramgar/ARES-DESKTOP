@@ -258,6 +258,9 @@ public partial class SetupWindow : Window
             _selectedPerfMode = mode;
             HighlightPerfModeCard(mode);
             AnimationHelper.BounceSelect(card);
+
+            // Auto-set the recommended model for each performance tier
+            ModelBox.Text = mode == "avanzado" ? "qwen2.5:14b" : "qwen2.5:7b";
         }
     }
 
@@ -318,6 +321,31 @@ public partial class SetupWindow : Window
         _testSpeech.Volume = (float)SetupVolumeSlider.Value;
         _testSpeech.VoiceGender = _selectedVoiceGender;
         _testSpeech.Speak("Hola, soy ARES. Esta es una prueba de voz.");
+    }
+
+    private async void SetupDownloadPiper_Click(object sender, RoutedEventArgs e)
+    {
+        SetupDownloadPiper.IsEnabled = false;
+        SetupDownloadPiper.Content = "⏳  Descargando...";
+        PiperDownloadStatus.Text = "Descargando voces Piper...";
+
+        try
+        {
+            var speech = new SpeechEngine();
+            await speech.DownloadPiperAsync();
+            speech.Dispose();
+
+            PiperDownloadStatus.Text = "✓ Voces offline instaladas";
+            PiperDownloadStatus.Foreground = (SolidColorBrush)FindResource("AccentBrush");
+            SetupDownloadPiper.Content = "✓  Descargado";
+        }
+        catch
+        {
+            PiperDownloadStatus.Text = "Error — reintenta más tarde";
+            PiperDownloadStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xff, 0x44, 0x44));
+            SetupDownloadPiper.Content = "⬇  Descargar voces offline";
+            SetupDownloadPiper.IsEnabled = true;
+        }
     }
 
     // ═══════════════ Finish ═══════════════

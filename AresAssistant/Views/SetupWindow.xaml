@@ -397,7 +397,7 @@
                                                 <TextBlock Text="Rápido, poca RAM" FontSize="9"
                                                            Foreground="#999999" HorizontalAlignment="Center"
                                                            FontFamily="Consolas" Margin="0,4,0,0"/>
-                                                <TextBlock Text="7B · 4K ctx" FontSize="8"
+                                                <TextBlock Text="qwen2.5:7b · 4K ctx" FontSize="8"
                                                            Foreground="#666666" HorizontalAlignment="Center"
                                                            FontFamily="Consolas" Margin="0,3,0,0"/>
                                             </StackPanel>
@@ -414,7 +414,7 @@
                                                 <TextBlock Text="Más contexto y detalle" FontSize="9"
                                                            Foreground="#999999" HorizontalAlignment="Center"
                                                            FontFamily="Consolas" Margin="0,4,0,0"/>
-                                                <TextBlock Text="7B+ · 8K ctx" FontSize="8"
+                                                <TextBlock Text="qwen2.5:14b · 8K ctx" FontSize="8"
                                                            Foreground="#666666" HorizontalAlignment="Center"
                                                            FontFamily="Consolas" Margin="0,3,0,0"/>
                                             </StackPanel>
@@ -577,10 +577,10 @@
                                                 <TextBlock Text="🗣" FontSize="22" HorizontalAlignment="Center" Margin="0,0,0,5"/>
                                                 <TextBlock Text="Femenino" FontFamily="Consolas" FontSize="12" FontWeight="Bold"
                                                            Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Elvira neural" FontSize="9"
+                                                <TextBlock Text="Dalia / Piper neural" FontSize="9"
                                                            Foreground="#999999" HorizontalAlignment="Center"
                                                            FontFamily="Consolas" Margin="0,4,0,0"/>
-                                                <TextBlock Text="Requiere conexión" FontSize="8"
+                                                <TextBlock Text="Voz offline disponible" FontSize="8"
                                                            Foreground="#666666" HorizontalAlignment="Center"
                                                            FontFamily="Consolas" Margin="0,3,0,0"/>
                                             </StackPanel>
@@ -615,6 +615,34 @@
                                                    VerticalAlignment="Center" Margin="12,0,0,0" Width="40"
                                                    TextAlignment="Right" FontWeight="Bold"/>
                                     </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Piper offline download -->
+                            <Border Background="#0b0b0b" CornerRadius="10"
+                                    BorderBrush="#1a1a1a" BorderThickness="1" Padding="22,16" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                        <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"
+                                                   Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="VOZ OFFLINE (PIPER)" FontFamily="Consolas" FontSize="10"
+                                                   FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
+                                                   VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Descarga las voces neuronales Piper para usar sin conexión (~140 MB total)"
+                                               FontSize="10" Foreground="#606060" FontFamily="Consolas" Margin="0,0,0,12"
+                                               TextWrapping="Wrap"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button x:Name="SetupDownloadPiper" Content="⬇  Descargar voces offline"
+                                                Style="{StaticResource GhostButton}"
+                                                Height="34" Padding="20,0"
+                                                HorizontalAlignment="Left" Cursor="Hand"
+                                                FontFamily="Consolas" FontSize="12"
+                                                Click="SetupDownloadPiper_Click"/>
+                                        <TextBlock x:Name="PiperDownloadStatus" Text=""
+                                                   FontSize="10" Foreground="#808080" FontFamily="Consolas"
+                                                   VerticalAlignment="Center" Margin="14,0,0,0"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
 

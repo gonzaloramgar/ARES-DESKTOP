@@ -166,7 +166,9 @@ public sealed class SpeechEngine : IDisposable
         var male         = IsMale;
         var piperReady   = male ? _piperReadyMale       : _piperReadyFemale;
         var piperDling   = male ? _piperDownloadingMale : _piperDownloadingFemale;
-        var piperModel   = male ? VoiceModelMale        : VoiceModelFemale;
+        var piperModel    = male ? VoiceModelMale : VoiceModelFemale;
+        // sharvard is multi-speaker: M=0, F=1. davefx is single-speaker (no --speaker arg).
+        int? piperSpeaker = male ? null : 1;
 
         // Select Edge voices and prosody based on gender
         var edgePrimary  = male ? EdgeVoiceMalePrimary  : EdgeVoiceFemalePrimary;
@@ -179,7 +181,7 @@ public sealed class SpeechEngine : IDisposable
         {
             try
             {
-                audio = await SynthesizePiperAsync(text, piperModel, ct);
+                audio = await SynthesizePiperAsync(text, piperModel, ct, piperSpeaker);
                 if (audio is { Length: > 0 })
                 {
                     LastEngine = "piper";
@@ -241,8 +243,8 @@ public sealed class SpeechEngine : IDisposable
                     : await SynthesizeSapiAsync(text, ct);
                 if (audio is { Length: > 0 })
                 {
-                    LastEngine = "local";
-                    EngineUsed?.Invoke("local");
+                    LastEngine = male ? "local-winrt" : "local-sapi";
+                    EngineUsed?.Invoke(LastEngine);
                 }
             }
             catch (OperationCanceledException) { return; }
@@ -257,16 +259,17 @@ public sealed class SpeechEngine : IDisposable
     //  1. Piper TTS
     // ═══════════════════════════════════════════════════════════════
 
-    private static async Task<byte[]?> SynthesizePiperAsync(string text, string voiceModel, CancellationToken ct)
+    private static async Task<byte[]?> SynthesizePiperAsync(string text, string voiceModel, CancellationToken ct, int? speakerId = null)
     {
         var wavFile = Path.Combine(Path.GetTempPath(), $"ares_tts_{Guid.NewGuid():N}.wav");
         try
         {
+            var speakerArg = speakerId.HasValue ? $" --speaker {speakerId.Value}" : "";
             using var proc = new Process();
             proc.StartInfo = new ProcessStartInfo
             {
                 FileName  = PiperExe,
-                Arguments = $"--model \"{voiceModel}\" --output_file \"{wavFile}\" --length_scale 1.05",
+                Arguments = $"--model \"{voiceModel}\" --output_file \"{wavFile}\" --length_scale 1.05{speakerArg}",
                 RedirectStandardInput  = true,
                 RedirectStandardError  = true,
                 UseShellExecute  = false,
@@ -293,8 +296,13 @@ public sealed class SpeechEngine : IDisposable
     //  Piper auto-download
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Downloads Piper binary + voice model for the current gender setting.</summary>
-    public async Task DownloadPiperAsync() => await DownloadPiperCoreAsync(IsMale);
+    /// <summary>Downloads Piper binary + voice models for both genders.</summary>
+    public async Task DownloadPiperAsync()
+    {
+        await Task.WhenAll(
+            DownloadPiperCoreAsync(true),
+            DownloadPiperCoreAsync(false));
+    }
 
     private async Task DownloadPiperCoreAsync(bool male)
     {
@@ -406,12 +414,12 @@ public sealed class SpeechEngine : IDisposable
         }
         else
         {
-            // ElviraNeural / DaliaNeural: bare SSML — no express-as, no prosody wrappers
-            // Any extra markup on these voices silently returns empty audio
+            // DaliaNeural / ElviraNeural: support <prosody> but NOT <mstts:express-as>
             ssml =
                 $"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='es-ES'>" +
-                $"<voice name='{voice}'>{escaped}</voice>" +
-                $"</speak>";
+                $"<voice name='{voice}'>" +
+                $"<prosody rate='0.92' pitch='{pitch}'>{escaped}</prosody>" +
+                $"</voice></speak>";
         }
 
         var ssmlMsg =
@@ -547,9 +555,17 @@ public sealed class SpeechEngine : IDisposable
                 catch { /* use system default */ }
             }
 
+            var lang = synth.Voice?.Culture?.Name ?? "es-ES";
+            var escaped = System.Security.SecurityElement.Escape(text);
+            // Match the same prosody tweaks used on male WinRT: slower rate, natural pitch
+            var ssml =
+                $"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='{lang}'>" +
+                $"<prosody rate='0.85' pitch='+0%'><break time='150ms'/>{escaped}</prosody>" +
+                $"</speak>";
+
             using var ms = new MemoryStream();
             synth.SetOutputToWaveStream(ms);
-            synth.Speak(text);
+            synth.SpeakSsml(ssml);
             return ms.ToArray();
         }, ct);
     }

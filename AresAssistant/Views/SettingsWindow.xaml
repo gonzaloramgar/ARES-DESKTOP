@@ -395,7 +395,7 @@
                                         <ComboBox Grid.Column="1"
                                                   SelectedValue="{Binding TtsVoiceGender}" SelectedValuePath="Tag">
                                             <ComboBoxItem Content="Masculino — Alvaro / Piper" Tag="masculino"/>
-                                            <ComboBoxItem Content="Femenino — Elvira neural" Tag="femenino"/>
+                                            <ComboBoxItem Content="Femenino — Dalia / Piper" Tag="femenino"/>
                                         </ComboBox>
                                     </Grid>
                                     <!-- Volume row -->

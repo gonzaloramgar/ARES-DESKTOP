@@ -73,10 +73,11 @@ public partial class SettingsWindow : Window
             {
                 var label = engine switch
                 {
-                    "piper" => "Motor: Piper neural offline ✓",
-                    "edge"  => "Motor: Edge online neural ✓",
-                    "local" => "⚠ Motor: WinRT local (Edge falló)",
-                    _       => $"Motor: {engine}"
+                    "piper"      => "Motor: Piper neural offline ✓",
+                    "edge"       => "Motor: Edge online neural ✓",
+                    "local-winrt"=> "⚠ Motor: WinRT local (Edge falló)",
+                    "local-sapi" => "⚠ Motor: SAPI local (Edge falló)",
+                    _            => $"Motor: {engine}"
                 };
                 _vm.TtsEngineStatus = label;
             });

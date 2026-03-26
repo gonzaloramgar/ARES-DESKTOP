@@ -11,12 +11,12 @@
   "ToggleModeHotkey": "Ctrl+Shift+Space",
   "LaunchWithWindows": false,
   "SaveChatHistory": true,
-  "CloseToTray": false,
+  "CloseToTray": true,
   "ConfirmationAlertsEnabled": true,
-  "VoiceEnabled": true,
-  "TtsVolume": 0.2062318,
-  "TtsVoiceGender": "femenino",
+  "VoiceEnabled": false,
+  "TtsVolume": 0.5,
+  "TtsVoiceGender": "masculino",
   "ModelKeepAliveMinutes": 5,
-  "SetupCompleted": true,
-  "PerformanceMode": "avanzado"
+  "SetupCompleted": false,
+  "PerformanceMode": "ligero"
 }

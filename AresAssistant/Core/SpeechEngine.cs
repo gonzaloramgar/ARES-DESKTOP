@@ -5,6 +5,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 using Windows.Media.SpeechSynthesis;
 
 namespace AresAssistant.Core;
@@ -439,8 +440,17 @@ public sealed class SpeechEngine : IDisposable
         try
         {
             reader = new StreamMediaFoundationReader(ms);
-            player = new WaveOutEvent { DesiredLatency = 100, Volume = _volume };
-            player.Init(reader);
+
+            // Prepend 250 ms of silence before the speech so the audio device has time
+            // to fully initialize before the first syllable. Without this the OS audio
+            // engine eats the first ~100-200 ms while it opens the device.
+            var withSilence = new OffsetSampleProvider(reader.ToSampleProvider())
+            {
+                DelayBy = TimeSpan.FromMilliseconds(250)
+            };
+
+            player = new WaveOutEvent { DesiredLatency = 300, NumberOfBuffers = 3, Volume = _volume };
+            player.Init(withSilence);
 
             lock (_lock)
             {

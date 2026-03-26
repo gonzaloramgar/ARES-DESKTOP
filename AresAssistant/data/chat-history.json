@@ -42,5 +42,21 @@
   {
     "role": "assistant",
     "content": "¡Hola de nuevo! ¿Necesitas ayuda con algo en particular?"
+  },
+  {
+    "role": "user",
+    "content": "hola"
+  },
+  {
+    "role": "assistant",
+    "content": "¡Hola! ¿En qué puedo asistirte hoy?"
+  },
+  {
+    "role": "user",
+    "content": "cómo estás?"
+  },
+  {
+    "role": "assistant",
+    "content": "Estoy bien, gracias por preguntar. ¿Cómo estás tú? ¿Necesitas ayuda con algo en particular?"
   }
 ]

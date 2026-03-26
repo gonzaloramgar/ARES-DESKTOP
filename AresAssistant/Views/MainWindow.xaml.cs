@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     public static ChatViewModel ChatViewModel { get; private set; } = null!;
     public static AgentLoop AgentLoop { get; private set; } = null!;
     public static ToolRegistry ToolRegistry { get; private set; } = null!;
+    public static SpeechEngine SpeechEngine { get; private set; } = null!;
 
     public MainWindow()
     {
@@ -84,9 +85,12 @@ public partial class MainWindow : Window
 
         var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config);
 
+        var speech = new SpeechEngine { Enabled = config.VoiceEnabled, Volume = config.TtsVolume };
+        SpeechEngine = speech;
+
         ToolRegistry = registry;
         AgentLoop = agentLoop;
-        ChatViewModel = new ChatViewModel(agentLoop, history, config, registry);
+        ChatViewModel = new ChatViewModel(agentLoop, history, config, registry, speech);
 
         OverlayControl.DataContext = ChatViewModel;
         FullHudControl.DataContext = ChatViewModel;
@@ -221,6 +225,7 @@ public partial class MainWindow : Window
         // Unload the model so Ollama releases RAM when ARES exits
         _ = _ollamaClient?.UnloadModelAsync(App.ConfigManager.Config.OllamaModel);
         _hotkeyManager.Dispose();
+        SpeechEngine?.Dispose();
         base.OnClosed(e);
         ((App)Application.Current).CleanupTray();
         Application.Current.Shutdown();

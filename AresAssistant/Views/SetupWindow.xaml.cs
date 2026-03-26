@@ -2,19 +2,27 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Shapes;
 using AresAssistant.Config;
 using AresAssistant.Core;
+using AresAssistant.Helpers;
 
 namespace AresAssistant.Views;
 
 public partial class SetupWindow : Window
 {
+    private const int TotalPages = 5;
+    private int _currentPage;
+
     private string _selectedColor = "#ff2222";
     private string _selectedPersonality = "formal";
     private string _selectedPerfMode = "ligero";
 
-    private Border[] _personalityCards = Array.Empty<Border>();
-    private Border[] _perfModeCards = Array.Empty<Border>();
+    private Border[] _personalityCards = [];
+    private Border[] _perfModeCards = [];
+    private Grid[] _pages = [];
+    private Ellipse[] _dots = [];
 
     public SetupWindow()
     {
@@ -23,12 +31,115 @@ public partial class SetupWindow : Window
         {
             _personalityCards = [CardFormal, CardCasual, CardSarcastico, CardTecnico];
             _perfModeCards = [CardLigero, CardAvanzado];
+            _pages = [Page0, Page1, Page2, Page3, Page4];
+            _dots = [Dot0, Dot1, Dot2, Dot3, Dot4];
+
             UpdateColorPreview(_selectedColor);
             HighlightPersonalityCard(_selectedPersonality);
             HighlightPerfModeCard(_selectedPerfMode);
+            UpdateNavigation();
+
+            // Staggered entrance for the first page content
+            await Task.Delay(300);
+            AnimatePageEntrance(Page0);
+
             await DetectHardwareAsync();
+            await LoadOllamaModelsAsync();
         };
     }
+
+    // ═══════════════ Navigation ═══════════════
+
+    private void Next_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentPage < TotalPages - 1)
+            GoToPage(_currentPage + 1, forward: true);
+        else
+            Finish();
+    }
+
+    private void Back_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentPage > 0)
+            GoToPage(_currentPage - 1, forward: false);
+    }
+
+    private void GoToPage(int target, bool forward)
+    {
+        if (target < 0 || target >= TotalPages || target == _currentPage) return;
+
+        var outPage = _pages[_currentPage];
+        var inPage = _pages[target];
+
+        AnimationHelper.SlideTransition(outPage, inPage, forward);
+
+        _currentPage = target;
+        UpdateNavigation();
+
+        // Animate inner sections with stagger
+        AnimatePageEntrance(inPage);
+    }
+
+    private void UpdateNavigation()
+    {
+        BtnBack.Visibility = _currentPage > 0 ? Visibility.Visible : Visibility.Collapsed;
+        BtnNext.Content = _currentPage == TotalPages - 1 ? "✦  COMENZAR" : "SIGUIENTE →";
+
+        StepLabel.Text = $"Paso {_currentPage + 1} de {TotalPages}";
+
+        // Update dots
+        var accent = (SolidColorBrush)FindResource("AccentBrush");
+
+        for (int i = 0; i < _dots.Length; i++)
+        {
+            bool active = i == _currentPage;
+            bool visited = i < _currentPage;
+
+            _dots[i].Fill = active ? accent
+                          : visited ? accent
+                          : new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
+
+            double targetSize = active ? 10 : 8;
+            double targetOpacity = active ? 1.0 : visited ? 0.6 : 0.35;
+
+            var dur = AnimationHelper.Fast;
+            _dots[i].BeginAnimation(WidthProperty,
+                new DoubleAnimation(targetSize, dur) { EasingFunction = AnimationHelper.EaseOut });
+            _dots[i].BeginAnimation(HeightProperty,
+                new DoubleAnimation(targetSize, dur) { EasingFunction = AnimationHelper.EaseOut });
+            _dots[i].BeginAnimation(OpacityProperty,
+                new DoubleAnimation(targetOpacity, dur) { EasingFunction = AnimationHelper.EaseOut });
+        }
+    }
+
+    private void AnimatePageEntrance(Grid page)
+    {
+        // Find all Border children (section cards) and animate them with stagger
+        int delay = 0;
+        foreach (var child in FindVisualChildren<Border>(page))
+        {
+            // Only animate top-level section borders (Background = #0b0b0b)
+            if (child.Parent is StackPanel && child.Background is SolidColorBrush bg
+                && bg.Color == Color.FromRgb(0x0b, 0x0b, 0x0b))
+            {
+                AnimationHelper.FadeSlideIn(child, fromY: AnimationHelper.SlideDistanceSmall, delayMs: delay);
+                delay += AnimationHelper.IsAdvanced ? 100 : 50;
+            }
+        }
+    }
+
+    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T t) yield return t;
+            foreach (var sub in FindVisualChildren<T>(child))
+                yield return sub;
+        }
+    }
+
+    // ═══════════════ Hardware ═══════════════
 
     private async Task DetectHardwareAsync()
     {
@@ -55,13 +166,30 @@ public partial class SetupWindow : Window
         HighlightPerfModeCard(_selectedPerfMode);
     }
 
+    private async Task LoadOllamaModelsAsync()
+    {
+        try
+        {
+            var client = new OllamaClient();
+            var models = await client.GetInstalledModelsAsync();
+            if (models is { Count: > 0 })
+            {
+                ModelBox.ItemsSource = models;
+                if (models.Contains("qwen2.5:7b"))
+                    ModelBox.Text = "qwen2.5:7b";
+            }
+        }
+        catch { /* Ollama not running — user can type manually */ }
+    }
+
+    // ═══════════════ Color ═══════════════
+
     private void Color_Click(object sender, RoutedEventArgs e)
     {
         var hex = (string)((FrameworkElement)sender).Tag;
         _selectedColor = hex;
         UpdateColorPreview(hex);
 
-        // Live-update the theme so the whole window adapts
         App.ConfigManager.Update(c => c with { AccentColor = hex });
         ThemeEngine.Apply(App.ConfigManager.Config);
     }
@@ -75,12 +203,21 @@ public partial class SetupWindow : Window
         }
     }
 
+    private void Opacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (OpacityLabel != null)
+            OpacityLabel.Text = $"{e.NewValue:P0}";
+    }
+
+    // ═══════════════ Personality ═══════════════
+
     private void Personality_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is Border card && card.Tag is string personality)
         {
             _selectedPersonality = personality;
             HighlightPersonalityCard(personality);
+            AnimationHelper.BounceSelect(card);
         }
     }
 
@@ -99,26 +236,7 @@ public partial class SetupWindow : Window
         }
     }
 
-    private void Start_Click(object sender, RoutedEventArgs e)
-    {
-        var name = NameBox.Text.Trim();
-        if (string.IsNullOrWhiteSpace(name))
-            name = "ARES";
-
-        App.ConfigManager.Update(c => c with
-        {
-            AccentColor = _selectedColor,
-            Personality = _selectedPersonality,
-            PerformanceMode = _selectedPerfMode,
-            AssistantName = name,
-            SetupCompleted = true
-        });
-        ThemeEngine.Apply(App.ConfigManager.Config);
-
-        var splash = new SplashWindow(isFirstLaunch: true);
-        splash.Show();
-        Close();
-    }
+    // ═══════════════ Performance Mode ═══════════════
 
     private void PerfMode_Click(object sender, MouseButtonEventArgs e)
     {
@@ -126,6 +244,7 @@ public partial class SetupWindow : Window
         {
             _selectedPerfMode = mode;
             HighlightPerfModeCard(mode);
+            AnimationHelper.BounceSelect(card);
         }
     }
 
@@ -142,5 +261,50 @@ public partial class SetupWindow : Window
                 ? new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x16))
                 : new SolidColorBrush(Color.FromRgb(0x11, 0x11, 0x11));
         }
+    }
+
+    // ═══════════════ Finish ═══════════════
+
+    private void Finish()
+    {
+        var name = NameBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(name)) name = "ARES";
+
+        var fontSize = (FontSizeBox.SelectedValue as string) ?? "medium";
+        var position = (PositionBox.SelectedValue as string) ?? "bottom-right";
+        var responseLength = (ResponseLengthBox.SelectedValue as string) ?? "normal";
+        var keepAlive = int.TryParse(KeepAliveBox.SelectedValue as string, out var ka) ? ka : 5;
+
+        App.ConfigManager.Update(c => c with
+        {
+            AccentColor = _selectedColor,
+            Personality = _selectedPersonality,
+            PerformanceMode = _selectedPerfMode,
+            AssistantName = name,
+            OllamaModel = ModelBox.Text?.Trim() is { Length: > 0 } m ? m : "qwen2.5:7b",
+            FontSize = fontSize,
+            OverlayOpacity = OpacitySlider.Value,
+            OverlayPosition = position,
+            ResponseLength = responseLength,
+            ShowHideHotkey = HotkeyShowBox.Text?.Trim() is { Length: > 0 } h1 ? h1 : "Ctrl+Space",
+            ToggleModeHotkey = HotkeyModeBox.Text?.Trim() is { Length: > 0 } h2 ? h2 : "Ctrl+Shift+Space",
+            LaunchWithWindows = ChkLaunchWindows.IsChecked == true,
+            SaveChatHistory = ChkSaveChat.IsChecked == true,
+            CloseToTray = ChkCloseToTray.IsChecked == true,
+            ConfirmationAlertsEnabled = ChkConfirmation.IsChecked == true,
+            VoiceEnabled = ChkVoice.IsChecked == true,
+            ModelKeepAliveMinutes = keepAlive,
+            SetupCompleted = true
+        });
+        ThemeEngine.Apply(App.ConfigManager.Config);
+
+        if (App.ConfigManager.Config.LaunchWithWindows)
+            StartupManager.SetEnabled(true);
+        else
+            StartupManager.SetEnabled(false);
+
+        var splash = new SplashWindow(isFirstLaunch: true);
+        splash.Show();
+        Close();
     }
 }

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using AresAssistant.Helpers;
 using AresAssistant.ViewModels;
 
 namespace AresAssistant.Views;
@@ -61,5 +62,11 @@ public partial class OverlayModeControl : UserControl
     private void ScrollToBottom()
     {
         Dispatcher.BeginInvoke(() => ChatScroll.ScrollToEnd());
+    }
+
+    private void MessageBubble_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement el)
+            AnimationHelper.FadeSlideIn(el, fromY: AnimationHelper.SlideDistanceSmall);
     }
 }

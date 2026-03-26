@@ -18,7 +18,7 @@ public class WriteFileTool : ITool
         Required = new() { "path", "content" }
     };
 
-    public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
+    public async Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
         var rawPath = args.TryGetValue("path", out var p) ? p.ToString() : "";
         var path = PathResolver.Resolve(rawPath);
@@ -30,12 +30,12 @@ public class WriteFileTool : ITool
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
 
-            File.WriteAllText(path, content);
-            return Task.FromResult(new ToolResult(true, $"Archivo escrito correctamente: {path}"));
+            await File.WriteAllTextAsync(path, content);
+            return new ToolResult(true, $"Archivo escrito correctamente: {path}");
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new ToolResult(false, $"Error al escribir archivo: {ex.Message}"));
+            return new ToolResult(false, $"Error al escribir archivo: {ex.Message}");
         }
     }
 }

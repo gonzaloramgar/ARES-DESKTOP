@@ -7,7 +7,7 @@ namespace AresAssistant.Core;
 public class BoolToAlignmentConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (bool)value ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+        => value is true ? HorizontalAlignment.Right : HorizontalAlignment.Left;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
@@ -16,7 +16,7 @@ public class BoolToAlignmentConverter : IValueConverter
 public class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (bool)value ? Visibility.Visible : Visibility.Collapsed;
+        => value is true ? Visibility.Visible : Visibility.Collapsed;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
@@ -25,16 +25,16 @@ public class BoolToVisibilityConverter : IValueConverter
 public class InvertBoolConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => !(bool)value;
+        => value is not true;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => !(bool)value;
+        => value is not true;
 }
 
 public class InvertBoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (bool)value ? Visibility.Collapsed : Visibility.Visible;
+        => value is true ? Visibility.Collapsed : Visibility.Visible;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
@@ -48,7 +48,7 @@ public class HexToColorBrushConverter : IValueConverter
         {
             try { return new System.Windows.Media.SolidColorBrush(
                 (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex)); }
-            catch { }
+            catch { /* invalid hex → transparent fallback */ }
         }
         return System.Windows.Media.Brushes.Transparent;
     }

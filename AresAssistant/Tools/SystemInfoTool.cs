@@ -16,13 +16,13 @@ public class SystemInfoTool : ITool
         Required = new()
     };
 
-    public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
+    public async Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
         try
         {
             var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             cpuCounter.NextValue(); // first call always 0
-            System.Threading.Thread.Sleep(100);
+            await Task.Delay(100);
             var cpu = cpuCounter.NextValue();
 
             var ramTotal = GetTotalRam();
@@ -45,30 +45,27 @@ public class SystemInfoTool : ITool
                 current_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
             };
 
-            return Task.FromResult(new ToolResult(true, JsonConvert.SerializeObject(result, Formatting.Indented)));
+            return new ToolResult(true, JsonConvert.SerializeObject(result, Formatting.Indented));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(new ToolResult(false, $"Error al obtener info del sistema: {ex.Message}"));
+            return new ToolResult(false, $"Error al obtener info del sistema: {ex.Message}");
         }
     }
 
     private static long GetTotalRam()
     {
-        try
-        {
-            return GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
-        }
-        catch { return 0; }
+        try { return GC.GetGCMemoryInfo().TotalAvailableMemoryBytes; }
+        catch { return 0; } // PerformanceCounter may not be available
     }
 
     private static long GetAvailableRam()
     {
         try
         {
-            var counter = new PerformanceCounter("Memory", "Available Bytes");
+            using var counter = new PerformanceCounter("Memory", "Available Bytes");
             return (long)counter.NextValue();
         }
-        catch { return 0; }
+        catch { return 0; } // PerformanceCounter may not be available
     }
 }

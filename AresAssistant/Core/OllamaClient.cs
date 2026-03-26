@@ -7,7 +7,7 @@ namespace AresAssistant.Core;
 
 public class OllamaClient
 {
-    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromMinutes(5) };
+    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromMinutes(2) };
     private const string BaseUrl = "http://localhost:11434";
     private static readonly string DebugLogPath = Path.Combine("data", "logs", "ollama_debug.log");
 

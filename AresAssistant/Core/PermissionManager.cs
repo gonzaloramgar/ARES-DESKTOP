@@ -43,11 +43,15 @@ public class PermissionManager
 
         if (args.TryGetValue("path", out var pathToken))
         {
-            var path = pathToken.ToString();
+            // Canonicalize to prevent traversal bypass (e.g. C:\Windows\..\..\target)
+            string path;
+            try { path = Path.GetFullPath(pathToken.ToString()); }
+            catch { return true; } // malformed path → block
+
             foreach (var prefix in BlockedPathPrefixes)
             {
                 if (!string.IsNullOrEmpty(prefix) &&
-                    path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    path.StartsWith(Path.GetFullPath(prefix), StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 

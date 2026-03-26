@@ -13,6 +13,7 @@
             <helpers:HexToColorBrushConverter x:Key="HexToColorBrushConverter"/>
             <!-- Dynamic accent resources — set by ThemeEngine at runtime -->
             <SolidColorBrush x:Key="AccentBrush" Color="#ff2222"/>
+            <Color x:Key="AccentMediaColor">#ff2222</Color>
             <SolidColorBrush x:Key="AccentGlowBrush" Color="#66ff2222"/>
             <!-- OverlayBackgroundBrush alpha = OverlayOpacity (default 0.85 = 0xD9) -->
             <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#D90d0d0d"/>

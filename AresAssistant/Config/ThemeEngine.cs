@@ -12,6 +12,7 @@ public static class ThemeEngine
         if (TryParseColor(config.AccentColor, out var accent))
         {
             resources["AccentBrush"] = new SolidColorBrush(accent);
+            resources["AccentMediaColor"] = accent;
             var glow = accent;
             glow.A = 102; // 40% opacity
             resources["AccentGlowBrush"] = new SolidColorBrush(glow);

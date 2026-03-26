@@ -5,18 +5,21 @@ namespace AresAssistant.Core;
 public class ConversationHistory
 {
     private readonly List<OllamaMessage> _messages = new();
+    private readonly object _lock = new();
 
-    public void Add(OllamaMessage message) => _messages.Add(message);
+    public void Add(OllamaMessage message) { lock (_lock) _messages.Add(message); }
 
-    public void Clear() => _messages.Clear();
+    public void Clear() { lock (_lock) _messages.Clear(); }
 
-    public List<OllamaMessage> ToList() => new(_messages);
+    public List<OllamaMessage> ToList() { lock (_lock) return new(_messages); }
 
-    public int Count => _messages.Count;
+    public int Count { get { lock (_lock) return _messages.Count; } }
 
     public void ExportToTxt(string path)
     {
-        var lines = _messages.Select(m =>
+        List<OllamaMessage> snapshot;
+        lock (_lock) snapshot = new(_messages);
+        var lines = snapshot.Select(m =>
             $"[{m.Role.ToUpper()}]: {m.Content}");
         File.WriteAllLines(path, lines);
     }
@@ -30,8 +33,11 @@ public class ConversationHistory
             var msgs = JsonConvert.DeserializeObject<List<OllamaMessage>>(json);
             if (msgs != null)
             {
-                _messages.Clear();
-                _messages.AddRange(msgs);
+                lock (_lock)
+                {
+                    _messages.Clear();
+                    _messages.AddRange(msgs);
+                }
             }
         }
         catch { /* ignore corrupt history */ }
@@ -39,10 +45,13 @@ public class ConversationHistory
 
     public void ReplaceSystemPrompt(string content)
     {
-        if (_messages.Count > 0 && _messages[0].Role == "system")
-            _messages[0] = new OllamaMessage("system", content);
-        else
-            _messages.Insert(0, new OllamaMessage("system", content));
+        lock (_lock)
+        {
+            if (_messages.Count > 0 && _messages[0].Role == "system")
+                _messages[0] = new OllamaMessage("system", content);
+            else
+                _messages.Insert(0, new OllamaMessage("system", content));
+        }
     }
 
     /// <summary>
@@ -52,46 +61,51 @@ public class ConversationHistory
     /// </summary>
     public void PurgeToolFailures()
     {
-        var toRemove = new HashSet<int>();
-
-        for (int i = 0; i < _messages.Count; i++)
+        lock (_lock)
         {
-            if (_messages[i].Role != "tool") continue;
-            var content = _messages[i].Content ?? "";
-            if (!content.Contains("no encontrada", StringComparison.OrdinalIgnoreCase)
-                && !content.Contains("Error", StringComparison.OrdinalIgnoreCase))
-                continue;
+            var toRemove = new HashSet<int>();
 
-            // Mark this tool message for removal
-            toRemove.Add(i);
-
-            // Walk backwards to find the parent assistant with tool_calls
-            for (int j = i - 1; j >= 0; j--)
+            for (int i = 0; i < _messages.Count; i++)
             {
-                if (_messages[j].Role == "tool") { toRemove.Add(j); continue; }
-                if (_messages[j].Role == "assistant" && _messages[j].ToolCalls?.Count > 0)
-                { toRemove.Add(j); break; }
-                break;
+                if (_messages[i].Role != "tool") continue;
+                var content = _messages[i].Content ?? "";
+                if (!content.Contains("no encontrada", StringComparison.OrdinalIgnoreCase)
+                    && !content.Contains("Error", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // Mark this tool message for removal
+                toRemove.Add(i);
+
+                // Walk backwards to find the parent assistant with tool_calls
+                for (int j = i - 1; j >= 0; j--)
+                {
+                    if (_messages[j].Role == "tool") { toRemove.Add(j); continue; }
+                    if (_messages[j].Role == "assistant" && _messages[j].ToolCalls?.Count > 0)
+                    { toRemove.Add(j); break; }
+                    break;
+                }
+
+                // Walk forward to remove the assistant echo that reported the failure
+                if (i + 1 < _messages.Count && _messages[i + 1].Role == "assistant"
+                    && (_messages[i + 1].ToolCalls == null || _messages[i + 1].ToolCalls!.Count == 0))
+                    toRemove.Add(i + 1);
             }
 
-            // Walk forward to remove the assistant echo that reported the failure
-            if (i + 1 < _messages.Count && _messages[i + 1].Role == "assistant"
-                && (_messages[i + 1].ToolCalls == null || _messages[i + 1].ToolCalls!.Count == 0))
-                toRemove.Add(i + 1);
-        }
+            if (toRemove.Count == 0) return;
 
-        if (toRemove.Count == 0) return;
-
-        for (int i = _messages.Count - 1; i >= 0; i--)
-        {
-            if (toRemove.Contains(i))
-                _messages.RemoveAt(i);
+            for (int i = _messages.Count - 1; i >= 0; i--)
+            {
+                if (toRemove.Contains(i))
+                    _messages.RemoveAt(i);
+            }
         }
     }
 
     public void SaveToJson(string path)
     {
-        var json = JsonConvert.SerializeObject(_messages, Formatting.Indented);
+        List<OllamaMessage> snapshot;
+        lock (_lock) snapshot = new(_messages);
+        var json = JsonConvert.SerializeObject(snapshot, Formatting.Indented);
         File.WriteAllText(path, json);
     }
 
@@ -101,27 +115,30 @@ public class ConversationHistory
     /// </summary>
     public void TrimToLast(int maxMessages)
     {
-        OllamaMessage? systemMsg = _messages.Count > 0 && _messages[0].Role == "system"
-            ? _messages[0]
-            : null;
+        lock (_lock)
+        {
+            OllamaMessage? systemMsg = _messages.Count > 0 && _messages[0].Role == "system"
+                ? _messages[0]
+                : null;
 
-        var nonSystem = _messages.Skip(systemMsg != null ? 1 : 0).ToList();
-        if (nonSystem.Count <= maxMessages) return;
+            var nonSystem = _messages.Skip(systemMsg != null ? 1 : 0).ToList();
+            if (nonSystem.Count <= maxMessages) return;
 
-        // Take last N, then walk backwards to include the full tool-call group
-        int start = nonSystem.Count - maxMessages;
+            // Take last N, then walk backwards to include the full tool-call group
+            int start = nonSystem.Count - maxMessages;
 
-        // If we'd start on a "tool" message, walk back to include
-        // the preceding tool messages and their parent assistant message
-        while (start > 0 && nonSystem[start].Role == "tool")
-            start--;
-        // Also include the assistant that triggered the tool calls
-        if (start > 0 && nonSystem[start - 1].Role == "assistant"
-            && nonSystem[start - 1].ToolCalls?.Count > 0)
-            start--;
+            // If we'd start on a "tool" message, walk back to include
+            // the preceding tool messages and their parent assistant message
+            while (start > 0 && nonSystem[start].Role == "tool")
+                start--;
+            // Also include the assistant that triggered the tool calls
+            if (start > 0 && nonSystem[start - 1].Role == "assistant"
+                && nonSystem[start - 1].ToolCalls?.Count > 0)
+                start--;
 
-        _messages.Clear();
-        if (systemMsg != null) _messages.Add(systemMsg);
-        _messages.AddRange(nonSystem.Skip(start));
+            _messages.Clear();
+            if (systemMsg != null) _messages.Add(systemMsg);
+            _messages.AddRange(nonSystem.Skip(start));
+        }
     }
 }

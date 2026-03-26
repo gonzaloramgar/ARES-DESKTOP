@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Text;
 using AresAssistant.Config;
 using AresAssistant.Tools;
@@ -281,9 +282,13 @@ public class AgentLoop
 
             return (fullText.ToString(), null);
         }
-        catch
+        catch (HttpRequestException)
         {
-            return null; // fall back to non-streaming
+            return null; // network issue → fall back to non-streaming
+        }
+        catch (TaskCanceledException)
+        {
+            return null; // timeout → fall back to non-streaming
         }
     }
 }

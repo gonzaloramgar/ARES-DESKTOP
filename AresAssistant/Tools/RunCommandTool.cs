@@ -35,9 +35,15 @@ public class RunCommandTool : ITool
         "del ", "rmdir", " rd ", "/rd", "format ", "reg add", "reg delete", "reg import",
         "net user", "net localgroup", "sc delete", "sc stop", "bcdedit",
         "shutdown", "restart", "powershell -enc", "powershell -e ",
+        "powershell -command", "powershell -c ", "pwsh -",
+        "python -c", "python -c \"", "python -c '",
         "invoke-expression", "iex ", "invoke-webrequest",
-        "remove-item", "rm -rf", "rm -r", "del /f", "del /s"
+        "remove-item", "rm -rf", "rm -r", "del /f", "del /s",
+        "downloadstring", "downloadfile", "start-bitstransfer",
+        "new-object net.webclient", "set-executionpolicy"
     };
+
+    private const int TimeoutMs = 30_000;
 
     public async Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
@@ -66,9 +72,23 @@ public class RunCommandTool : ITool
             };
 
             using var proc = Process.Start(psi)!;
-            var output = await proc.StandardOutput.ReadToEndAsync();
-            var error = await proc.StandardError.ReadToEndAsync();
-            await proc.WaitForExitAsync();
+            using var cts = new CancellationTokenSource(TimeoutMs);
+
+            var outputTask = proc.StandardOutput.ReadToEndAsync(cts.Token);
+            var errorTask = proc.StandardError.ReadToEndAsync(cts.Token);
+
+            try
+            {
+                await proc.WaitForExitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { proc.Kill(entireProcessTree: true); } catch { }
+                return new ToolResult(false, "Comando cancelado: excedió el tiempo límite de 30 segundos.");
+            }
+
+            var output = await outputTask;
+            var error = await errorTask;
 
             var result = string.IsNullOrWhiteSpace(output) ? error : output;
             return new ToolResult(true, result.Length > 3000 ? result[..3000] + "\n[...truncado]" : result);

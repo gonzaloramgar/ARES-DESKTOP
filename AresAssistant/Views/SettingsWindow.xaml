@@ -35,7 +35,7 @@
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="Transparent" Offset="0"/>
-                        <GradientStop Color="{Binding AccentMediaColor}" Offset="0.5"/>
+                        <GradientStop Color="{DynamicResource AccentMediaColor}" Offset="0.5"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
                 </Border.Background>
@@ -57,7 +57,7 @@
                               Fill="{DynamicResource AccentBrush}" Width="10" Height="16" Margin="0,0,10,0"
                               VerticalAlignment="Center">
                             <Path.Effect>
-                                <DropShadowEffect Color="{Binding AccentMediaColor}" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                <DropShadowEffect Color="{DynamicResource AccentMediaColor}" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
                             </Path.Effect>
                         </Path>
                         <TextBlock Text="AJUSTES" FontFamily="Consolas" FontSize="14"

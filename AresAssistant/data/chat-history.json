@@ -10,5 +10,33 @@
   {
     "role": "assistant",
     "content": "¡Hola! ¿En qué puedo ayudarte hoy?"
+  },
+  {
+    "role": "user",
+    "content": "abre valorant"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+      {
+        "id": "call_47jve3nd",
+        "function": {
+          "name": "open_app",
+          "arguments": {
+            "name": "Valorant"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "content": "Aplicación abierta: VALORANT.",
+    "tool_call_id": "call_47jve3nd"
+  },
+  {
+    "role": "assistant",
+    "content": "He abierto Valorant para ti. ¿Necesitas ayuda con algo más?"
   }
 ]

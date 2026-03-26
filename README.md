@@ -32,9 +32,21 @@ ARES es un asistente de IA para Windows construido en WPF y .NET 8, que corre so
 | `minimize_window` | Minimiza una ventana por su título |
 | `maximize_window` | Maximiza una ventana por su título |
 | `type_text` | Escribe texto en la ventana activa (requiere confirmación) |
+| `remember_app` | Guarda nombre + ruta de una app no detectada automáticamente (persistente) |
+
+### Escaneo de aplicaciones inteligente
+- **Registry + Start Menu** — Detecta aplicaciones instaladas vía registro de Windows y accesos directos del menú Inicio
+- **Steam** — Escanea todas las bibliotecas de Steam (parsea `libraryfolders.vdf`) y encuentra el ejecutable correcto de cada juego
+- **Epic Games** — Lee los manifiestos `.item` de Epic Games Launcher para detectar juegos instalados (Fortnite, etc.)
+- **Escritorio** — Escanea accesos directos `.lnk` y `.url` (incluye URLs `steam://`)
+- **Memoria de apps personalizadas** — Si un juego o app no se detecta, el usuario proporciona la ruta una vez y ARES la recuerda para siempre (`data/custom-apps.json`). La herramienta `remember_app` permite al modelo guardar nuevas apps durante la conversación
 
 ### Respuesta en streaming
 Las respuestas se muestran token a token en tiempo real. El sistema usa streaming para el primer turno de conversación y cambia automáticamente al modo no-streaming cuando hay llamadas a herramientas pendientes.
+
+### Modos de rendimiento
+- **Ligero** — `num_ctx=4096`, 4 threads, 20 mensajes de historial. Ideal para hardware modesto (16 GB RAM, CPU básica)
+- **Avanzado** — `num_ctx=8192`, threads automáticos, 30 mensajes de historial. Para hardware potente
 
 ### Gestión de memoria de modelo
 ARES descarga automáticamente el modelo de la RAM de Ollama tras un período de inactividad configurable (`ModelKeepAliveMinutes`). También descarga el modelo al cerrar la aplicación.
@@ -44,7 +56,9 @@ ARES descarga automáticamente el modelo de la RAM de Ollama tras un período de
 - Opacidad del overlay configurable en tiempo real
 - Historial de chat persistente con truncado automático (últimos 30 mensajes)
 - Hotkeys globales configurables y rerregistrables sin reiniciar
-- Escáner de sistema en primer arranque (detecta apps, navegadores y carpetas)
+- Escáner de sistema en cada arranque (detecta apps de Steam, Epic Games, escritorio, navegadores y carpetas)
+- Purga automática de historial envenenado (elimina respuestas "app no encontrada" obsoletas al iniciar)
+- Parámetros de inferencia anti-alucinación (`temperature: 0.7`, `repeat_penalty: 1.1`)
 - Confirmación interactiva antes de ejecutar acciones sensibles (desactivable)
 - Auto-unload del modelo tras inactividad configurable
 - Icono en la bandeja del sistema con opción de minimizar-a-bandeja al cerrar
@@ -61,15 +75,15 @@ ARES descarga automáticamente el modelo de la RAM de Ollama tras un período de
 
 ARES usa la API nativa de herramientas de Ollama. Solo ciertos modelos generan `tool_calls` de forma fiable:
 
-| Modelo | Tool calling | Tamaño aprox. |
-|---|---|---|
-| `qwen2.5:7b` | ✅ Muy bueno | ~5 GB |
-| `qwen2.5:14b` | ✅ Muy bueno | ~9 GB |
-| `qwen2.5:32b` | ✅ Excelente (default) | ~20 GB |
-| `llama3.1:8b` | ✅ Bueno | ~5 GB |
-| `llama3.2:3b` | ✅ Funcional | ~2 GB |
-| `mistral-nemo` | ✅ Bueno | ~7 GB |
-| `phi4`, `gemma`, `deepseek-r1` | ❌ No soportado | — |
+| Modelo | Tool calling | Tamaño aprox. | Notas |
+|---|---|---|---|
+| `qwen2.5:7b` | ✅ Muy bueno | ~5 GB | **Default** — Mejor relación calidad/tamaño para tool-calling |
+| `qwen2.5:14b` | ✅ Muy bueno | ~9 GB | |
+| `qwen2.5:32b` | ✅ Excelente | ~20 GB | Requiere GPU potente |
+| `llama3.1:8b` | ✅ Bueno | ~5 GB | |
+| `llama3.2:3b` | ✅ Funcional | ~2 GB | Tool-calling poco fiable |
+| `mistral-nemo` | ✅ Bueno | ~7 GB | |
+| `phi4`, `gemma`, `deepseek-r1` | ❌ No soportado | — | |
 
 ## Instalación
 
@@ -82,8 +96,8 @@ cd ares
 ### 2. Instalar Ollama y un modelo
 ```bash
 # Instalar Ollama desde https://ollama.ai
-ollama pull qwen2.5:7b      # opción ligera
-ollama pull qwen2.5:32b     # opción por defecto (requiere ~20 GB RAM/VRAM)
+ollama pull qwen2.5:7b      # opción por defecto y recomendada
+ollama pull qwen2.5:32b     # opción pesada (requiere ~20 GB RAM/VRAM)
 ```
 
 ### 3. Compilar y ejecutar
@@ -121,6 +135,7 @@ La configuración se guarda en `data/config.json` y se puede modificar desde el 
 | `LaunchWithWindows` | `true` / `false` | Inicio automático con Windows |
 | `CloseToTray` | `true` / `false` | Minimizar a bandeja al cerrar |
 | `ConfirmationAlertsEnabled` | `true` / `false` | Diálogos de confirmación |
+| `PerformanceMode` | `ligero`, `avanzado` | Modo de rendimiento (control de contexto, threads e historial) |
 | `ModelKeepAliveMinutes` | Entero (`0` = nunca) | Minutos de inactividad antes de descargar el modelo |
 
 ## Hotkeys predeterminadas
@@ -156,7 +171,8 @@ AresAssistant/
 │   ├── OllamaResponse.cs          # Respuesta + ToolArgumentsConverter (string/object)
 │   ├── ToolDefinition.cs          # Esquemas de herramientas (compatible OpenAI)
 │   ├── SystemScanner.cs           # Coordinador de escaneo
-│   ├── AppScanner / BrowserScanner / FolderScanner
+│   ├── AppScanner.cs          # Escaneo: Registry, Start Menu, Steam, Epic Games, Desktop, custom apps
+│   ├── BrowserScanner.cs / FolderScanner.cs
 │   ├── PermissionManager.cs       # Niveles Auto / Confirm / Blocked por herramienta
 │   ├── ActionLogger.cs            # Log de acciones ejecutadas
 │   └── GlobalHotkeyManager.cs     # Hotkeys globales Win32
@@ -164,6 +180,7 @@ AresAssistant/
     ├── PathResolver.cs             # Resolución de alias de rutas (compartido)
     ├── GenericOpenAppTool.cs       # open_app con búsqueda aproximada
     ├── GenericOpenFolderTool.cs    # open_folder con búsqueda aproximada
+    ├── RememberAppTool.cs         # Guarda apps custom en data/custom-apps.json
     ├── CreateFolderTool.cs
     ├── DeleteFolderTool.cs         # Mueve a papelera (requiere confirmación)
     ├── RecycleBinTool.cs           # list / restore / restore_all (lee $I* metadata)
@@ -178,7 +195,8 @@ AresAssistant/
 data/
 ├── config.json           # Configuración del usuario
 ├── chat-history.json     # Historial de conversaciones
-├── tools.json            # Herramientas generadas por el escáner de primer arranque
+├── tools.json            # Herramientas generadas por el escáner (se regenera cada arranque)
+├── custom-apps.json      # Apps/juegos guardados manualmente por el usuario (persistente)
 ├── logs/
 │   ├── actions_*.log     # Log de acciones ejecutadas por el asistente
 │   └── ollama_debug.log  # Log de peticiones/respuestas (solo build Debug)
@@ -194,6 +212,7 @@ data/
 - **NAudio** — Control de audio
 - **System.Windows.Forms** — NotifyIcon para la bandeja del sistema
 - **Microsoft.VisualBasic.FileIO** — Operaciones de papelera de reciclaje
+- **System.Management** — Detección de hardware (GPU, RAM) para modos de rendimiento
 - **MVVM** — Patrón de arquitectura UI
 
 ## Licencia

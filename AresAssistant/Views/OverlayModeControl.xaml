@@ -66,19 +66,7 @@
                 <ItemsControl ItemsSource="{Binding Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="0,4,0,0">
-                                <StackPanel.Triggers>
-                                    <EventTrigger RoutedEvent="Loaded">
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 From="0" To="1" Duration="0:0:0.22"/>
-                                                <ThicknessAnimation Storyboard.TargetProperty="Margin"
-                                                                    From="0,12,0,0" To="0,4,0,0" Duration="0:0:0.2"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </EventTrigger>
-                                </StackPanel.Triggers>
+                            <StackPanel Margin="0,4,0,0" Loaded="MessageBubble_Loaded">
 
                                 <!-- Bubble -->
                                 <Border HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}"

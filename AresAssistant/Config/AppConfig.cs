@@ -16,6 +16,10 @@ public record AppConfig
     public bool SaveChatHistory { get; init; } = true;
     public bool CloseToTray { get; init; } = true;
     public bool ConfirmationAlertsEnabled { get; init; } = true;
+    /// <summary>Enable text-to-speech for assistant responses.</summary>
+    public bool VoiceEnabled { get; init; } = false;
+    /// <summary>TTS playback volume 0.0–1.0. Default 0.5 (50%).</summary>
+    public float TtsVolume { get; init; } = 0.5f;
     /// <summary>
     /// Minutes of inactivity before telling Ollama to unload the model from RAM.
     /// 0 = never auto-unload.

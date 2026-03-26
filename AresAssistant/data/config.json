@@ -11,9 +11,11 @@
   "ToggleModeHotkey": "Ctrl+Shift+Space",
   "LaunchWithWindows": false,
   "SaveChatHistory": true,
-  "CloseToTray": true,
+  "CloseToTray": false,
   "ConfirmationAlertsEnabled": true,
+  "VoiceEnabled": true,
+  "TtsVolume": 0.2641722,
   "ModelKeepAliveMinutes": 5,
   "SetupCompleted": true,
-  "PerformanceMode": "ligero"
+  "PerformanceMode": "avanzado"
 }

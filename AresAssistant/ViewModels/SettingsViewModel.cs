@@ -24,12 +24,17 @@ public class SettingsViewModel : ViewModelBase
     private bool _closeToTray;
     private bool _confirmationAlertsEnabled;
     private int _modelKeepAliveMinutes;
+    private bool _voiceEnabled;
     private bool _ollamaAvailable;
     private string _ollamaStatus = "";
     private string _performanceMode;
     private string _hwCpuInfo = "";
     private string _hwRamInfo = "";
     private string _hwRecommendation = "";
+    private string _ttsEngineStatus = "";
+    private System.Windows.Visibility _piperButtonVisible = System.Windows.Visibility.Collapsed;
+    private bool _canDownloadPiper = true;
+    private float _ttsVolume;
 
     public ObservableCollection<string> AvailableModels { get; } = new();
 
@@ -48,12 +53,26 @@ public class SettingsViewModel : ViewModelBase
     public bool CloseToTray { get => _closeToTray; set => SetField(ref _closeToTray, value); }
     public bool ConfirmationAlertsEnabled { get => _confirmationAlertsEnabled; set => SetField(ref _confirmationAlertsEnabled, value); }
     public int ModelKeepAliveMinutes { get => _modelKeepAliveMinutes; set => SetField(ref _modelKeepAliveMinutes, value); }
+    public bool VoiceEnabled { get => _voiceEnabled; set => SetField(ref _voiceEnabled, value); }
     public bool OllamaAvailable { get => _ollamaAvailable; set => SetField(ref _ollamaAvailable, value); }
     public string OllamaStatus { get => _ollamaStatus; set => SetField(ref _ollamaStatus, value); }
     public string PerformanceMode { get => _performanceMode; set => SetField(ref _performanceMode, value); }
     public string HwCpuInfo { get => _hwCpuInfo; set => SetField(ref _hwCpuInfo, value); }
     public string HwRamInfo { get => _hwRamInfo; set => SetField(ref _hwRamInfo, value); }
     public string HwRecommendation { get => _hwRecommendation; set => SetField(ref _hwRecommendation, value); }
+    public string TtsEngineStatus { get => _ttsEngineStatus; set => SetField(ref _ttsEngineStatus, value); }
+    public System.Windows.Visibility PiperButtonVisible { get => _piperButtonVisible; set => SetField(ref _piperButtonVisible, value); }
+    public bool CanDownloadPiper { get => _canDownloadPiper; set => SetField(ref _canDownloadPiper, value); }
+    public float TtsVolume
+    {
+        get => _ttsVolume;
+        set
+        {
+            SetField(ref _ttsVolume, value);
+            // Apply live so the user hears the change immediately with the test button
+            if (Views.MainWindow.SpeechEngine is { } s) s.Volume = value;
+        }
+    }
 
     public SettingsViewModel(ConfigManager configManager, OllamaClient ollamaClient)
     {
@@ -77,6 +96,8 @@ public class SettingsViewModel : ViewModelBase
         _closeToTray = cfg.CloseToTray;
         _confirmationAlertsEnabled = cfg.ConfirmationAlertsEnabled;
         _modelKeepAliveMinutes = cfg.ModelKeepAliveMinutes;
+        _voiceEnabled = cfg.VoiceEnabled;
+        _ttsVolume = cfg.TtsVolume;
         _performanceMode = cfg.PerformanceMode;
     }
 
@@ -97,6 +118,8 @@ public class SettingsViewModel : ViewModelBase
         CloseToTray = CloseToTray,
         ConfirmationAlertsEnabled = ConfirmationAlertsEnabled,
         ModelKeepAliveMinutes = ModelKeepAliveMinutes,
+        VoiceEnabled = VoiceEnabled,
+        TtsVolume = TtsVolume,
         PerformanceMode = PerformanceMode,
         SetupCompleted = _configManager.Config.SetupCompleted
     };
@@ -107,6 +130,13 @@ public class SettingsViewModel : ViewModelBase
         _configManager.Save(config);
         ThemeEngine.Apply(config);
         StartupManager.SetEnabled(LaunchWithWindows);
+
+        // Sync speech engine
+        if (Views.MainWindow.SpeechEngine is { } speech)
+        {
+            speech.Enabled = config.VoiceEnabled;
+            speech.Volume = config.TtsVolume;
+        }
     }
 
     public async Task CheckOllamaAsync()
@@ -121,6 +151,31 @@ public class SettingsViewModel : ViewModelBase
             AvailableModels.Clear();
             foreach (var m in models)
                 AvailableModels.Add(m);
+        }
+    }
+
+    public void RefreshTtsStatus()
+    {
+        var speech = Views.MainWindow.SpeechEngine;
+        if (speech == null) { TtsEngineStatus = "Voz no disponible"; return; }
+
+        if (speech.PiperDownloading)
+        {
+            TtsEngineStatus = "Descargando Piper...";
+            PiperButtonVisible = System.Windows.Visibility.Visible;
+            CanDownloadPiper = false;
+        }
+        else if (speech.PiperReady)
+        {
+            TtsEngineStatus = "Motor: Piper neural offline ✓";
+            PiperButtonVisible = System.Windows.Visibility.Collapsed;
+            CanDownloadPiper = false;
+        }
+        else
+        {
+            TtsEngineStatus = "Motor: Edge online / Local";
+            PiperButtonVisible = System.Windows.Visibility.Visible;
+            CanDownloadPiper = true;
         }
     }
 

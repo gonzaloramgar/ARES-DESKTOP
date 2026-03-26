@@ -118,7 +118,7 @@
                 <ItemsControl ItemsSource="{Binding Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="0,5"
+                            <StackPanel Margin="0,5" Loaded="MessageBubble_Loaded"
                                         HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}">
                                 <!-- Role label -->
                                 <TextBlock FontSize="10" FontFamily="Consolas"

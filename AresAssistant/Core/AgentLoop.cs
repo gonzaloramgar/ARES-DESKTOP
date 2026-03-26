@@ -69,7 +69,9 @@ public class AgentLoop
 
         var sb = new StringBuilder();
         sb.AppendLine($"Eres {_config.AssistantName}, un asistente de IA integrado en el sistema operativo del usuario.");
-        sb.AppendLine("Respondes siempre en español. Eres directo, eficiente y ligeramente formal.");
+        sb.AppendLine("SIEMPRE respondes en español de España. NUNCA cambies de idioma bajo ninguna circunstancia.");
+        sb.AppendLine("No escribas en chino, inglés, ni ningún otro idioma. Solo español.");
+        sb.AppendLine("Eres directo, eficiente y ligeramente formal.");
         sb.AppendLine();
 
         sb.AppendLine("## USO DE HERRAMIENTAS — REGLA ABSOLUTA");

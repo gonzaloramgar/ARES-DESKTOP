@@ -42,6 +42,7 @@ public class ChatViewModel : ViewModelBase
     private readonly ConversationHistory _history;
     private readonly AppConfig _config;
     private readonly ToolRegistry? _toolRegistry;
+    private readonly SpeechEngine? _speech;
 
     private string _inputText = "";
     private bool _isBusy;
@@ -69,12 +70,13 @@ public class ChatViewModel : ViewModelBase
         set => SetField(ref _statusText, value);
     }
 
-    public ChatViewModel(AgentLoop agentLoop, ConversationHistory history, AppConfig config, ToolRegistry? toolRegistry = null)
+    public ChatViewModel(AgentLoop agentLoop, ConversationHistory history, AppConfig config, ToolRegistry? toolRegistry = null, SpeechEngine? speech = null)
     {
         _agentLoop = agentLoop;
         _history = history;
         _config = config;
         _toolRegistry = toolRegistry;
+        _speech = speech;
 
         _agentLoop.ResponseReceived += OnResponseReceived;
         _agentLoop.StatusChanged += OnStatusChanged;
@@ -97,6 +99,9 @@ public class ChatViewModel : ViewModelBase
         InputText = "";
         IsBusy = true;
         _streamingMessage = null;
+
+        // Stop any in-progress speech when the user sends a new message
+        _speech?.Stop();
 
         Messages.Add(new ChatMessage { Role = "user", Content = text });
 
@@ -153,6 +158,9 @@ public class ChatViewModel : ViewModelBase
             }
             StatusText = "";
         });
+
+        // Speak the response aloud (fire-and-forget, runs on SpeechSynthesizer's own thread)
+        _speech?.Speak(response);
     }
 
     private void OnStatusChanged(string status)

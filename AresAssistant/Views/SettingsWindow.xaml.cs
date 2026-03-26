@@ -21,6 +21,7 @@ public partial class SettingsWindow : Window
         {
             await _vm.CheckOllamaAsync();
             await _vm.DetectHardwareAsync();
+            _vm.RefreshTtsStatus();
         };
     }
 
@@ -57,6 +58,32 @@ public partial class SettingsWindow : Window
 
     private async void CheckOllama_Click(object sender, RoutedEventArgs e)
         => await _vm.CheckOllamaAsync();
+
+    private void TestVoice_Click(object sender, RoutedEventArgs e)
+    {
+        var speech = MainWindow.SpeechEngine;
+        if (speech == null) return;
+        speech.Speak("Hola, soy ARES. La voz del asistente está funcionando correctamente.");
+    }
+
+    private async void DownloadPiper_Click(object sender, RoutedEventArgs e)
+    {
+        var speech = MainWindow.SpeechEngine;
+        if (speech == null) return;
+
+        _vm.CanDownloadPiper = false;
+        _vm.TtsEngineStatus = "Descargando Piper neural (~60 MB)...";
+        try
+        {
+            await speech.DownloadPiperAsync();
+            _vm.RefreshTtsStatus();
+        }
+        catch (Exception ex)
+        {
+            _vm.TtsEngineStatus = $"Error al descargar: {ex.Message}";
+            _vm.CanDownloadPiper = true;
+        }
+    }
 
     private async void Rescan_Click(object sender, RoutedEventArgs e)
     {

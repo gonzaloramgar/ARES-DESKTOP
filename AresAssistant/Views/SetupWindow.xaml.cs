@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,6 +8,7 @@ using System.Windows.Shapes;
 using AresAssistant.Config;
 using AresAssistant.Core;
 using AresAssistant.Helpers;
+using Path = System.IO.Path;
 
 namespace AresAssistant.Views;
 
@@ -321,6 +323,137 @@ public partial class SetupWindow : Window
         _testSpeech.Volume = (float)SetupVolumeSlider.Value;
         _testSpeech.VoiceGender = _selectedVoiceGender;
         _testSpeech.Speak("Hola, soy ARES. Esta es una prueba de voz.");
+    }
+
+    // ═══════════════ Ollama Auto-Install ═══════════════
+
+    private static readonly string OllamaInstallerUrl = "https://ollama.com/download/OllamaSetup.exe";
+
+    private async void SetupInstallOllama_Click(object sender, RoutedEventArgs e)
+    {
+        SetupInstallOllama.IsEnabled = false;
+        OllamaProgressBorder.Visibility = Visibility.Visible;
+
+        var model = ModelBox.Text?.Trim() is { Length: > 0 } m ? m : "qwen2.5:7b";
+
+        try
+        {
+            var client = new OllamaClient();
+
+            // Step 1: Check if Ollama is already running
+            SetStatus("Comprobando Ollama...");
+            SetProgress(0.02);
+            bool ollamaReady = await client.IsAvailableAsync();
+
+            if (!ollamaReady)
+            {
+                // Step 2: Download the installer
+                SetStatus("Descargando Ollama...");
+                SetProgress(0.05);
+                var installerPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "OllamaSetup.exe");
+
+                using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) })
+                {
+                    using var resp = await http.GetAsync(OllamaInstallerUrl, HttpCompletionOption.ResponseHeadersRead);
+                    resp.EnsureSuccessStatusCode();
+                    var totalBytes = resp.Content.Headers.ContentLength ?? 0;
+                    using var dlStream = await resp.Content.ReadAsStreamAsync();
+                    using var fs = File.Create(installerPath);
+                    var buffer = new byte[81920];
+                    long downloaded = 0;
+                    int read;
+                    while ((read = await dlStream.ReadAsync(buffer)) > 0)
+                    {
+                        await fs.WriteAsync(buffer.AsMemory(0, read));
+                        downloaded += read;
+                        if (totalBytes > 0)
+                            SetProgress(0.05 + 0.25 * ((double)downloaded / totalBytes));
+                    }
+                }
+
+                // Step 3: Run installer silently
+                SetStatus("Instalando Ollama...");
+                SetProgress(0.32);
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = installerPath,
+                    Arguments = "/VERYSILENT /NORESTART",
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+                var proc = System.Diagnostics.Process.Start(psi);
+                if (proc != null)
+                    await proc.WaitForExitAsync();
+
+                try { File.Delete(installerPath); } catch { }
+
+                // Step 4: Wait for Ollama API to come up
+                SetStatus("Esperando a que Ollama inicie...");
+                SetProgress(0.40);
+                for (int i = 0; i < 30; i++)
+                {
+                    await Task.Delay(2000);
+                    if (await client.IsAvailableAsync()) { ollamaReady = true; break; }
+                    SetProgress(0.40 + 0.10 * (i / 30.0));
+                }
+
+                if (!ollamaReady)
+                {
+                    SetStatus("⚠ Ollama no responde — inicia 'ollama serve' manualmente");
+                    SetupInstallOllama.IsEnabled = true;
+                    return;
+                }
+            }
+
+            // Step 5: Check if model already exists
+            SetStatus($"Comprobando modelo {model}...");
+            SetProgress(0.52);
+            var installed = await client.GetInstalledModelsAsync();
+            bool modelExists = installed.Any(n => n.StartsWith(model.Split(':')[0]) &&
+                                                   (model.Contains(':') ? n == model : true));
+
+            if (!modelExists)
+            {
+                // Step 6: Pull model
+                SetStatus($"Descargando {model}...");
+                await client.PullModelAsync(model, onProgress: (pct, status) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        SetProgress(0.55 + 0.40 * pct);
+                        if (status.Contains("pulling"))
+                            SetStatus($"Descargando {model}... {pct:P0}");
+                        else if (status == "success")
+                            SetStatus($"✓ {model} instalado");
+                    });
+                });
+            }
+
+            // Done
+            SetProgress(1.0);
+            SetStatus($"✓ Ollama + {model} listos");
+            OllamaInstallStatus.Foreground = (SolidColorBrush)FindResource("AccentBrush");
+            SetupInstallOllama.Content = "✓  Instalado";
+
+            // Refresh the model list
+            await LoadOllamaModelsAsync();
+            ModelBox.Text = model;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            SetStatus($"Error: {ex.Message}");
+            OllamaInstallStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xff, 0x44, 0x44));
+            SetupInstallOllama.Content = "⬇  Instalar todo";
+            SetupInstallOllama.IsEnabled = true;
+        }
+
+        void SetStatus(string text) => OllamaInstallStatus.Text = text;
+
+        void SetProgress(double pct)
+        {
+            pct = Math.Clamp(pct, 0, 1);
+            OllamaProgressFill.Width = OllamaProgressBorder.ActualWidth * pct;
+        }
     }
 
     private async void SetupDownloadPiper_Click(object sender, RoutedEventArgs e)

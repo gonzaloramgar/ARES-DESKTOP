@@ -199,6 +199,44 @@ public class OllamaClient
             return new List<string>();
         }
     }
+
+    /// <summary>
+    /// Pulls (downloads) a model from the Ollama library.
+    /// Reports progress via <paramref name="onProgress"/> (0.0–1.0) and status text.
+    /// </summary>
+    public async Task PullModelAsync(string model, Action<double, string>? onProgress = null, CancellationToken ct = default)
+    {
+        using var pullHttp = new HttpClient { Timeout = TimeSpan.FromHours(2) };
+        var payload = JsonConvert.SerializeObject(new { name = model, stream = true });
+        var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/api/pull")
+        {
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+
+        using var response = await pullHttp.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        response.EnsureSuccessStatusCode();
+
+        using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
+
+        while (!reader.EndOfStream)
+        {
+            ct.ThrowIfCancellationRequested();
+            var line = await reader.ReadLineAsync(ct);
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            try
+            {
+                var obj = JObject.Parse(line);
+                var status = obj["status"]?.ToString() ?? "";
+                var total = obj["total"]?.Value<long>() ?? 0;
+                var completed = obj["completed"]?.Value<long>() ?? 0;
+                var pct = total > 0 ? (double)completed / total : 0;
+                onProgress?.Invoke(pct, status);
+            }
+            catch { /* skip malformed lines */ }
+        }
+    }
 }
 
 /// <summary>One chunk from the streaming response — either a text token or a full tool-call response.</summary>

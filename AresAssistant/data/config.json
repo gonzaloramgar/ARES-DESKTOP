@@ -3,7 +3,7 @@
   "OverlayOpacity": 0.85,
   "FontSize": "medium",
   "OverlayPosition": "bottom-right",
-  "OllamaModel": "qwen2.5:7b",
+  "OllamaModel": "qwen2.5:14b",
   "AssistantName": "ARES",
   "Personality": "formal",
   "ResponseLength": "normal",
@@ -17,6 +17,6 @@
   "TtsVolume": 0.5,
   "TtsVoiceGender": "masculino",
   "ModelKeepAliveMinutes": 5,
-  "SetupCompleted": false,
-  "PerformanceMode": "ligero"
+  "SetupCompleted": true,
+  "PerformanceMode": "avanzado"
 }

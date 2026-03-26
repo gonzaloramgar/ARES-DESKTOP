@@ -422,6 +422,42 @@
                                     </UniformGrid>
                                 </StackPanel>
                             </Border>
+
+                            <!-- Auto-install Ollama + model -->
+                            <Border Background="#0b0b0b" CornerRadius="10"
+                                    BorderBrush="#1a1a1a" BorderThickness="1" Padding="22,16">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                        <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"
+                                                   Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="INSTALACIÓN AUTOMÁTICA" FontFamily="Consolas" FontSize="10"
+                                                   FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
+                                                   VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Descarga e instala Ollama y el modelo de IA seleccionado automáticamente"
+                                               FontSize="10" Foreground="#606060" FontFamily="Consolas" Margin="0,0,0,12"
+                                               TextWrapping="Wrap"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button x:Name="SetupInstallOllama" Content="⬇  Instalar todo"
+                                                Style="{StaticResource GhostButton}"
+                                                Height="34" Padding="20,0"
+                                                HorizontalAlignment="Left" Cursor="Hand"
+                                                FontFamily="Consolas" FontSize="12"
+                                                Click="SetupInstallOllama_Click"/>
+                                        <TextBlock x:Name="OllamaInstallStatus" Text=""
+                                                   FontSize="10" Foreground="#808080" FontFamily="Consolas"
+                                                   VerticalAlignment="Center" Margin="14,0,0,0"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <!-- Progress bar -->
+                                    <Border x:Name="OllamaProgressBorder" Visibility="Collapsed"
+                                            Background="#0a0a0a" CornerRadius="4" Height="6" Margin="0,10,0,0"
+                                            BorderBrush="#1a1a1a" BorderThickness="1">
+                                        <Border x:Name="OllamaProgressFill" HorizontalAlignment="Left"
+                                                Width="0" CornerRadius="3" Background="{DynamicResource AccentBrush}"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

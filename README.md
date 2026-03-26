@@ -8,6 +8,28 @@ ARES es un asistente de IA para Windows construido en WPF y .NET 8, que corre so
 - **Modo Overlay** (380×600) — Panel compacto anclado a una esquina de la pantalla
 - **Modo HUD Completo** (1200×800) — Interfaz completa con lista de herramientas, chat y estado del sistema
 
+### Síntesis de voz (TTS) — Sistema de 3 niveles
+ARES puede leer sus respuestas en voz alta con un sistema de TTS de 3 niveles con fallback automático:
+
+| Nivel | Motor | Tipo | Requisitos |
+|---|---|---|---|
+| 1 | **Piper** | Neural offline | Se descarga automáticamente (~60 MB). Mejor calidad |
+| 2 | **Edge TTS** | Neural online | Requiere conexión a internet |
+| 3 | **Windows OneCore** | Local del sistema | Siempre disponible como último recurso |
+
+- **Selección de género de voz** — Masculino (Piper → Edge Álvaro → Local Pablo) o Femenino (Edge Elvira → Local Elvira, omite Piper por falta de voz femenina española de calidad)
+- **Control de volumen** en tiempo real desde Ajustes
+- **Botón de prueba** para escuchar la voz configurada
+- Configurable desde el asistente de configuración inicial y desde Ajustes
+
+### Asistente de configuración inicial (Setup Wizard)
+Al primer arranque, ARES presenta un wizard de 5 pasos:
+1. **Bienvenida** — Presentación del asistente
+2. **Nombre y personalidad** — Configura nombre, tono y longitud de respuestas
+3. **Rendimiento** — Detección automática de hardware y recomendación de modo
+4. **Voz** — Activar/desactivar TTS, seleccionar género, ajustar volumen y probar
+5. **Apariencia** — Color de acento, opacidad y posición del overlay
+
 ### Herramientas integradas
 
 | Herramienta | Descripción |
@@ -51,10 +73,18 @@ Las respuestas se muestran token a token en tiempo real. El sistema usa streamin
 ### Gestión de memoria de modelo
 ARES descarga automáticamente el modelo de la RAM de Ollama tras un período de inactividad configurable (`ModelKeepAliveMinutes`). También descarga el modelo al cerrar la aplicación.
 
+### Seguridad y estabilidad
+- **Canonicalización de rutas** — `PermissionManager` y `DeleteFolderTool` usan `Path.GetFullPath()` para prevenir bypass por traversal (`C:\Windows\..\..\target`)
+- **Timeout de comandos** — `RunCommandTool` mata procesos que excedan 30 segundos
+- **Patrones bloqueados ampliados** — `powershell -command`, `python -c`, `downloadstring`, `downloadfile`, `set-executionpolicy`, etc.
+- **Thread safety** — `ConversationHistory` protegida con locks en todas las operaciones
+- **I/O asíncrono** — `ReadFileTool`, `WriteFileTool` y `SystemInfoTool` usan operaciones async para no bloquear el hilo de UI
+- **Ejecución de herramientas** fuera del hilo de UI (`Task.Run` en `ToolDispatcher`)
+
 ### Otras funcionalidades
 - Tema oscuro con **selector de color de acento** personalizable (ColorPicker integrado)
 - Opacidad del overlay configurable en tiempo real
-- Historial de chat persistente con truncado automático (últimos 30 mensajes)
+- Historial de chat persistente con truncado automático
 - Hotkeys globales configurables y rerregistrables sin reiniciar
 - Escáner de sistema en cada arranque (detecta apps de Steam, Epic Games, escritorio, navegadores y carpetas)
 - Purga automática de historial envenenado (elimina respuestas "app no encontrada" obsoletas al iniciar)
@@ -137,6 +167,9 @@ La configuración se guarda en `data/config.json` y se puede modificar desde el 
 | `ConfirmationAlertsEnabled` | `true` / `false` | Diálogos de confirmación |
 | `PerformanceMode` | `ligero`, `avanzado` | Modo de rendimiento (control de contexto, threads e historial) |
 | `ModelKeepAliveMinutes` | Entero (`0` = nunca) | Minutos de inactividad antes de descargar el modelo |
+| `VoiceEnabled` | `true` / `false` | Activar síntesis de voz (TTS) |
+| `TtsVoiceGender` | `masculino`, `femenino` | Género de la voz del asistente |
+| `TtsVolume` | `0.0` – `1.0` | Volumen de la voz |
 
 ## Hotkeys predeterminadas
 
@@ -155,26 +188,36 @@ AresAssistant/
 │   ├── SettingsWindow             # Panel de ajustes
 │   ├── SplashWindow               # Pantalla de carga / primer arranque
 │   ├── ColorPickerWindow          # Selector de color de acento
+│   ├── SetupWindow                 # Wizard de configuración inicial (5 pasos)
 │   ├── OverlayModeControl         # UI modo compacto
 │   ├── FullHudModeControl         # UI modo HUD completo
-│   └── ConfirmationDialog         # Diálogo de confirmación de herramientas
+│   ├── ConfirmationDialog         # Diálogo de confirmación de herramientas
+│   └── PurgeConfirmationDialog    # Confirmación de purga de historial
 ├── ViewModels/                    # MVVM: Chat, Settings, Main, Splash
+│   ├── ViewModelBase.cs           # Base INotifyPropertyChanged
+│   ├── ChatViewModel.cs           # Estado del chat y mensajes
+│   ├── SettingsViewModel.cs       # Todas las opciones con live-apply
+│   ├── MainViewModel.cs           # Toggle Overlay / HUD
+│   └── SplashViewModel.cs         # Progreso de carga
 ├── Config/
 │   ├── AppConfig.cs               # Record de configuración
 │   ├── ConfigManager.cs           # Serialización JSON
 │   └── ThemeEngine.cs             # Aplicación dinámica del tema
 ├── Core/                          # Lógica de negocio y servicios
-│   ├── AgentLoop.cs               # Bucle de conversación (streaming + tool-call loop)
+│   ├── AgentLoop.cs               # Bucle de conversación (streaming + tool-call loop, max 10 iteraciones)
 │   ├── OllamaClient.cs            # Cliente HTTP: ChatAsync, ChatStreamAsync, UnloadModelAsync
-│   ├── ConversationHistory.cs     # Gestión del historial con TrimToLast
+│   ├── ConversationHistory.cs     # Gestión del historial thread-safe con TrimToLast
+│   ├── SpeechEngine.cs            # TTS 3 niveles: Piper neural → Edge online → Windows local
 │   ├── OllamaMessage.cs           # Modelos de datos de mensajes
 │   ├── OllamaResponse.cs          # Respuesta + ToolArgumentsConverter (string/object)
 │   ├── ToolDefinition.cs          # Esquemas de herramientas (compatible OpenAI)
 │   ├── SystemScanner.cs           # Coordinador de escaneo
-│   ├── AppScanner.cs          # Escaneo: Registry, Start Menu, Steam, Epic Games, Desktop, custom apps
+│   ├── AppScanner.cs              # Escaneo: Registry, Start Menu, Steam, Epic Games, Desktop, custom apps
 │   ├── BrowserScanner.cs / FolderScanner.cs
-│   ├── PermissionManager.cs       # Niveles Auto / Confirm / Blocked por herramienta
+│   ├── PermissionManager.cs       # Niveles Auto / Confirm / Blocked con canonicalización de rutas
 │   ├── ActionLogger.cs            # Log de acciones ejecutadas
+│   ├── HardwareDetector.cs        # Detección de CPU/RAM para recomendación de modo
+│   ├── StartupManager.cs          # Autoarranque con Windows (registro HKCU)
 │   └── GlobalHotkeyManager.cs     # Hotkeys globales Win32
 └── Tools/                         # Implementaciones ITool
     ├── PathResolver.cs             # Resolución de alias de rutas (compartido)
@@ -197,6 +240,7 @@ data/
 ├── chat-history.json     # Historial de conversaciones
 ├── tools.json            # Herramientas generadas por el escáner (se regenera cada arranque)
 ├── custom-apps.json      # Apps/juegos guardados manualmente por el usuario (persistente)
+├── tts/                  # Archivos de Piper TTS (descargados automáticamente)
 ├── logs/
 │   ├── actions_*.log     # Log de acciones ejecutadas por el asistente
 │   └── ollama_debug.log  # Log de peticiones/respuestas (solo build Debug)
@@ -205,14 +249,18 @@ data/
 
 ## Stack tecnológico
 
-- **WPF .NET 8** — Framework de UI
+- **WPF .NET 8** (TFM: `net8.0-windows10.0.19041.0`) — Framework de UI
 - **C# 12** — Namespaces por archivo, records, pattern matching, `IAsyncEnumerable`
 - **Ollama HTTP API** — Modelos de lenguaje locales (streaming + tool calling)
 - **Newtonsoft.Json** — Serialización
-- **NAudio** — Control de audio
+- **NAudio 2.2.1** — Control de volumen del sistema + reproducción de audio TTS
+- **Piper TTS** — Motor de síntesis neural offline (descarga automática)
+- **Edge TTS** — Síntesis neural online vía WebSocket (voces de Microsoft Edge)
+- **Windows.Media.SpeechSynthesis** — WinRT OneCore como fallback local
 - **System.Windows.Forms** — NotifyIcon para la bandeja del sistema
 - **Microsoft.VisualBasic.FileIO** — Operaciones de papelera de reciclaje
-- **System.Management** — Detección de hardware (GPU, RAM) para modos de rendimiento
+- **System.Management** — Detección de hardware (CPU, RAM) para modos de rendimiento
+- **System.Drawing.Common** — Capturas de pantalla
 - **MVVM** — Patrón de arquitectura UI
 
 ## Licencia

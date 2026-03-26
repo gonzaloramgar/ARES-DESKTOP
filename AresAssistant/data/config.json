@@ -1,18 +1,19 @@
 {
   "AccentColor": "#ff2222",
-  "OverlayOpacity": 0.783844580777096,
+  "OverlayOpacity": 0.85,
   "FontSize": "medium",
   "OverlayPosition": "bottom-right",
   "OllamaModel": "qwen2.5:7b",
   "AssistantName": "ARES",
   "Personality": "formal",
-  "ResponseLength": "conciso",
+  "ResponseLength": "normal",
   "ShowHideHotkey": "Ctrl+Space",
   "ToggleModeHotkey": "Ctrl+Shift+Space",
   "LaunchWithWindows": false,
   "SaveChatHistory": true,
-  "CloseToTray": false,
+  "CloseToTray": true,
   "ConfirmationAlertsEnabled": true,
   "ModelKeepAliveMinutes": 5,
-  "SetupCompleted": true
+  "SetupCompleted": true,
+  "PerformanceMode": "ligero"
 }

@@ -26,6 +26,10 @@ public class SettingsViewModel : ViewModelBase
     private int _modelKeepAliveMinutes;
     private bool _ollamaAvailable;
     private string _ollamaStatus = "";
+    private string _performanceMode;
+    private string _hwCpuInfo = "";
+    private string _hwRamInfo = "";
+    private string _hwRecommendation = "";
 
     public ObservableCollection<string> AvailableModels { get; } = new();
 
@@ -46,6 +50,10 @@ public class SettingsViewModel : ViewModelBase
     public int ModelKeepAliveMinutes { get => _modelKeepAliveMinutes; set => SetField(ref _modelKeepAliveMinutes, value); }
     public bool OllamaAvailable { get => _ollamaAvailable; set => SetField(ref _ollamaAvailable, value); }
     public string OllamaStatus { get => _ollamaStatus; set => SetField(ref _ollamaStatus, value); }
+    public string PerformanceMode { get => _performanceMode; set => SetField(ref _performanceMode, value); }
+    public string HwCpuInfo { get => _hwCpuInfo; set => SetField(ref _hwCpuInfo, value); }
+    public string HwRamInfo { get => _hwRamInfo; set => SetField(ref _hwRamInfo, value); }
+    public string HwRecommendation { get => _hwRecommendation; set => SetField(ref _hwRecommendation, value); }
 
     public SettingsViewModel(ConfigManager configManager, OllamaClient ollamaClient)
     {
@@ -69,6 +77,7 @@ public class SettingsViewModel : ViewModelBase
         _closeToTray = cfg.CloseToTray;
         _confirmationAlertsEnabled = cfg.ConfirmationAlertsEnabled;
         _modelKeepAliveMinutes = cfg.ModelKeepAliveMinutes;
+        _performanceMode = cfg.PerformanceMode;
     }
 
     public AppConfig BuildConfig() => new()
@@ -87,7 +96,9 @@ public class SettingsViewModel : ViewModelBase
         SaveChatHistory = SaveChatHistory,
         CloseToTray = CloseToTray,
         ConfirmationAlertsEnabled = ConfirmationAlertsEnabled,
-        ModelKeepAliveMinutes = ModelKeepAliveMinutes
+        ModelKeepAliveMinutes = ModelKeepAliveMinutes,
+        PerformanceMode = PerformanceMode,
+        SetupCompleted = _configManager.Config.SetupCompleted
     };
 
     public void Save()
@@ -110,6 +121,25 @@ public class SettingsViewModel : ViewModelBase
             AvailableModels.Clear();
             foreach (var m in models)
                 AvailableModels.Add(m);
+        }
+    }
+
+    public async Task DetectHardwareAsync()
+    {
+        try
+        {
+            var hw = await Task.Run(HardwareDetector.Detect);
+            HwCpuInfo = $"CPU: {hw.CpuName} ({hw.CpuCores} hilos)";
+            HwRamInfo = $"RAM: {hw.TotalRamGb:F1} GB";
+            HwRecommendation = hw.RecommendedMode == "avanzado"
+                ? "⮞ Recomendado: Avanzado"
+                : "⮞ Recomendado: Ligero";
+        }
+        catch
+        {
+            HwCpuInfo = "CPU: no detectado";
+            HwRamInfo = "RAM: no detectada";
+            HwRecommendation = "⮞ Recomendado: Ligero";
         }
     }
 }

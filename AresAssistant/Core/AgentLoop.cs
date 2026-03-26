@@ -92,7 +92,18 @@ public class AgentLoop
         sb.AppendLine("  - subir/bajar volumen    → usa volume");
         sb.AppendLine("  - ventanas               → usa list_open_windows, minimize_window, maximize_window");
         sb.AppendLine("  - portapapeles            → usa clipboard_read, clipboard_write");
+        sb.AppendLine("  - recordar app/juego      → usa remember_app (guarda nombre + ruta para siempre)");
         sb.AppendLine("Usa la herramienta PRIMERO. Explica brevemente lo que hiciste DESPUÉS.");
+        sb.AppendLine("NUNCA digas que una aplicación no existe sin haber llamado a open_app. Siempre intenta abrir con la herramienta.");
+        sb.AppendLine("Aunque antes haya fallado, VUELVE A INTENTARLO con la herramienta porque las apps se escanean de nuevo cada inicio.");
+        sb.AppendLine("Si open_app no encuentra una app y el usuario da la ruta, usa remember_app para guardarla. Así la recordarás para siempre.");
+        sb.AppendLine();
+
+        sb.AppendLine("## CONTEXTO CONVERSACIONAL");
+        sb.AppendLine("Recuerda las acciones que acabas de realizar. Si el usuario dice 'bórrala', 'borra eso',");
+        sb.AppendLine("'lo que hiciste', 'deshaz eso' o cualquier referencia similar, MIRA los mensajes anteriores");
+        sb.AppendLine("para identificar la carpeta, archivo o acción concreta y ejecuta la herramienta adecuada.");
+        sb.AppendLine("Ejemplo: si creaste 'Desktop/patata' y el usuario dice 'bórrala' → usa delete_folder con path='Desktop/patata'.");
         sb.AppendLine();
 
         sb.AppendLine("## LÍMITES");
@@ -130,8 +141,10 @@ public class AgentLoop
 
     public async Task RunAsync(string userMessage)
     {
+        var (numCtx, numThread, historyLimit) = _config.GetPerformanceParams();
+
         _history.Add(new OllamaMessage("user", userMessage));
-        _history.TrimToLast(30);
+        _history.TrimToLast(historyLimit);
 
         int iterations = 0;
 
@@ -146,7 +159,7 @@ public class AgentLoop
             if (useStreaming)
             {
                 // Attempt streaming — gives instant token-by-token feedback
-                var streamed = await TryStreamResponseAsync();
+                var streamed = await TryStreamResponseAsync(numCtx, numThread).ConfigureAwait(false);
                 if (streamed.HasValue)
                 {
                     if (streamed.Value.toolResponse != null)
@@ -161,7 +174,7 @@ public class AgentLoop
                         foreach (var call in resp.Message.ToolCalls!)
                         {
                             StatusChanged?.Invoke($"Ejecutando: {call.Function.Name}...");
-                            var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments);
+                            var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments).ConfigureAwait(false);
                             _history.Add(new OllamaMessage("tool", result) { ToolCallId = call.Id });
                         }
                         continue; // loop back
@@ -186,7 +199,9 @@ public class AgentLoop
                 response = await _ollamaClient.ChatAsync(
                     _history.ToList(),
                     _toolRegistry.GetToolDefinitions(),
-                    _config.OllamaModel);
+                    _config.OllamaModel,
+                    numCtx,
+                    numThread).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -210,7 +225,7 @@ public class AgentLoop
                 foreach (var call in response.Message.ToolCalls)
                 {
                     StatusChanged?.Invoke($"Ejecutando: {call.Function.Name}...");
-                    var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments);
+                    var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments).ConfigureAwait(false);
                     _history.Add(new OllamaMessage("tool", result) { ToolCallId = call.Id });
                 }
             }
@@ -238,7 +253,7 @@ public class AgentLoop
     /// Tries to get a streaming response. Returns text + optional tool response.
     /// Returns null if streaming fails (caller should fall back to non-streaming).
     /// </summary>
-    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync()
+    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync(int numCtx, int numThread)
     {
         try
         {
@@ -248,7 +263,9 @@ public class AgentLoop
             await foreach (var chunk in _ollamaClient.ChatStreamAsync(
                 _history.ToList(),
                 _toolRegistry.GetToolDefinitions(),
-                _config.OllamaModel))
+                _config.OllamaModel,
+                numCtx,
+                numThread))
             {
                 if (chunk.IsToolCall)
                     return (null, chunk.ToolResponse);

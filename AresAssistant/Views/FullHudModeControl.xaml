@@ -38,7 +38,7 @@
                                    VerticalAlignment="Center"/>
                         <TextBlock Text=" — HUD COMPLETO"
                                    FontFamily="Consolas" FontSize="11"
-                                   Foreground="#777777" VerticalAlignment="Center"/>
+                                   Foreground="#999999" VerticalAlignment="Center"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
@@ -74,7 +74,7 @@
                     <TextBlock DockPanel.Dock="Top"
                                Text="{Binding ToolNames.Count, StringFormat='{}{0} disponibles'}"
                                FontSize="10" FontFamily="Consolas"
-                               Foreground="#555555" Margin="0,0,0,10"/>
+                               Foreground="#808080" Margin="0,0,0,10"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding ToolNames}">
                             <ItemsControl.ItemTemplate>
@@ -175,7 +175,7 @@
                     <TextBlock x:Name="SystemStatus"
                                Text="{Binding StatusText, FallbackValue='Esperando...'}"
                                FontSize="11" DockPanel.Dock="Top"
-                               FontFamily="Consolas" Foreground="#888888"
+                               FontFamily="Consolas" Foreground="#aaaaaa"
                                TextWrapping="Wrap"/>
                 </DockPanel>
             </Border>

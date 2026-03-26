@@ -72,7 +72,7 @@
   "open_copilot": {
     "type": "open_app",
     "display_name": "Copilot",
-    "path": "C:\\Program Files (x86)\\Microsoft\\Copilot\\Application\\146.0.3856.80\\mscopilot.exe"
+    "path": "C:\\Program Files (x86)\\Microsoft\\Copilot\\Application\\147.0.3912.25\\mscopilot.exe"
   },
   "open_microsoft_edge": {
     "type": "open_app",
@@ -1278,6 +1278,106 @@
     "type": "open_app",
     "display_name": "Python 3.14",
     "path": "C:\\Users\\grg30\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe"
+  },
+  "open_blade_sorcery": {
+    "type": "open_app",
+    "display_name": "Blade & Sorcery",
+    "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Blade & Sorcery\\BladeAndSorcery.exe"
+  },
+  "open_geometry_dash": {
+    "type": "open_app",
+    "display_name": "Geometry Dash",
+    "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Geometry Dash\\GeometryDash.exe"
+  },
+  "open_slime_rancher": {
+    "type": "open_app",
+    "display_name": "Slime Rancher",
+    "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Slime Rancher\\SlimeRancher.exe"
+  },
+  "open_valheim": {
+    "type": "open_app",
+    "display_name": "Valheim",
+    "path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Valheim\\valheim.exe"
+  },
+  "open_fortnite": {
+    "type": "open_app",
+    "display_name": "Fortnite",
+    "path": "C:\\Program Files\\Epic Games\\Fortnite\\FortniteGame\\Binaries\\Win64\\FortniteLauncher.exe"
+  },
+  "open_citra": {
+    "type": "open_app",
+    "display_name": "Citra",
+    "path": "C:\\Program Files\\citra-windows-msvc-20240303-0ff3440\\citra-qt.exe"
+  },
+  "open_ryujinx_exe_acceso_directo": {
+    "type": "open_app",
+    "display_name": "Ryujinx.exe - Acceso directo",
+    "path": "C:\\Users\\grg30\\Documents\\Ryujinx\\Ryujinx.exe"
+  },
+  "open_outplayed": {
+    "type": "open_app",
+    "display_name": "Outplayed",
+    "path": "C:\\Program Files (x86)\\Overwolf\\OverwolfLauncher.exe"
+  },
+  "open_skidlauncher": {
+    "type": "open_app",
+    "display_name": "SkidLauncher",
+    "path": "C:\\Users\\grg30\\AppData\\Local\\game-jolt-client\\User Data\\Default\\Games\\clrdt-849881\\default-853526\\data\\SkidLauncher.exe"
+  },
+  "open_libreoffice_24_2": {
+    "type": "open_app",
+    "display_name": "LibreOffice 24.2",
+    "path": "C:\\Program Files\\LibreOffice\\program\\soffice.exe"
+  },
+  "open_libreoffice_24_8": {
+    "type": "open_app",
+    "display_name": "LibreOffice 24.8",
+    "path": "C:\\Program Files\\LibreOffice\\program\\soffice.exe"
+  },
+  "open_libreoffice_7_5": {
+    "type": "open_app",
+    "display_name": "LibreOffice 7.5",
+    "path": "C:\\Program Files\\LibreOffice\\program\\soffice.exe"
+  },
+  "open_nvidia": {
+    "type": "open_app",
+    "display_name": "NVIDIA",
+    "path": "C:\\Program Files\\NVIDIA Corporation\\NVIDIA app\\CEF\\NVIDIA app.exe"
+  },
+  "open_star_wars_genesis": {
+    "type": "open_app",
+    "display_name": "Star Wars Genesis",
+    "path": "file:///C:\\Star Wars Genesis\\Game\\ModOrganizer.exe"
+  },
+  "open_among_us": {
+    "type": "open_app",
+    "display_name": "Among Us",
+    "path": "steam://rungameid/945360"
+  },
+  "open_orochi_games": {
+    "type": "open_app",
+    "display_name": "OROCHI GAMES",
+    "path": "https://www.gamesorochi.com/"
+  },
+  "open_igg_games_com": {
+    "type": "open_app",
+    "display_name": "IGG-GAMES.COM",
+    "path": "https://igg-games.com/"
+  },
+  "open_pcgamestorrents_com": {
+    "type": "open_app",
+    "display_name": "PCGAMESTORRENTS.COM",
+    "path": "https://pcgamestorrents.com/"
+  },
+  "open_steamrip_free_pre_installed_steam_games": {
+    "type": "open_app",
+    "display_name": "STEAMRIP » Free Pre-installed Steam Games",
+    "path": "https://steamrip.com/"
+  },
+  "open_onlinefix": {
+    "type": "open_app",
+    "display_name": "OnlineFix",
+    "path": "https://online-fix.me/"
   },
   "open_desktop": {
     "type": "open_folder",

@@ -19,8 +19,8 @@
             <SolidColorBrush x:Key="BackgroundBrush" Color="#0d0d0d"/>
             <SolidColorBrush x:Key="SurfaceBrush" Color="#1a1a1a"/>
             <SolidColorBrush x:Key="SurfaceLightBrush" Color="#222222"/>
-            <SolidColorBrush x:Key="TextBrush" Color="#e0e0e0"/>
-            <SolidColorBrush x:Key="SubtextBrush" Color="#888888"/>
+            <SolidColorBrush x:Key="TextBrush" Color="#eeeeee"/>
+            <SolidColorBrush x:Key="SubtextBrush" Color="#a0a0a0"/>
             <SolidColorBrush x:Key="BorderBrush" Color="#333333"/>
 
             <!-- Font sizes -->

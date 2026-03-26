@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
 
@@ -16,6 +17,10 @@ public class AppScanner
         ScanRegistry(tools, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
         ScanRegistry(tools, @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
         ScanStartMenu(tools);
+        ScanSteamApps(tools);
+        ScanEpicGamesApps(tools);
+        ScanDesktopShortcuts(tools);
+        ScanCustomApps(tools);
 
         return tools;
     }
@@ -114,12 +119,262 @@ public class AppScanner
         }
     }
 
+    // ───── Steam games ─────
+
+    private static readonly HashSet<string> _ignoredExeNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "uninstall", "unitycrashandler64", "unitycrashandler32",
+        "crashhandler", "launcher", "updater", "setup", "redist"
+    };
+
+    private static void ScanSteamApps(Dictionary<string, JObject> tools)
+    {
+        foreach (var commonDir in GetSteamLibraryPaths())
+        {
+            if (!Directory.Exists(commonDir)) continue;
+
+            try
+            {
+                foreach (var gameDir in Directory.GetDirectories(commonDir))
+                {
+                    try
+                    {
+                        var gameName = Path.GetFileName(gameDir);
+                        var exe = PickBestExe(gameDir, gameName);
+                        if (exe == null) continue;
+
+                        var toolKey = MakeKey("open", gameName);
+                        if (!tools.ContainsKey(toolKey))
+                            tools[toolKey] = CreateAppEntry(gameName, exe);
+                    }
+                    catch { /* skip game folder */ }
+                }
+            }
+            catch { /* skip library folder */ }
+        }
+    }
+
+    private static List<string> GetSteamLibraryPaths()
+    {
+        var steamRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam");
+        var paths = new List<string>();
+
+        var defaultCommon = Path.Combine(steamRoot, "steamapps", "common");
+        if (Directory.Exists(defaultCommon))
+            paths.Add(defaultCommon);
+
+        // Parse libraryfolders.vdf for extra library locations
+        var vdf = Path.Combine(steamRoot, "steamapps", "libraryfolders.vdf");
+        if (File.Exists(vdf))
+        {
+            try
+            {
+                foreach (var line in File.ReadAllLines(vdf))
+                {
+                    var m = Regex.Match(line, @"""path""\s+""(.+?)""");
+                    if (!m.Success) continue;
+
+                    var libCommon = Path.Combine(
+                        m.Groups[1].Value.Replace(@"\\", @"\"), "steamapps", "common");
+                    if (Directory.Exists(libCommon) && !paths.Contains(libCommon, StringComparer.OrdinalIgnoreCase))
+                        paths.Add(libCommon);
+                }
+            }
+            catch { /* ignore vdf parse errors */ }
+        }
+
+        return paths;
+    }
+
+    private static string? PickBestExe(string gameDir, string gameName)
+    {
+        string[] exes;
+        try { exes = Directory.GetFiles(gameDir, "*.exe", SearchOption.TopDirectoryOnly); }
+        catch { return null; }
+
+        if (exes.Length == 0) return null;
+
+        var folderNorm = gameName.Replace(" ", "").ToLowerInvariant();
+
+        // 1. Prefer exe whose name matches the folder name
+        foreach (var exe in exes)
+        {
+            var exeName = Path.GetFileNameWithoutExtension(exe).ToLowerInvariant();
+            if (_ignoredExeNames.Contains(exeName)) continue;
+            var exeNorm = exeName.Replace(" ", "");
+            if (exeNorm == folderNorm || exeNorm.Contains(folderNorm) || folderNorm.Contains(exeNorm))
+                return exe;
+        }
+
+        // 2. Fallback: first exe that isn't an ignored utility
+        return exes.FirstOrDefault(e =>
+            !_ignoredExeNames.Contains(Path.GetFileNameWithoutExtension(e).ToLowerInvariant()));
+    }
+
+    // ───── Desktop shortcuts (.lnk + .url) ─────
+
+    private static void ScanDesktopShortcuts(Dictionary<string, JObject> tools)
+    {
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        if (!Directory.Exists(desktop)) return;
+
+        var opts = new EnumerationOptions { IgnoreInaccessible = true, RecurseSubdirectories = true };
+
+        // .lnk shortcuts
+        try
+        {
+            foreach (var lnk in Directory.GetFiles(desktop, "*.lnk", opts))
+            {
+                try
+                {
+                    var target = ResolveLnk(lnk);
+                    if (string.IsNullOrEmpty(target) || !File.Exists(target)) continue;
+                    if (!target.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var name = Path.GetFileNameWithoutExtension(lnk);
+                    var toolKey = MakeKey("open", name);
+                    if (!tools.ContainsKey(toolKey))
+                        tools[toolKey] = CreateAppEntry(name, target);
+                }
+                catch { /* skip */ }
+            }
+        }
+        catch { /* skip */ }
+
+        // .url shortcuts (Steam games, etc.)
+        try
+        {
+            foreach (var url in Directory.GetFiles(desktop, "*.url", opts))
+            {
+                try
+                {
+                    var name = Path.GetFileNameWithoutExtension(url);
+                    var urlTarget = ParseUrlShortcut(url);
+                    if (string.IsNullOrEmpty(urlTarget)) continue;
+
+                    var toolKey = MakeKey("open", name);
+                    if (!tools.ContainsKey(toolKey))
+                        tools[toolKey] = CreateAppEntry(name, urlTarget);
+                }
+                catch { /* skip */ }
+            }
+        }
+        catch { /* skip */ }
+    }
+
+    private static string? ParseUrlShortcut(string urlPath)
+    {
+        foreach (var line in File.ReadAllLines(urlPath))
+        {
+            if (line.StartsWith("URL=", StringComparison.OrdinalIgnoreCase))
+                return line.Substring(4).Trim();
+        }
+        return null;
+    }
+
     private static JObject CreateAppEntry(string displayName, string path) => new()
     {
         ["type"] = "open_app",
         ["display_name"] = displayName,
         ["path"] = path
     };
+
+    // ───── Epic Games ─────
+
+    private static void ScanEpicGamesApps(Dictionary<string, JObject> tools)
+    {
+        var manifestDir = @"C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests";
+        if (!Directory.Exists(manifestDir)) return;
+
+        try
+        {
+            foreach (var file in Directory.GetFiles(manifestDir, "*.item"))
+            {
+                try
+                {
+                    var json = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(file));
+
+                    var displayName = json["DisplayName"]?.ToString();
+                    var installLocation = json["InstallLocation"]?.ToString()?.Replace('/', '\\');
+                    var launchExe = json["LaunchExecutable"]?.ToString()?.Replace('/', '\\');
+
+                    if (string.IsNullOrWhiteSpace(displayName) ||
+                        string.IsNullOrWhiteSpace(installLocation) ||
+                        string.IsNullOrWhiteSpace(launchExe))
+                        continue;
+
+                    var fullExe = Path.Combine(installLocation, launchExe);
+                    if (!File.Exists(fullExe)) continue;
+
+                    var toolKey = MakeKey("open", displayName);
+                    if (!tools.ContainsKey(toolKey))
+                        tools[toolKey] = CreateAppEntry(displayName, fullExe);
+                }
+                catch { /* skip bad manifest */ }
+            }
+        }
+        catch { /* skip if inaccessible */ }
+    }
+
+    // ───── Custom / user-remembered apps ─────
+
+    private const string CustomAppsFile = "data/custom-apps.json";
+
+    private static void ScanCustomApps(Dictionary<string, JObject> tools)
+    {
+        if (!File.Exists(CustomAppsFile)) return;
+        try
+        {
+            var dict = Newtonsoft.Json.JsonConvert.DeserializeObject<
+                Dictionary<string, CustomAppEntry>>(File.ReadAllText(CustomAppsFile));
+            if (dict == null) return;
+
+            foreach (var (key, entry) in dict)
+            {
+                var toolKey = MakeKey("open", key);
+                if (!tools.ContainsKey(toolKey))
+                    tools[toolKey] = CreateAppEntry(entry.DisplayName, entry.Path);
+            }
+        }
+        catch { /* ignore corrupt file */ }
+    }
+
+    /// <summary>
+    /// Saves a user-provided app so it is remembered across sessions.
+    /// Returns true if saved successfully.
+    /// </summary>
+    public static bool SaveCustomApp(string name, string path)
+    {
+        try
+        {
+            var dict = new Dictionary<string, CustomAppEntry>(StringComparer.OrdinalIgnoreCase);
+            if (File.Exists(CustomAppsFile))
+            {
+                var existing = Newtonsoft.Json.JsonConvert.DeserializeObject<
+                    Dictionary<string, CustomAppEntry>>(File.ReadAllText(CustomAppsFile));
+                if (existing != null)
+                    foreach (var kv in existing) dict[kv.Key] = kv.Value;
+            }
+
+            dict[name.ToLowerInvariant()] = new CustomAppEntry { DisplayName = name, Path = path };
+
+            var dir = Path.GetDirectoryName(CustomAppsFile);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            File.WriteAllText(CustomAppsFile,
+                Newtonsoft.Json.JsonConvert.SerializeObject(dict, Newtonsoft.Json.Formatting.Indented));
+            return true;
+        }
+        catch { return false; }
+    }
+
+    private class CustomAppEntry
+    {
+        public string DisplayName { get; set; } = "";
+        public string Path { get; set; } = "";
+    }
 
     public static string MakeKey(string prefix, string name)
     {

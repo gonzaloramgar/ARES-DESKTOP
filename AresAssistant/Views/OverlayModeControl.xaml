@@ -112,7 +112,7 @@
                                 <!-- Timestamp -->
                                 <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
                                            HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}"
-                                           FontSize="9" Foreground="#383838"
+                                           FontSize="9" Foreground="#505050"
                                            Margin="8,2,8,0"/>
                             </StackPanel>
                         </DataTemplate>

@@ -82,6 +82,9 @@ public class ToolRegistry
             }
         }
 
+        // Merge custom/user-remembered apps
+        LoadCustomApps(appPaths, appDisplayNames);
+
         if (appPaths.Count > 0)
             Register(new GenericOpenAppTool(appPaths, appDisplayNames));
 
@@ -90,4 +93,34 @@ public class ToolRegistry
     }
 
     public IEnumerable<ITool> GetAll() => _tools.Values;
+
+    private static void LoadCustomApps(
+        Dictionary<string, string> appPaths,
+        Dictionary<string, string> appDisplayNames)
+    {
+        const string customFile = "data/custom-apps.json";
+        if (!File.Exists(customFile)) return;
+
+        try
+        {
+            var raw = File.ReadAllText(customFile);
+            var dict = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(raw);
+            if (dict == null) return;
+
+            foreach (var (key, obj) in dict)
+            {
+                var displayName = obj["DisplayName"]?.ToString() ?? key;
+                var path = obj["Path"]?.ToString() ?? "";
+                if (string.IsNullOrEmpty(path)) continue;
+
+                var toolKey = AresAssistant.Core.AppScanner.MakeKey("open", key);
+                if (!appPaths.ContainsKey(toolKey))
+                {
+                    appPaths[toolKey] = path;
+                    appDisplayNames[toolKey] = displayName;
+                }
+            }
+        }
+        catch { /* ignore corrupt file */ }
+    }
 }

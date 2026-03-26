@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using AresAssistant.Core;
 using AresAssistant.Config;
@@ -6,13 +8,32 @@ using AresAssistant.Tools;
 
 namespace AresAssistant.ViewModels;
 
-public class ChatMessage
+public class ChatMessage : INotifyPropertyChanged
 {
+    private string _content = "";
+
     public string Role { get; set; } = "";
-    public string Content { get; set; } = "";
+
+    public string Content
+    {
+        get => _content;
+        set
+        {
+            if (_content != value)
+            {
+                _content = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public bool IsUser => Role == "user";
     public bool IsAssistant => Role == "assistant";
     public DateTime Timestamp { get; set; } = DateTime.Now;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
 public class ChatViewModel : ViewModelBase
@@ -79,12 +100,24 @@ public class ChatViewModel : ViewModelBase
 
         Messages.Add(new ChatMessage { Role = "user", Content = text });
 
-        await _agentLoop.RunAsync(text);
+        try
+        {
+            await Task.Run(() => _agentLoop.RunAsync(text));
+        }
+        catch (Exception ex)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Messages.Add(new ChatMessage { Role = "assistant", Content = $"Error inesperado: {ex.Message}" });
+            });
+        }
+        finally
+        {
+            if (_config.SaveChatHistory)
+                _history.SaveToJson("data/chat-history.json");
 
-        if (_config.SaveChatHistory)
-            _history.SaveToJson("data/chat-history.json");
-
-        IsBusy = false;
+            IsBusy = false;
+        }
     }
 
     private ChatMessage? _streamingMessage;
@@ -101,13 +134,6 @@ public class ChatViewModel : ViewModelBase
             else
             {
                 _streamingMessage.Content += token;
-                // Force UI refresh by replacing the item
-                var idx = Messages.IndexOf(_streamingMessage);
-                if (idx >= 0)
-                {
-                    Messages.RemoveAt(idx);
-                    Messages.Insert(idx, _streamingMessage);
-                }
             }
         });
     }
@@ -118,14 +144,7 @@ public class ChatViewModel : ViewModelBase
         {
             if (_streamingMessage != null)
             {
-                // Streaming already added the message — just ensure final text matches
                 _streamingMessage.Content = response;
-                var idx = Messages.IndexOf(_streamingMessage);
-                if (idx >= 0)
-                {
-                    Messages.RemoveAt(idx);
-                    Messages.Insert(idx, _streamingMessage);
-                }
                 _streamingMessage = null;
             }
             else

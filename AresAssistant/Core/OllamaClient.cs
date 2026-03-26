@@ -18,8 +18,14 @@ public class OllamaClient
     public async Task<OllamaResponse> ChatAsync(
         List<OllamaMessage> messages,
         List<ToolDefinition> tools,
-        string model)
+        string model,
+        int numCtx = 8192,
+        int numThread = 0)
     {
+        var options = numThread > 0
+            ? (object)new { num_ctx = numCtx, num_thread = numThread, temperature = 0.7, repeat_penalty = 1.1 }
+            : new { num_ctx = numCtx, temperature = 0.7, repeat_penalty = 1.1 };
+
         var payload = new
         {
             model,
@@ -32,7 +38,7 @@ public class OllamaClient
                 tool_call_id = m.ToolCallId
             }),
             tools,
-            options = new { num_ctx = 8192 }
+            options
         };
 
         var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
@@ -47,10 +53,10 @@ public class OllamaClient
 
         var response = await _http.PostAsync(
             $"{BaseUrl}/api/chat",
-            new StringContent(json, Encoding.UTF8, "application/json"));
+            new StringContent(json, Encoding.UTF8, "application/json")).ConfigureAwait(false);
 
         response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync();
+        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 #if DEBUG
         WriteDebug("RESPONSE", body);
@@ -66,8 +72,14 @@ public class OllamaClient
     public async IAsyncEnumerable<StreamChunk> ChatStreamAsync(
         List<OllamaMessage> messages,
         List<ToolDefinition> tools,
-        string model)
+        string model,
+        int numCtx = 8192,
+        int numThread = 0)
     {
+        var options = numThread > 0
+            ? (object)new { num_ctx = numCtx, num_thread = numThread, temperature = 0.7, repeat_penalty = 1.1 }
+            : new { num_ctx = numCtx, temperature = 0.7, repeat_penalty = 1.1 };
+
         var payload = new
         {
             model,
@@ -80,7 +92,7 @@ public class OllamaClient
                 tool_call_id = m.ToolCallId
             }),
             tools,
-            options = new { num_ctx = 8192 }
+            options
         };
 
         var json = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
@@ -94,15 +106,15 @@ public class OllamaClient
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync();
+        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         using var reader = new StreamReader(stream);
 
         while (!reader.EndOfStream)
         {
-            var line = await reader.ReadLineAsync();
+            var line = await reader.ReadLineAsync().ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             JObject chunk;

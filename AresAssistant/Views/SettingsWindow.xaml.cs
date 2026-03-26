@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using AresAssistant.Config;
 using AresAssistant.Core;
 using AresAssistant.ViewModels;
 using AresAssistant.Views;
@@ -16,7 +17,11 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         _vm = new SettingsViewModel(App.ConfigManager, new OllamaClient());
         DataContext = _vm;
-        Loaded += async (_, _) => await _vm.CheckOllamaAsync();
+        Loaded += async (_, _) =>
+        {
+            await _vm.CheckOllamaAsync();
+            await _vm.DetectHardwareAsync();
+        };
     }
 
     private void PresetColor_Click(object sender, RoutedEventArgs e)
@@ -73,6 +78,48 @@ public partial class SettingsWindow : Window
         {
             Title = "ARES — Ajustes";
             MessageBox.Show($"Error durante el escaneo:\n{ex.Message}", "ARES — Error",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void PurgeData_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new PurgeConfirmationDialog(this);
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var dataDir = Path.GetFullPath("data");
+            if (Directory.Exists(dataDir))
+            {
+                foreach (var file in Directory.GetFiles(dataDir, "*", SearchOption.AllDirectories))
+                    File.Delete(file);
+                foreach (var dir in Directory.GetDirectories(dataDir))
+                    Directory.Delete(dir, true);
+            }
+
+            // Reset config to defaults and re-apply
+            var fresh = new Config.AppConfig();
+            App.ConfigManager.Save(fresh);
+            Config.ThemeEngine.Apply(fresh);
+
+            Close();
+
+            MessageBox.Show(
+                "Todos los datos han sido eliminados.\nLa aplicación se reiniciará.",
+                "ARES — Datos eliminados", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Restart the app
+            var exePath = Environment.ProcessPath;
+            if (exePath != null)
+            {
+                System.Diagnostics.Process.Start(exePath);
+                Application.Current.Shutdown();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al eliminar datos:\n{ex.Message}", "ARES — Error",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }

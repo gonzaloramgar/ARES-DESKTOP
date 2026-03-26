@@ -49,7 +49,7 @@ public class ToolDispatcher
 
         try
         {
-            var result = await tool.ExecuteAsync(args);
+            var result = await Task.Run(() => tool.ExecuteAsync(args)).ConfigureAwait(false);
             return result.Message;
         }
         catch (Exception ex)

@@ -42,14 +42,14 @@ public class GenericOpenAppTool : ITool
         if (string.IsNullOrEmpty(name))
             return Task.FromResult(new ToolResult(false, "Nombre no especificado."));
 
-        var path = FindPath(name);
-        if (path == null)
+        var match = FindMatch(name);
+        if (match == null)
             return Task.FromResult(new ToolResult(false, $"Aplicación '{name}' no encontrada en el sistema."));
 
         try
         {
-            Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
-            return Task.FromResult(new ToolResult(true, $"Aplicación abierta: {Path.GetFileNameWithoutExtension(path)}."));
+            Process.Start(new ProcessStartInfo { FileName = match.Value.path, UseShellExecute = true });
+            return Task.FromResult(new ToolResult(true, $"Aplicación abierta: {match.Value.displayName}."));
         }
         catch (Exception ex)
         {
@@ -57,25 +57,28 @@ public class GenericOpenAppTool : ITool
         }
     }
 
-    private string? FindPath(string query)
+    private (string path, string displayName)? FindMatch(string query)
     {
         // Normalize query: lowercase, spaces → underscores
         var normalized = query.ToLowerInvariant().Trim().Replace(' ', '_');
 
         // 1. Exact key match (with or without "open_" prefix)
         var keyWithPrefix = normalized.StartsWith("open_") ? normalized : "open_" + normalized;
-        if (_paths.TryGetValue(keyWithPrefix, out var p1)) return p1;
+        if (_paths.TryGetValue(keyWithPrefix, out var p1))
+            return (p1, _displayNames.GetValueOrDefault(keyWithPrefix, query));
 
         // 2. Key contains query
         var keyMatch = _paths.FirstOrDefault(kv =>
             kv.Key.Contains(normalized, StringComparison.OrdinalIgnoreCase));
-        if (keyMatch.Key != null) return keyMatch.Value;
+        if (keyMatch.Key != null)
+            return (keyMatch.Value, _displayNames.GetValueOrDefault(keyMatch.Key, query));
 
         // 3. Display name contains original query (spaces preserved)
         var displayQuery = query.ToLowerInvariant().Trim();
         var nameMatch = _displayNames.FirstOrDefault(kv =>
             kv.Value.Contains(displayQuery, StringComparison.OrdinalIgnoreCase));
-        if (nameMatch.Key != null && _paths.TryGetValue(nameMatch.Key, out var p3)) return p3;
+        if (nameMatch.Key != null && _paths.TryGetValue(nameMatch.Key, out var p3))
+            return (p3, nameMatch.Value);
 
         return null;
     }

@@ -126,7 +126,7 @@
                 </TextBlock>
 
                 <TextBlock Text="AUTONOMOUS  RESPONSE  ENGINE  SYSTEM"
-                           FontSize="9" Foreground="#3d3d3d"
+                           FontSize="9" Foreground="#5a5a5a"
                            HorizontalAlignment="Center" FontFamily="Consolas"
                            Margin="0,0,0,28"/>
 

@@ -1,0 +1,120 @@
+<Window x:Class="AresAssistant.Views.PurgeConfirmationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ARES — Confirmación"
+        Width="460" Height="310"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+
+    <Border x:Name="RootBorder" CornerRadius="14"
+            BorderBrush="#cc3333" BorderThickness="2" Opacity="0">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#110a0a" Offset="0"/>
+                <GradientStop Color="#0a0606" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.RenderTransform>
+            <TranslateTransform x:Name="RootTranslate" Y="15"/>
+        </Border.RenderTransform>
+
+        <Grid Margin="24,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                <Path Data="M 8,0 L 16,11 L 8,22 L 0,11 Z"
+                      Fill="#cc3333" Width="14" Height="20" Margin="0,0,10,0">
+                    <Path.Effect>
+                        <DropShadowEffect Color="#cc3333" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                    </Path.Effect>
+                </Path>
+                <TextBlock Text="Eliminar todos los datos"
+                           FontSize="16" FontWeight="Bold"
+                           Foreground="#cc3333" FontFamily="Consolas"/>
+            </StackPanel>
+
+            <!-- Body -->
+            <Border Grid.Row="1" Background="#0e0808" CornerRadius="8" Padding="16,14"
+                    BorderBrush="#2a1111" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="⚠  Esta acción eliminará permanentemente:"
+                               FontSize="13" Foreground="{DynamicResource TextBrush}"
+                               FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Foreground="#aa7777" FontSize="11" FontFamily="Consolas" Margin="4,0,0,0">
+                        <Run Text="•  Historial de conversaciones" /><LineBreak/>
+                        <Run Text="•  Configuración personalizada" /><LineBreak/>
+                        <Run Text="•  Herramientas escaneadas" /><LineBreak/>
+                        <Run Text="•  Registros del sistema (logs)" />
+                    </TextBlock>
+                    <TextBlock Text="Esta acción NO se puede deshacer."
+                               FontSize="12" Foreground="#cc3333" FontWeight="Bold"
+                               FontFamily="Consolas" Margin="0,14,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal"
+                        HorizontalAlignment="Right" Margin="0,18,0,0">
+                <Button Content="Cancelar" Style="{StaticResource GhostButton}"
+                        Width="100" Height="34" Click="Cancel_Click" Margin="0,0,10,0"/>
+                <Button x:Name="ConfirmButton" Content="Eliminar todo" Height="34" Padding="18,0"
+                        Click="Confirm_Click" Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#cc3333"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="FontFamily" Value="Consolas"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Setter Property="FontSize" Value="12"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="#cc3333" CornerRadius="4"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#ee4444"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#aa2222"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="RootBorder"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0" To="1" Duration="0:0:0.35"/>
+                    <DoubleAnimation Storyboard.TargetName="RootTranslate"
+                                     Storyboard.TargetProperty="Y"
+                                     From="15" To="0" Duration="0:0:0.4">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
+</Window>

@@ -21,19 +21,8 @@ public partial class SplashWindow : Window
     {
         try
         {
-            if (_isFirstLaunch)
-            {
-                await RunFirstLaunchScanAsync();
-            }
-            else
-            {
-                UpdateStatus("Cargando ARES...", 20);
-                await Task.Delay(1200);
-                UpdateStatus("Verificando conexión con Ollama...", 60);
-                await Task.Delay(1400);
-                UpdateStatus("ARES listo.", 100);
-                await Task.Delay(900);
-            }
+            // Always re-scan so new apps / Steam games / desktop shortcuts are detected
+            await RunFirstLaunchScanAsync();
 
             OpenMainWindow();
         }

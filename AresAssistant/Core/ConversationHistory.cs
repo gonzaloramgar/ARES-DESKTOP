@@ -45,6 +45,50 @@ public class ConversationHistory
             _messages.Insert(0, new OllamaMessage("system", content));
     }
 
+    /// <summary>
+    /// Removes tool responses that reported failures ("no encontrada", "Error") AND
+    /// their parent assistant tool_call + any assistant follow-up that echoed the error.
+    /// This prevents stale "app not found" results from poisoning future model behaviour.
+    /// </summary>
+    public void PurgeToolFailures()
+    {
+        var toRemove = new HashSet<int>();
+
+        for (int i = 0; i < _messages.Count; i++)
+        {
+            if (_messages[i].Role != "tool") continue;
+            var content = _messages[i].Content ?? "";
+            if (!content.Contains("no encontrada", StringComparison.OrdinalIgnoreCase)
+                && !content.Contains("Error", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // Mark this tool message for removal
+            toRemove.Add(i);
+
+            // Walk backwards to find the parent assistant with tool_calls
+            for (int j = i - 1; j >= 0; j--)
+            {
+                if (_messages[j].Role == "tool") { toRemove.Add(j); continue; }
+                if (_messages[j].Role == "assistant" && _messages[j].ToolCalls?.Count > 0)
+                { toRemove.Add(j); break; }
+                break;
+            }
+
+            // Walk forward to remove the assistant echo that reported the failure
+            if (i + 1 < _messages.Count && _messages[i + 1].Role == "assistant"
+                && (_messages[i + 1].ToolCalls == null || _messages[i + 1].ToolCalls!.Count == 0))
+                toRemove.Add(i + 1);
+        }
+
+        if (toRemove.Count == 0) return;
+
+        for (int i = _messages.Count - 1; i >= 0; i--)
+        {
+            if (toRemove.Contains(i))
+                _messages.RemoveAt(i);
+        }
+    }
+
     public void SaveToJson(string path)
     {
         var json = JsonConvert.SerializeObject(_messages, Formatting.Indented);
@@ -53,7 +97,7 @@ public class ConversationHistory
 
     /// <summary>
     /// Keeps only the system message plus the most recent <paramref name="maxMessages"/> messages.
-    /// Prevents the context window from growing unboundedly over long conversations.
+    /// Never splits an assistant→tool group so the model always sees complete tool-call sequences.
     /// </summary>
     public void TrimToLast(int maxMessages)
     {
@@ -64,8 +108,20 @@ public class ConversationHistory
         var nonSystem = _messages.Skip(systemMsg != null ? 1 : 0).ToList();
         if (nonSystem.Count <= maxMessages) return;
 
+        // Take last N, then walk backwards to include the full tool-call group
+        int start = nonSystem.Count - maxMessages;
+
+        // If we'd start on a "tool" message, walk back to include
+        // the preceding tool messages and their parent assistant message
+        while (start > 0 && nonSystem[start].Role == "tool")
+            start--;
+        // Also include the assistant that triggered the tool calls
+        if (start > 0 && nonSystem[start - 1].Role == "assistant"
+            && nonSystem[start - 1].ToolCalls?.Count > 0)
+            start--;
+
         _messages.Clear();
         if (systemMsg != null) _messages.Add(systemMsg);
-        _messages.AddRange(nonSystem.TakeLast(maxMessages));
+        _messages.AddRange(nonSystem.Skip(start));
     }
 }

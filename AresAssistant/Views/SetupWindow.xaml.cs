@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using AresAssistant.Config;
+using AresAssistant.Core;
 
 namespace AresAssistant.Views;
 
@@ -10,18 +11,48 @@ public partial class SetupWindow : Window
 {
     private string _selectedColor = "#ff2222";
     private string _selectedPersonality = "formal";
+    private string _selectedPerfMode = "ligero";
 
     private Border[] _personalityCards = Array.Empty<Border>();
+    private Border[] _perfModeCards = Array.Empty<Border>();
 
     public SetupWindow()
     {
         InitializeComponent();
-        Loaded += (_, _) =>
+        Loaded += async (_, _) =>
         {
             _personalityCards = [CardFormal, CardCasual, CardSarcastico, CardTecnico];
+            _perfModeCards = [CardLigero, CardAvanzado];
             UpdateColorPreview(_selectedColor);
             HighlightPersonalityCard(_selectedPersonality);
+            HighlightPerfModeCard(_selectedPerfMode);
+            await DetectHardwareAsync();
         };
+    }
+
+    private async Task DetectHardwareAsync()
+    {
+        HardwareInfo hw;
+        try
+        {
+            hw = await Task.Run(HardwareDetector.Detect);
+        }
+        catch
+        {
+            HwCpuText.Text = "CPU: no detectado";
+            HwRamText.Text = "RAM: no detectada";
+            HwRecommendText.Text = "Recomendado: Ligero";
+            return;
+        }
+
+        HwCpuText.Text = $"CPU: {hw.CpuName} ({hw.CpuCores} hilos)";
+        HwRamText.Text = $"RAM: {hw.TotalRamGb:F1} GB";
+        HwRecommendText.Text = hw.RecommendedMode == "avanzado"
+            ? "⮞ Recomendado: Avanzado"
+            : "⮞ Recomendado: Ligero";
+
+        _selectedPerfMode = hw.RecommendedMode;
+        HighlightPerfModeCard(_selectedPerfMode);
     }
 
     private void Color_Click(object sender, RoutedEventArgs e)
@@ -78,6 +109,7 @@ public partial class SetupWindow : Window
         {
             AccentColor = _selectedColor,
             Personality = _selectedPersonality,
+            PerformanceMode = _selectedPerfMode,
             AssistantName = name,
             SetupCompleted = true
         });
@@ -86,5 +118,29 @@ public partial class SetupWindow : Window
         var splash = new SplashWindow(isFirstLaunch: true);
         splash.Show();
         Close();
+    }
+
+    private void PerfMode_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Border card && card.Tag is string mode)
+        {
+            _selectedPerfMode = mode;
+            HighlightPerfModeCard(mode);
+        }
+    }
+
+    private void HighlightPerfModeCard(string mode)
+    {
+        var accent = (SolidColorBrush)FindResource("AccentBrush");
+        var unselected = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x1e));
+
+        foreach (var card in _perfModeCards)
+        {
+            bool isCurrent = (string)card.Tag == mode;
+            card.BorderBrush = isCurrent ? accent : unselected;
+            card.Background = isCurrent
+                ? new SolidColorBrush(Color.FromRgb(0x16, 0x16, 0x16))
+                : new SolidColorBrush(Color.FromRgb(0x11, 0x11, 0x11));
+        }
     }
 }

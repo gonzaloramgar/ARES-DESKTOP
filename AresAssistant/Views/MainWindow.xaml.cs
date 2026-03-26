@@ -66,16 +66,21 @@ public partial class MainWindow : Window
         registry.Register(new CreateFolderTool());
         registry.Register(new DeleteFolderTool());
         registry.Register(new RecycleBinTool());
+        registry.Register(new RememberAppTool(registry));
 
-        // Load auto-generated tools from scan
+        // Load auto-generated tools from scan (also loads data/custom-apps.json)
         registry.LoadFromJson("data/tools.json");
 
         // Hook confirmation dialog
         dispatcher.ConfirmationRequested += ShowConfirmationDialogAsync;
 
-        // Load history if persistence enabled
+        // Load history if persistence enabled, then strip stale tool-failure messages
+        // so old "app not found" results don't prevent the model from retrying.
         if (config.SaveChatHistory && System.IO.File.Exists("data/chat-history.json"))
+        {
             history.LoadFromJson("data/chat-history.json");
+            history.PurgeToolFailures();
+        }
 
         var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config);
 

@@ -46,6 +46,18 @@ public class GenericOpenAppTool : ITool
         if (match == null)
             return Task.FromResult(new ToolResult(false, $"Aplicación '{name}' no encontrada en el sistema."));
 
+        // Check if the app is already running before launching a new instance
+        var exeName = Path.GetFileNameWithoutExtension(match.Value.path);
+        var alreadyRunning = Process.GetProcesses().Any(p =>
+        {
+            try { return p.ProcessName.Equals(exeName, StringComparison.OrdinalIgnoreCase); }
+            catch { return false; }
+        });
+
+        if (alreadyRunning)
+            return Task.FromResult(new ToolResult(true,
+                $"{match.Value.displayName} ya está en ejecución. No se abrió otra instancia."));
+
         try
         {
             Process.Start(new ProcessStartInfo { FileName = match.Value.path, UseShellExecute = true });

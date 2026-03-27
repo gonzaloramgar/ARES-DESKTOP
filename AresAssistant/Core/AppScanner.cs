@@ -52,6 +52,9 @@ public class AppScanner
                     if (!File.Exists(exePath) || !exePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                         continue;
 
+                    if (ShouldExclude(name, exePath))
+                        continue;
+
                     var toolKey = MakeKey("open", name);
                     if (!tools.ContainsKey(toolKey))
                         tools[toolKey] = CreateAppEntry(name, exePath);
@@ -94,6 +97,10 @@ public class AppScanner
                     if (string.IsNullOrEmpty(targetPath) || !File.Exists(targetPath)) continue;
 
                     var name = Path.GetFileNameWithoutExtension(lnk);
+
+                    if (ShouldExclude(name, targetPath))
+                        continue;
+
                     var toolKey = MakeKey("open", name);
 
                     if (!tools.ContainsKey(toolKey))
@@ -126,6 +133,42 @@ public class AppScanner
         "uninstall", "unitycrashandler64", "unitycrashandler32",
         "crashhandler", "launcher", "updater", "setup", "redist"
     };
+
+    /// <summary>
+    /// Filters out entries that are clearly not user-facing apps:
+    /// uninstallers, runtimes, redistributables, SDKs, Package Cache, etc.
+    /// </summary>
+    private static bool ShouldExclude(string displayName, string exePath)
+    {
+        // Paths inside Package Cache are never real apps
+        if (exePath.Contains(@"\Package Cache\", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var exeFileName = Path.GetFileNameWithoutExtension(exePath).ToLowerInvariant();
+
+        // Exe name is an uninstaller or utility
+        if (exeFileName.Contains("uninstall") || exeFileName.Contains("setup")
+            || exeFileName.Contains("vcredist") || exeFileName.Contains("redist"))
+            return true;
+
+        var lower = displayName.ToLowerInvariant();
+
+        // Common non-app display names
+        if (lower.Contains("redistributable") || lower.Contains("redist"))
+            return true;
+        if (lower.Contains("runtime") && !lower.Contains("unity"))
+            return true;
+        if (lower.Contains("sdk") && !lower.Contains("game"))
+            return true;
+        if (lower.Contains("prerequisites") || lower.Contains("prereq"))
+            return true;
+        if (lower.Contains("webview2"))
+            return true;
+        if (lower.Contains("uninstall"))
+            return true;
+
+        return false;
+    }
 
     private static void ScanSteamApps(Dictionary<string, JObject> tools)
     {
@@ -233,6 +276,10 @@ public class AppScanner
                     if (!target.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
 
                     var name = Path.GetFileNameWithoutExtension(lnk);
+
+                    if (ShouldExclude(name, target))
+                        continue;
+
                     var toolKey = MakeKey("open", name);
                     if (!tools.ContainsKey(toolKey))
                         tools[toolKey] = CreateAppEntry(name, target);

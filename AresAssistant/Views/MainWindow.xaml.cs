@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     public static AgentLoop AgentLoop { get; private set; } = null!;
     public static ToolRegistry ToolRegistry { get; private set; } = null!;
     public static SpeechEngine SpeechEngine { get; private set; } = null!;
+    public static Task? WarmUpTask { get; private set; }
 
     public MainWindow()
     {
@@ -91,8 +92,8 @@ public partial class MainWindow : Window
 
         var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config);
 
-        var speech = new SpeechEngine { Enabled = config.VoiceEnabled, Volume = config.TtsVolume, VoiceGender = config.TtsVoiceGender };
-        _ = speech.WarmUpAsync();  // Pre-warm Edge TTS so first response doesn't fall to local voice
+        var speech = new SpeechEngine { Enabled = config.VoiceEnabled, Volume = config.TtsVolume, VoiceGender = config.TtsVoiceGender, SkipLocalFallback = true };
+        WarmUpTask = speech.WarmUpAsync();  // Pre-warm Piper + Edge TTS so first response uses neural voice
         SpeechEngine = speech;
 
         ToolRegistry = registry;

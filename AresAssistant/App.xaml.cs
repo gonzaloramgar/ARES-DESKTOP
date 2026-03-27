@@ -7,6 +7,10 @@ namespace AresAssistant;
 
 public partial class App : Application
 {
+    /// <summary>App version displayed in splash and setup screens.</summary>
+    public static string AppVersion =>
+        $"v{typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.1.0"}";
+
     public static ConfigManager ConfigManager { get; private set; } = null!;
     public static bool IsExiting { get; set; } = false;
 

@@ -11,6 +11,7 @@
     <AssemblyName>AresAssistant</AssemblyName>
     <RootNamespace>AresAssistant</RootNamespace>
     <ApplicationIcon>Assets\ares.ico</ApplicationIcon>
+    <Version>1.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

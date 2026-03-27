@@ -103,7 +103,10 @@ public class AgentLoop
         sb.AppendLine("  - ubicación/localización  → usa get_location (detecta ciudad por IP, no necesita GPS)");
         sb.AppendLine("  - tiempo/clima/meteorología→ usa get_location PRIMERO y luego get_weather con las coordenadas");
         sb.AppendLine("Usa la herramienta PRIMERO. Explica brevemente lo que hiciste DESPUÉS.");
+        sb.AppendLine("Cuando la herramienta devuelve un resultado, informa al usuario con una frase breve y natural. NO vuelvas a ejecutar la misma herramienta.");
+        sb.AppendLine("Si el resultado dice que la acción ya se realizó (ej: app ya abierta), informa al usuario sin reintentar.");
         sb.AppendLine("NUNCA digas que una aplicación no existe sin haber llamado a open_app. Siempre intenta abrir con la herramienta.");
+        sb.AppendLine("La herramienta open_app detecta si la aplicación YA ESTÁ EN EJECUCIÓN y te lo dirá. Si dice que ya está abierta, informa al usuario sin intentar abrir otra vez.");
         sb.AppendLine("Aunque antes haya fallado, VUELVE A INTENTARLO con la herramienta porque las apps se escanean de nuevo cada inicio.");
         sb.AppendLine("Si open_app no encuentra una app y el usuario da la ruta, usa remember_app para guardarla. Así la recordarás para siempre.");
         sb.AppendLine();

@@ -59,10 +59,17 @@ public partial class SettingsWindow : Window
     private async void CheckOllama_Click(object sender, RoutedEventArgs e)
         => await _vm.CheckOllamaAsync();
 
-    private void TestVoice_Click(object sender, RoutedEventArgs e)
+    private async void TestVoice_Click(object sender, RoutedEventArgs e)
     {
         var speech = MainWindow.SpeechEngine;
         if (speech == null) return;
+
+        // Wait for warm-up to finish so Piper/Edge are ready on first click
+        if (MainWindow.WarmUpTask is { IsCompleted: false } t)
+        {
+            _vm.TtsEngineStatus = "Preparando motor de voz...";
+            await t;
+        }
 
         _vm.TtsEngineStatus = "Sintetizando...";
 

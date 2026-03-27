@@ -30,6 +30,7 @@ public partial class SetupWindow : Window
     private Grid[] _pages = [];
     private Ellipse[] _dots = [];
     private SpeechEngine? _testSpeech;
+    private Task? _warmUpTask;
 
     public SetupWindow()
     {
@@ -47,6 +48,10 @@ public partial class SetupWindow : Window
             HighlightPerfModeCard(_selectedPerfMode);
             HighlightVoiceGenderCard(_selectedVoiceGender);
             UpdateNavigation();
+
+            // Start warming up Piper + Edge early so the voice test works on first click
+            _testSpeech = new SpeechEngine { SkipLocalFallback = true };
+            _warmUpTask = _testSpeech.WarmUpAsync();
 
             // Staggered entrance for the first page content
             await Task.Delay(300);
@@ -84,13 +89,7 @@ public partial class SetupWindow : Window
         _currentPage = target;
         UpdateNavigation();
 
-        // Pre-warm Edge TTS when entering the voice page so the first test
-        // doesn't fall through to the low-quality Local WinRT voice.
-        if (target == 1 && _testSpeech == null)
-        {
-            _testSpeech = new SpeechEngine { SkipLocalFallback = true };
-            _ = _testSpeech.WarmUpAsync();
-        }
+        // Already warmed up from window load — nothing extra needed here
 
         // Animate inner sections with stagger
         AnimatePageEntrance(inPage);
@@ -298,14 +297,24 @@ public partial class SetupWindow : Window
             SetupVolumeLabel.Text = $"{e.NewValue:P0}";
     }
 
-    private void SetupTestVoice_Click(object sender, RoutedEventArgs e)
+    private async void SetupTestVoice_Click(object sender, RoutedEventArgs e)
     {
-        // Reuse the same engine — Speak() internally calls Stop(),
-        // which cancels any in-progress synthesis/playback on the same instance.
         _testSpeech ??= new SpeechEngine { SkipLocalFallback = true };
         _testSpeech.Enabled = true;
         _testSpeech.Volume = (float)SetupVolumeSlider.Value;
         _testSpeech.VoiceGender = _selectedVoiceGender;
+
+        // Wait for warm-up to finish so Piper/Edge are ready
+        if (_warmUpTask != null)
+        {
+            SetupTestVoice.IsEnabled = false;
+            SetupTestVoice.Content = "⏳  Preparando...";
+            await _warmUpTask;
+            _warmUpTask = null;
+            SetupTestVoice.IsEnabled = true;
+            SetupTestVoice.Content = "▶  Probar voz";
+        }
+
         _testSpeech.Speak("Hola, soy ARES. Esta es una prueba de voz.");
     }
 

@@ -107,19 +107,34 @@ public sealed class SpeechEngine : IDisposable
     }
 
     /// <summary>
-    /// Pre-warm the Edge TTS pipeline by doing a real (tiny) synthesis.
-    /// This warms DNS, TLS, and the server-side voice model so the first
-    /// real Speak() gets audio from Edge instead of falling to Local WinRT.
+    /// Pre-warm Piper (ONNX model load) and Edge TTS (DNS/TLS handshake)
+    /// so the very first real Speak() doesn't fall back to the local WinRT voice.
     /// Call once after construction — fire-and-forget is fine.
     /// </summary>
     public async Task WarmUpAsync()
     {
+        // 1️⃣ Piper warm-up — the ONNX model needs a cold-load on first use;
+        //    without this, the first Speak() can fail/timeout and fall to local voice.
+        var male = IsMale;
+        var piperReady = male ? _piperReadyMale : _piperReadyFemale;
+        if (piperReady)
+        {
+            try
+            {
+                var model   = male ? VoiceModelMale : VoiceModelFemale;
+                int? speaker = male ? null : 1;
+                using var pcts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                await SynthesizePiperAsync(".", model, pcts.Token, speaker);
+            }
+            catch { /* best-effort */ }
+        }
+
+        // 2️⃣ Edge warm-up — DNS + TLS + server-side voice model cache
         try
         {
-            var voice = IsMale ? EdgeVoiceMalePrimary : EdgeVoiceFemalePrimary;
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            // Synthesize a tiny phrase to truly warm the full pipeline
-            await SynthesizeEdgeAsync(".", voice, cts.Token);
+            var voice = male ? EdgeVoiceMalePrimary : EdgeVoiceFemalePrimary;
+            using var ects = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            await SynthesizeEdgeAsync(".", voice, ects.Token);
         }
         catch { /* best-effort warm-up */ }
     }

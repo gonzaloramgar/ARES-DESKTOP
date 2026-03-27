@@ -31,7 +31,12 @@ Al primer arranque, ARES presenta un wizard de 5 pasos:
 5. **Sistema** — Hotkeys, inicio con Windows, historial, bandeja del sistema y tiempo de descarga del modelo
 
 #### Instalación automática de Ollama
-Desde el wizard, el botón **"Instalar todo"** descarga OllamaSetup.exe, lo instala silenciosamente, espera a que la API esté lista y descarga automáticamente el modelo seleccionado según el modo de rendimiento. Barra de progreso en tiempo real.
+Desde el wizard, el botón **"Instalar todo"** abre una ventana de progreso dedicada (`OllamaInstallWindow`) con 3 fases:
+1. **Descarga** del instalador desde ollama.com (0–60%) — muestra MB descargados en tiempo real
+2. **Instalación** silenciosa con elevación de permisos UAC (60–80%)
+3. **Espera** a que la API de Ollama responda (80–100%)
+
+Una vez instalado, descarga automáticamente el modelo correspondiente al modo de rendimiento elegido mediante otra ventana de progreso dedicada (`ModelDownloadWindow`) que muestra porcentaje, tamaño descargado/total y estado de cada capa.
 
 #### Descarga de voces offline
 El botón **"Descargar voces offline"** en la página de voz descarga los modelos Piper para ambos géneros (~60 MB total), habilitando TTS neural sin conexión a internet.
@@ -213,6 +218,8 @@ AresAssistant/
 │   ├── SetupWindow                 # Wizard de configuración inicial (5 pasos)
 │   ├── OverlayModeControl         # UI modo compacto
 │   ├── FullHudModeControl         # UI modo HUD completo
+│   ├── OllamaInstallWindow        # Descarga e instalación automática de Ollama (3 fases con progreso)
+│   ├── ModelDownloadWindow        # Descarga de modelos Ollama con progreso en tiempo real
 │   ├── ConfirmationDialog         # Diálogo de confirmación de herramientas
 │   └── PurgeConfirmationDialog    # Confirmación de purga de historial
 ├── ViewModels/                    # MVVM: Chat, Settings, Main, Splash
@@ -221,6 +228,8 @@ AresAssistant/
 │   ├── SettingsViewModel.cs       # Todas las opciones con live-apply
 │   ├── MainViewModel.cs           # Toggle Overlay / HUD
 │   └── SplashViewModel.cs         # Progreso de carga
+├── Helpers/
+│   └── FormatHelper.cs            # Utilidad compartida: formateo de bytes (B/KB/MB/GB)
 ├── Config/
 │   ├── AppConfig.cs               # Record de configuración
 │   ├── ConfigManager.cs           # Serialización JSON

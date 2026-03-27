@@ -1,22 +1,25 @@
-# Build output
+# ─── Build output ────────────────────────────────────────────────
 bin/
 obj/
+Build/
 
-# User-specific files
+# ─── Visual Studio / Rider ───────────────────────────────────────
 *.user
 *.suo
 .vs/
+*.DotSettings.user
 
-# Runtime data generada al iniciar la app (no subir al repo)
-AresAssistant/data/logs/
-AresAssistant/data/chat-history.json
+# ─── Runtime data (generada por la app, local a cada usuario) ────
+# Toda la carpeta data/ se genera al iniciar: config, historial,
+# herramientas escaneadas, voces TTS descargadas, logs y crashes.
+AresAssistant/data/
 
-# OS
+# ─── OS ──────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Superpowers internals
+# ─── Herramientas internas ───────────────────────────────────────
 .superpowers/
-
 .claude/
 docs/

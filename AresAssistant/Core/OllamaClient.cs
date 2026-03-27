@@ -189,8 +189,8 @@ public class OllamaClient
     }
 
     /// <summary>
-    /// Attempts to start 'ollama serve' if it's installed but not running.
-    /// Returns true if Ollama becomes available within the timeout.
+    /// Attempts to start Ollama if it's installed but not running.
+    /// Kills stuck processes if needed. Returns true if Ollama becomes available.
     /// </summary>
     public async Task<bool> TryStartAsync(int timeoutSeconds = 15)
     {
@@ -202,24 +202,43 @@ public class OllamaClient
 
         try
         {
-            // Find ollama executable
-            var exePath = "ollama";
-            var defaultPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Programs", "Ollama", "ollama.exe");
-            if (File.Exists(defaultPath))
-                exePath = defaultPath;
-
-            var psi = new System.Diagnostics.ProcessStartInfo
+            // Kill any stuck Ollama processes before trying to start fresh
+            foreach (var proc in System.Diagnostics.Process.GetProcessesByName("ollama"))
             {
-                FileName = exePath,
-                Arguments = "serve",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-            System.Diagnostics.Process.Start(psi);
+                try { proc.Kill(); proc.WaitForExit(3000); } catch { }
+            }
+            foreach (var proc in System.Diagnostics.Process.GetProcessesByName("ollama app"))
+            {
+                try { proc.Kill(); proc.WaitForExit(3000); } catch { }
+            }
+            await Task.Delay(1000);
+
+            var ollamaDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Programs", "Ollama");
+
+            // Prefer "ollama app.exe" — it's the proper Windows launcher that starts the service
+            var appExe = Path.Combine(ollamaDir, "ollama app.exe");
+            if (File.Exists(appExe))
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = appExe,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                // Fallback: ollama serve
+                var cliExe = Path.Combine(ollamaDir, "ollama.exe");
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = File.Exists(cliExe) ? cliExe : "ollama",
+                    Arguments = "serve",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+            }
 
             // Wait for API to respond
             for (int i = 0; i < timeoutSeconds * 2; i++)

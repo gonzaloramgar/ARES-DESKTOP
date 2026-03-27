@@ -144,31 +144,20 @@ ARES usa la API nativa de herramientas de Ollama. Solo ciertos modelos generan `
 
 ## Instalación
 
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/tu-usuario/ares.git
-cd ares
-```
+### Opción A — Ejecutable precompilado (recomendado)
+1. Descarga el zip de la última [release](https://github.com/gonzaloramgar/ARES/releases)
+2. Extrae y ejecuta `AresAssistant.exe`
+3. Al primer arranque, ARES instala Ollama y descarga el modelo automáticamente
 
-### 2. Instalar Ollama y un modelo
-```bash
-# Instalar Ollama desde https://ollama.ai
-ollama pull qwen2.5:7b      # recomendado — rápido, ~5 GB, funciona en cualquier PC
-ollama pull qwen2.5:14b     # mejor calidad — ~9 GB, recomendado con 16+ GB RAM
-```
+Requisito: [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) instalado en la máquina.
 
-### 3. Compilar y ejecutar
+### Opción B — Compilar desde fuente
 ```bash
-dotnet build -c Release
-dotnet run --project AresAssistant
-```
-O abrir `Ares.sln` en Visual Studio 2022+ y ejecutar.
-
-### 4. Generar ejecutable
-```bash
+git clone https://github.com/gonzaloramgar/ARES.git
+cd ARES
 dotnet publish "AresAssistant/AresAssistant.csproj" -c Release -r win-x64 --self-contained false -o "Build/"
 ```
-Requiere .NET 8 instalado en la máquina de destino. Resultado: `Build/AresAssistant.exe`.
+Resultado: `Build/AresAssistant.exe`. Al ejecutarlo por primera vez, el asistente de configuración instala Ollama y el modelo automáticamente.
 
 ## Configuración
 

@@ -54,8 +54,6 @@
                          Fill="#333333" Opacity="0.5"/>
                 <Ellipse x:Name="Dot4" Width="8" Height="8" Margin="4,0"
                          Fill="#333333" Opacity="0.5"/>
-                <Ellipse x:Name="Dot5" Width="8" Height="8" Margin="4,0"
-                         Fill="#333333" Opacity="0.5"/>
             </StackPanel>
 
             <!-- ══════════  PAGE CONTAINER  ══════════ -->
@@ -120,23 +118,6 @@
                                     <TextBox x:Name="NameBox" Style="{StaticResource AresTextBox}"
                                              Text="ARES" FontSize="15" FontFamily="Consolas"
                                              MaxLength="20"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Model -->
-                            <Border Background="#0b0b0b" CornerRadius="10"
-                                    BorderBrush="#1a1a1a" BorderThickness="1" Padding="22,18">
-                                <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                        <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"
-                                                   Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="MODELO DE OLLAMA" FontFamily="Consolas" FontSize="10"
-                                                   FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
-                                                   VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                    </StackPanel>
-                                    <TextBlock Text="Modelo de IA que usará el asistente"
-                                               FontSize="11" Foreground="#808080" FontFamily="Consolas" Margin="0,0,0,10"/>
-                                    <ComboBox x:Name="ModelBox" IsEditable="True" Text="qwen2.5:7b"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -238,7 +219,7 @@
                             <TextBlock Text="🤖  INTELIGENCIA ARTIFICIAL" FontSize="20" FontWeight="Bold"
                                        Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"
                                        FontFamily="Consolas" Margin="0,0,0,6"/>
-                            <TextBlock Text="Define cómo se comporta tu asistente"
+                            <TextBlock Text="Personalidad, rendimiento y modelo de IA"
                                        FontSize="11" Foreground="#707070" HorizontalAlignment="Center"
                                        FontFamily="Consolas" Margin="0,0,0,22"/>
 
@@ -316,7 +297,7 @@
 
                             <!-- Response Length -->
                             <Border Background="#0b0b0b" CornerRadius="10"
-                                    BorderBrush="#1a1a1a" BorderThickness="1" Padding="22,16">
+                                    BorderBrush="#1a1a1a" BorderThickness="1" Padding="22,16" Margin="0,0,0,14">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                         <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"
@@ -332,20 +313,6 @@
                                     </ComboBox>
                                 </StackPanel>
                             </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-
-                <!-- ────── PAGE 3: Rendimiento ────── -->
-                <Grid x:Name="Page3" Visibility="Collapsed">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0">
-                        <StackPanel HorizontalAlignment="Center" Margin="50,14,50,10">
-                            <TextBlock Text="⚙  RENDIMIENTO" FontSize="20" FontWeight="Bold"
-                                       Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"
-                                       FontFamily="Consolas" Margin="0,0,0,6"/>
-                            <TextBlock Text="Ajusta según la potencia de tu equipo"
-                                       FontSize="11" Foreground="#707070" HorizontalAlignment="Center"
-                                       FontFamily="Consolas" Margin="0,0,0,22"/>
 
                             <!-- Hardware info -->
                             <Border Background="#0b0b0b" CornerRadius="10"
@@ -375,7 +342,7 @@
 
                             <!-- Mode cards -->
                             <Border Background="#0b0b0b" CornerRadius="10"
-                                    BorderBrush="#1a1a1a" BorderThickness="1" Padding="22,16">
+                                    BorderBrush="#1a1a1a" BorderThickness="1" Padding="22,16" Margin="0,0,0,14">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                         <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"

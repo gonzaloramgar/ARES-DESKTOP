@@ -19,12 +19,14 @@ public class OllamaClient
         List<OllamaMessage> messages,
         List<ToolDefinition> tools,
         string model,
-        int numCtx = 8192,
-        int numThread = 0)
+        int numCtx = 4096,
+        int numThread = 0,
+        int numPredict = 512,
+        int numBatch = 512)
     {
         var options = numThread > 0
-            ? (object)new { num_ctx = numCtx, num_thread = numThread, temperature = 0.7, repeat_penalty = 1.1 }
-            : new { num_ctx = numCtx, temperature = 0.7, repeat_penalty = 1.1 };
+            ? (object)new { num_ctx = numCtx, num_thread = numThread, num_predict = numPredict, num_batch = numBatch, temperature = 0.7, repeat_penalty = 1.1 }
+            : new { num_ctx = numCtx, num_predict = numPredict, num_batch = numBatch, temperature = 0.7, repeat_penalty = 1.1 };
 
         var payload = new
         {
@@ -73,12 +75,14 @@ public class OllamaClient
         List<OllamaMessage> messages,
         List<ToolDefinition> tools,
         string model,
-        int numCtx = 8192,
-        int numThread = 0)
+        int numCtx = 4096,
+        int numThread = 0,
+        int numPredict = 512,
+        int numBatch = 512)
     {
         var options = numThread > 0
-            ? (object)new { num_ctx = numCtx, num_thread = numThread, temperature = 0.7, repeat_penalty = 1.1 }
-            : new { num_ctx = numCtx, temperature = 0.7, repeat_penalty = 1.1 };
+            ? (object)new { num_ctx = numCtx, num_thread = numThread, num_predict = numPredict, num_batch = numBatch, temperature = 0.7, repeat_penalty = 1.1 }
+            : new { num_ctx = numCtx, num_predict = numPredict, num_batch = numBatch, temperature = 0.7, repeat_penalty = 1.1 };
 
         var payload = new
         {

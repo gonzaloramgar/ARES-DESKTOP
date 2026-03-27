@@ -1,7 +1,9 @@
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using AresAssistant.Config;
 using AresAssistant.Tools;
+using Newtonsoft.Json.Linq;
 
 namespace AresAssistant.Core;
 
@@ -20,6 +22,8 @@ public class AgentLoop
     /// <summary>Fired for each streaming token so the UI can display text word by word.</summary>
     public event Action<string>? TokenReceived;
     public event Action<string>? StatusChanged;
+    /// <summary>Fired when tool calls are about to execute so the UI can remove any partial streaming bubble.</summary>
+    public event Action? ToolExecuting;
 
     private string? _cachedSystemPrompt;
     private string? _lastPersonality;
@@ -146,7 +150,7 @@ public class AgentLoop
 
     public async Task RunAsync(string userMessage)
     {
-        var (numCtx, numThread, historyLimit) = _config.GetPerformanceParams();
+        var (numCtx, numThread, historyLimit, numPredict, numBatch) = _config.GetPerformanceParams();
 
         _history.Add(new OllamaMessage("user", userMessage));
         _history.TrimToLast(historyLimit);
@@ -164,30 +168,38 @@ public class AgentLoop
             if (useStreaming)
             {
                 // Attempt streaming — gives instant token-by-token feedback
-                var streamed = await TryStreamResponseAsync(numCtx, numThread).ConfigureAwait(false);
+                var streamed = await TryStreamResponseAsync(numCtx, numThread, numPredict, numBatch).ConfigureAwait(false);
                 if (streamed.HasValue)
                 {
                     if (streamed.Value.toolResponse != null)
                     {
                         // Got tool calls from stream — process them
                         var resp = streamed.Value.toolResponse;
+                        ToolExecuting?.Invoke();
                         _history.Add(new OllamaMessage("assistant", resp.Message.Content ?? "")
                         {
                             ToolCalls = resp.Message.ToolCalls
                         });
-
-                        foreach (var call in resp.Message.ToolCalls!)
-                        {
-                            StatusChanged?.Invoke($"Ejecutando: {call.Function.Name}...");
-                            var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments).ConfigureAwait(false);
-                            _history.Add(new OllamaMessage("tool", result) { ToolCallId = call.Id });
-                        }
+                        await ExecuteToolCallsAsync(resp.Message.ToolCalls!).ConfigureAwait(false);
                         continue; // loop back
                     }
                     else
                     {
-                        // Got streamed text — done
+                        // Got streamed text — check for text-based tool calls first
                         var content = streamed.Value.text ?? "";
+                        var (textCalls, cleanedText) = TryParseTextToolCalls(content);
+
+                        if (textCalls.Count > 0)
+                        {
+                            ToolExecuting?.Invoke();
+                            _history.Add(new OllamaMessage("assistant", cleanedText)
+                            {
+                                ToolCalls = textCalls
+                            });
+                            await ExecuteToolCallsAsync(textCalls).ConfigureAwait(false);
+                            continue; // loop back for the tool result response
+                        }
+
                         _history.Add(new OllamaMessage("assistant", content));
                         StatusChanged?.Invoke("");
                         ResponseReceived?.Invoke(content);
@@ -206,7 +218,9 @@ public class AgentLoop
                     _toolRegistry.GetToolDefinitions(),
                     _config.OllamaModel,
                     numCtx,
-                    numThread).ConfigureAwait(false);
+                    numThread,
+                    numPredict,
+                    numBatch).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -222,21 +236,30 @@ public class AgentLoop
 
             if (response.Message.ToolCalls?.Count > 0)
             {
+                ToolExecuting?.Invoke();
                 _history.Add(new OllamaMessage("assistant", response.Message.Content ?? "")
                 {
                     ToolCalls = response.Message.ToolCalls
                 });
-
-                foreach (var call in response.Message.ToolCalls)
-                {
-                    StatusChanged?.Invoke($"Ejecutando: {call.Function.Name}...");
-                    var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments).ConfigureAwait(false);
-                    _history.Add(new OllamaMessage("tool", result) { ToolCallId = call.Id });
-                }
+                await ExecuteToolCallsAsync(response.Message.ToolCalls).ConfigureAwait(false);
             }
             else
             {
                 var content = response.Message.Content ?? "";
+
+                // Fallback: detect tool calls embedded as text
+                var (textCalls, cleanedText) = TryParseTextToolCalls(content);
+                if (textCalls.Count > 0)
+                {
+                    ToolExecuting?.Invoke();
+                    _history.Add(new OllamaMessage("assistant", cleanedText)
+                    {
+                        ToolCalls = textCalls
+                    });
+                    await ExecuteToolCallsAsync(textCalls).ConfigureAwait(false);
+                    continue; // loop back
+                }
+
                 _history.Add(new OllamaMessage("assistant", content));
                 StatusChanged?.Invoke("");
                 ResponseReceived?.Invoke(content);
@@ -254,23 +277,94 @@ public class AgentLoop
         return msgs.Count > 0 && msgs[^1].Role == "tool";
     }
 
+    // ═══════════════ Text-based tool call fallback ═══════════════
+    // Some models (especially qwen2.5:14b) sometimes emit tool calls as raw text
+    // instead of the structured Ollama tool_calls format.  Patterns seen:
+    //   <tool_call>\n{"name":"open_app","arguments":{...}}\n</tool_call>
+    //   _icall_\n{"name":"open_app","arguments":{...}}\n</tool_call>  (garbled prefix)
+
+    private static readonly Regex TextToolCallRegex = new(
+        @"\{[^{}]*""name""\s*:\s*""([^""]+)""\s*,\s*""arguments""\s*:\s*(\{[^{}]*\})",
+        RegexOptions.Singleline | RegexOptions.Compiled);
+
+    /// <summary>
+    /// Try to extract tool calls embedded as text in the response content.
+    /// Returns the list of parsed calls and the cleaned text with tool markup removed.
+    /// </summary>
+    private static (List<OllamaToolCall> calls, string cleanedText) TryParseTextToolCalls(string content)
+    {
+        var calls = new List<OllamaToolCall>();
+        if (string.IsNullOrWhiteSpace(content)) return (calls, content);
+
+        foreach (Match m in TextToolCallRegex.Matches(content))
+        {
+            try
+            {
+                var name = m.Groups[1].Value;
+                var argsJson = m.Groups[2].Value;
+                var argsObj = JObject.Parse(argsJson);
+                var args = argsObj.ToObject<Dictionary<string, JToken>>() ?? new();
+
+                calls.Add(new OllamaToolCall
+                {
+                    Function = new OllamaToolCallFunction { Name = name, Arguments = args }
+                });
+            }
+            catch { /* malformed JSON — skip */ }
+        }
+
+        if (calls.Count > 0)
+        {
+            // Strip the tool_call markup and any surrounding tags from the visible text
+            var cleaned = Regex.Replace(content, @"<?\/?tool_call>?", "", RegexOptions.IgnoreCase);
+            cleaned = Regex.Replace(cleaned, @"_icall_", "", RegexOptions.IgnoreCase);
+            cleaned = TextToolCallRegex.Replace(cleaned, "");
+            cleaned = cleaned.Trim('\n', '\r', ' ');
+            return (calls, cleaned);
+        }
+
+        return (calls, content);
+    }
+
+    /// <summary>
+    /// Process a list of tool calls (either from structured API or text fallback).
+    /// </summary>
+    private async Task ExecuteToolCallsAsync(List<OllamaToolCall> toolCalls)
+    {
+        foreach (var call in toolCalls)
+        {
+            StatusChanged?.Invoke($"Ejecutando: {call.Function.Name}...");
+            var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments)
+                .ConfigureAwait(false);
+            _history.Add(new OllamaMessage("tool", result) { ToolCallId = call.Id });
+        }
+    }
+
     /// <summary>
     /// Tries to get a streaming response. Returns text + optional tool response.
     /// Returns null if streaming fails (caller should fall back to non-streaming).
+    /// Buffers initial tokens to detect text-based tool calls before emitting to the UI.
     /// </summary>
-    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync(int numCtx, int numThread)
+    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync(int numCtx, int numThread, int numPredict, int numBatch)
     {
         try
         {
             StatusChanged?.Invoke("Pensando...");
             var fullText = new StringBuilder();
+            var buffer = new StringBuilder();
+            bool flushed = false;
+
+            // Tool-call text markers — if any of these appear early, keep buffering
+            const int BufferThreshold = 120; // characters before we decide it's safe text
 
             await foreach (var chunk in _ollamaClient.ChatStreamAsync(
                 _history.ToList(),
                 _toolRegistry.GetToolDefinitions(),
                 _config.OllamaModel,
                 numCtx,
-                numThread))
+                numThread,
+                numPredict,
+                numBatch))
             {
                 if (chunk.IsToolCall)
                     return (null, chunk.ToolResponse);
@@ -278,19 +372,67 @@ public class AgentLoop
                 if (chunk.Token != null)
                 {
                     fullText.Append(chunk.Token);
-                    TokenReceived?.Invoke(chunk.Token);
+
+                    if (!flushed)
+                    {
+                        buffer.Append(chunk.Token);
+                        var bufStr = buffer.ToString();
+
+                        // Check if buffer looks like a tool call
+                        if (LooksLikeToolCall(bufStr))
+                        {
+                            // Keep buffering — don't emit anything to UI
+                            continue;
+                        }
+
+                        // Once we have enough chars without tool call markers, flush everything
+                        if (bufStr.Length >= BufferThreshold || !MightBeToolCall(bufStr))
+                        {
+                            flushed = true;
+                            TokenReceived?.Invoke(bufStr);
+                        }
+                    }
+                    else
+                    {
+                        TokenReceived?.Invoke(chunk.Token);
+                    }
                 }
+            }
+
+            // If we never flushed, check the complete text
+            if (!flushed)
+            {
+                var completeText = fullText.ToString();
+                // Don't emit tokens if it contains tool calls — the caller will handle it
+                if (TryParseTextToolCalls(completeText).calls.Count > 0)
+                    return (completeText, null);
+
+                // Safe text that was just short — flush now
+                TokenReceived?.Invoke(completeText);
             }
 
             return (fullText.ToString(), null);
         }
         catch (HttpRequestException)
         {
-            return null; // network issue → fall back to non-streaming
+            return null;
         }
         catch (TaskCanceledException)
         {
-            return null; // timeout → fall back to non-streaming
+            return null;
         }
     }
+
+    /// <summary>Definitely contains tool call patterns</summary>
+    private static bool LooksLikeToolCall(string text)
+        => text.Contains("tool_call", StringComparison.OrdinalIgnoreCase)
+        || text.Contains("_icall_", StringComparison.OrdinalIgnoreCase)
+        || (text.Contains("\"name\"") && text.Contains("\"arguments\""));
+
+    /// <summary>Could still become a tool call (partial patterns in early tokens)</summary>
+    private static bool MightBeToolCall(string text)
+        => text.Contains("<tool", StringComparison.OrdinalIgnoreCase)
+        || text.Contains("_ical", StringComparison.OrdinalIgnoreCase)
+        || text.TrimStart().StartsWith("{")
+        || text.TrimStart().StartsWith("<");
 }

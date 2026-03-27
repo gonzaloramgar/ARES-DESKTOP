@@ -24,11 +24,17 @@ ARES puede leer sus respuestas en voz alta con un sistema de TTS de 3 niveles co
 
 ### Asistente de configuración inicial (Setup Wizard)
 Al primer arranque, ARES presenta un wizard de 5 pasos:
-1. **Bienvenida** — Presentación del asistente
-2. **Nombre y personalidad** — Configura nombre, tono y longitud de respuestas
-3. **Rendimiento** — Detección automática de hardware y recomendación de modo
-4. **Voz** — Activar/desactivar TTS, seleccionar género, ajustar volumen y probar
-5. **Apariencia** — Color de acento, opacidad y posición del overlay
+1. **Bienvenida + Nombre** — Presentación del asistente y nombre personalizado
+2. **Voz** — Activar/desactivar TTS, seleccionar género, ajustar volumen, probar voz y descargar voces Piper offline
+3. **Inteligencia Artificial** — Personalidad, longitud de respuestas, detección de hardware, selección de modo de rendimiento (Ligero/Avanzado) e instalación automática de Ollama + modelo
+4. **Apariencia** — Color de acento, opacidad, tamaño de fuente y posición del overlay
+5. **Sistema** — Hotkeys, inicio con Windows, historial, bandeja del sistema y tiempo de descarga del modelo
+
+#### Instalación automática de Ollama
+Desde el wizard, el botón **"Instalar todo"** descarga OllamaSetup.exe, lo instala silenciosamente, espera a que la API esté lista y descarga automáticamente el modelo seleccionado según el modo de rendimiento. Barra de progreso en tiempo real.
+
+#### Descarga de voces offline
+El botón **"Descargar voces offline"** en la página de voz descarga los modelos Piper para ambos géneros (~60 MB total), habilitando TTS neural sin conexión a internet.
 
 ### Herramientas integradas
 
@@ -55,6 +61,8 @@ Al primer arranque, ARES presenta un wizard de 5 pasos:
 | `maximize_window` | Maximiza una ventana por su título |
 | `type_text` | Escribe texto en la ventana activa (requiere confirmación) |
 | `remember_app` | Guarda nombre + ruta de una app no detectada automáticamente (persistente) |
+| `get_location` | Detecta la ciudad y coordenadas del usuario por IP (sin GPS) |
+| `get_weather` | Obtiene el clima actual usando coordenadas (Open-Meteo, sin API key) |
 
 ### Escaneo de aplicaciones inteligente
 - **Registry + Start Menu** — Detecta aplicaciones instaladas vía registro de Windows y accesos directos del menú Inicio
@@ -67,8 +75,20 @@ Al primer arranque, ARES presenta un wizard de 5 pasos:
 Las respuestas se muestran token a token en tiempo real. El sistema usa streaming para el primer turno de conversación y cambia automáticamente al modo no-streaming cuando hay llamadas a herramientas pendientes.
 
 ### Modos de rendimiento
-- **Ligero** — `num_ctx=4096`, 4 threads, 20 mensajes de historial. Ideal para hardware modesto (16 GB RAM, CPU básica)
-- **Avanzado** — `num_ctx=8192`, threads automáticos, 30 mensajes de historial. Para hardware potente
+Ambos modos usan el mismo tamaño de contexto y límite de historial, optimizados para velocidad:
+
+| Parámetro | Ligero (`qwen2.5:7b`) | Avanzado (`qwen2.5:14b`) |
+|---|---|---|
+| `num_ctx` | 4096 | 4096 |
+| `num_predict` | 512 | 512 |
+| `num_batch` | 512 | 1024 |
+| `num_thread` | 4 (fijo) | auto (Ollama decide) |
+| Historial | 20 mensajes | 20 mensajes |
+
+- **Ligero** — Modelo 7b, rápido, ideal para hardware modesto (8–16 GB RAM)
+- **Avanzado** — Modelo 14b, mejor calidad de respuesta y tool-calling, `num_batch` alto para evaluar prompts grandes rápidamente. Requiere ~16 GB RAM
+
+El modelo se selecciona automáticamente según el modo de rendimiento elegido (no hay selector manual de modelo en el wizard).
 
 ### Gestión de memoria de modelo
 ARES descarga automáticamente el modelo de la RAM de Ollama tras un período de inactividad configurable (`ModelKeepAliveMinutes`). También descarga el modelo al cerrar la aplicación.
@@ -207,7 +227,7 @@ AresAssistant/
 │   └── ThemeEngine.cs             # Aplicación dinámica del tema
 ├── Core/                          # Lógica de negocio y servicios
 │   ├── AgentLoop.cs               # Bucle de conversación (streaming + tool-call loop, max 10 iteraciones)
-│   ├── OllamaClient.cs            # Cliente HTTP: ChatAsync, ChatStreamAsync, UnloadModelAsync
+│   ├── OllamaClient.cs            # Cliente HTTP: ChatAsync, ChatStreamAsync, UnloadModelAsync, PullModelAsync
 │   ├── ConversationHistory.cs     # Gestión del historial thread-safe con TrimToLast
 │   ├── SpeechEngine.cs            # TTS 3 niveles: Piper neural → Edge online → Windows local
 │   ├── OllamaMessage.cs           # Modelos de datos de mensajes
@@ -220,7 +240,8 @@ AresAssistant/
 │   ├── ActionLogger.cs            # Log de acciones ejecutadas
 │   ├── HardwareDetector.cs        # Detección de CPU/RAM para recomendación de modo
 │   ├── StartupManager.cs          # Autoarranque con Windows (registro HKCU)
-│   └── GlobalHotkeyManager.cs     # Hotkeys globales Win32
+│   ├── GlobalHotkeyManager.cs     # Hotkeys globales Win32
+│   └── WindowNativeMethods.cs     # P/Invoke para operaciones de ventanas
 └── Tools/                         # Implementaciones ITool
     ├── PathResolver.cs             # Resolución de alias de rutas (compartido)
     ├── GenericOpenAppTool.cs       # open_app con búsqueda aproximada
@@ -229,7 +250,11 @@ AresAssistant/
     ├── CreateFolderTool.cs
     ├── DeleteFolderTool.cs         # Mueve a papelera (requiere confirmación)
     ├── RecycleBinTool.cs           # list / restore / restore_all (lee $I* metadata)
-    ├── [resto de tools individuales]
+    ├── LocationTool.cs             # Geolocalización por IP (ip-api.com)
+    ├── WeatherTool.cs              # Clima actual (Open-Meteo API, sin key)
+    ├── ClipboardTools.cs           # clipboard_read + clipboard_write
+    ├── WindowTools.cs              # list_open_windows, minimize_window, maximize_window
+    ├── VolumeTool.cs               # Control de volumen del sistema (NAudio)
     ├── ToolRegistry.cs             # Registro y carga desde tools.json
     └── ToolDispatcher.cs           # Permisos, confirmación y ejecución
 ```

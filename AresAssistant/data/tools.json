@@ -849,44 +849,9 @@
     "display_name": "Bulk Rename (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_burpsuite_kali_linux": {
-    "type": "open_app",
-    "display_name": "burpsuite (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_caido_kali_linux": {
-    "type": "open_app",
-    "display_name": "caido (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_cherrytree_kali_linux": {
-    "type": "open_app",
-    "display_name": "cherrytree (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_dirbuster_kali_linux": {
-    "type": "open_app",
-    "display_name": "dirbuster (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_document_viewer_kali_linux": {
     "type": "open_app",
     "display_name": "Document Viewer (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_edb_kali_linux": {
-    "type": "open_app",
-    "display_name": "edb (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_exploit_database_kali_linux": {
-    "type": "open_app",
-    "display_name": "Exploit Database (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_fern_wifi_cracker_kali_linux": {
-    "type": "open_app",
-    "display_name": "fern-wifi-cracker (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
   "open_flameshot_kali_linux": {
@@ -894,34 +859,14 @@
     "display_name": "Flameshot (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_fwbuilder_kali_linux": {
-    "type": "open_app",
-    "display_name": "fwbuilder (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_gnuradio_companion_kali_linux": {
-    "type": "open_app",
-    "display_name": "gnuradio-companion (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_gparted_kali_linux": {
     "type": "open_app",
     "display_name": "GParted (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_gqrx_kali_linux": {
-    "type": "open_app",
-    "display_name": "gqrx (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_gtkhash_kali_linux": {
     "type": "open_app",
     "display_name": "GtkHash (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_guymager_kali_linux": {
-    "type": "open_app",
-    "display_name": "guymager (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
   "open_gvim_kali_linux": {
@@ -949,39 +894,9 @@
     "display_name": "Inkscape (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_jadx_gui_kali_linux": {
-    "type": "open_app",
-    "display_name": "jadx-gui (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_javasnoop_kali_linux": {
-    "type": "open_app",
-    "display_name": "javasnoop (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_jd_gui_kali_linux": {
-    "type": "open_app",
-    "display_name": "jd-gui (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_johnny_kali_linux": {
-    "type": "open_app",
-    "display_name": "johnny (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_kali_autopilot_kali_linux": {
     "type": "open_app",
     "display_name": "Kali Autopilot (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_kali_docs_kali_linux": {
-    "type": "open_app",
-    "display_name": "Kali Docs (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_kali_tweaks_kali_linux": {
-    "type": "open_app",
-    "display_name": "Kali Tweaks (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
   "open_kde_connect_kali_linux": {
@@ -1029,29 +944,9 @@
     "display_name": "LibreOffice Writer (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_maltego_kali_linux": {
-    "type": "open_app",
-    "display_name": "maltego (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_mate_calculator_kali_linux": {
     "type": "open_app",
     "display_name": "MATE Calculator (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_nethunter_kali_linux": {
-    "type": "open_app",
-    "display_name": "NetHunter (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_obsidian_kali_linux": {
-    "type": "open_app",
-    "display_name": "obsidian (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_offsec_training_kali_linux": {
-    "type": "open_app",
-    "display_name": "OffSec Training (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
   "open_okular_kali_linux": {
@@ -1062,11 +957,6 @@
   "open_onboard_settings_kali_linux": {
     "type": "open_app",
     "display_name": "Onboard Settings (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_ophcrack_kali_linux": {
-    "type": "open_app",
-    "display_name": "ophcrack (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
   "open_parole_media_player_kali_linux": {
@@ -1109,16 +999,6 @@
     "display_name": "Sensor Viewer (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_sparrow_wifi_kali_linux": {
-    "type": "open_app",
-    "display_name": "sparrow-wifi (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_sqlitebrowser_kali_linux": {
-    "type": "open_app",
-    "display_name": "sqlitebrowser (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_thunar_preferences_kali_linux": {
     "type": "open_app",
     "display_name": "Thunar Preferences (kali-linux)",
@@ -1134,11 +1014,6 @@
     "display_name": "Tilix (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_uniscan_gui_kali_linux": {
-    "type": "open_app",
-    "display_name": "uniscan-gui (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_uxterm_kali_linux": {
     "type": "open_app",
     "display_name": "UXTerm (kali-linux)",
@@ -1149,11 +1024,6 @@
     "display_name": "Volume Control (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
-  "open_vulnhub_kali_linux": {
-    "type": "open_app",
-    "display_name": "VulnHub (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
   "open_xfce_terminal_kali_linux": {
     "type": "open_app",
     "display_name": "Xfce Terminal (kali-linux)",
@@ -1162,16 +1032,6 @@
   "open_xgps_kali_linux": {
     "type": "open_app",
     "display_name": "xgps (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_xsser_kali_linux": {
-    "type": "open_app",
-    "display_name": "xsser (kali-linux)",
-    "path": "C:\\Program Files\\WSL\\wslg.exe"
-  },
-  "open_zaproxy_kali_linux": {
-    "type": "open_app",
-    "display_name": "zaproxy (kali-linux)",
     "path": "C:\\Program Files\\WSL\\wslg.exe"
   },
   "open_mega_hack_installer": {

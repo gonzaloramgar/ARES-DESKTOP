@@ -17,7 +17,7 @@ public record AppConfig
     public bool CloseToTray { get; init; } = true;
     public bool ConfirmationAlertsEnabled { get; init; } = true;
     /// <summary>Enable text-to-speech for assistant responses.</summary>
-    public bool VoiceEnabled { get; init; } = false;
+    public bool VoiceEnabled { get; init; } = true;
     /// <summary>TTS playback volume 0.0–1.0. Default 0.5 (50%).</summary>
     public float TtsVolume { get; init; } = 0.5f;
     /// <summary>"masculino" or "femenino". Selects voice gender across all TTS engines.</summary>
@@ -33,12 +33,15 @@ public record AppConfig
     public string PerformanceMode { get; init; } = "ligero";
 
     /// <summary>Return Ollama options tuned for the current mode.</summary>
-    public (int NumCtx, int NumThread, int HistoryLimit) GetPerformanceParams()
+    public (int NumCtx, int NumThread, int HistoryLimit, int NumPredict, int NumBatch) GetPerformanceParams()
     {
         return PerformanceMode switch
         {
-            "avanzado" => (8192, 0, 30),   // 0 = let Ollama auto-detect threads
-            _          => (4096, 4, 20),    // ligero: tools+system≈2K tokens → 4K leaves room for history
+            //  14b: mismo ctx que 7b (4K sobra), batch grande para evaluar prompt rápido,
+            //  num_predict=512 evita respuestas interminables, auto-threads.
+            "avanzado" => (4096, 0, 20, 512, 1024),
+            //  7b: ctx 4K, 4 hilos fijos, batch estándar.
+            _          => (4096, 4, 20, 512, 512),
         };
     }
 }

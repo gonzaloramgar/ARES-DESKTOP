@@ -14,7 +14,9 @@ namespace AresAssistant.Views;
 
 public partial class SetupWindow : Window
 {
-    private const int TotalPages = 6;
+    private const int TotalPages = 5;
+
+    private string SelectedModel => _selectedPerfMode == "avanzado" ? "qwen2.5:14b" : "qwen2.5:7b";
     private int _currentPage;
 
     private string _selectedColor = "#ff2222";
@@ -37,8 +39,8 @@ public partial class SetupWindow : Window
             _personalityCards = [CardFormal, CardCasual, CardSarcastico, CardTecnico];
             _perfModeCards = [CardLigero, CardAvanzado];
             _voiceGenderCards = [CardMasculino, CardFemenino];
-            _pages = [Page0, Page1, Page2, Page3, Page4, Page5];
-            _dots = [Dot0, Dot1, Dot2, Dot3, Dot4, Dot5];
+            _pages = [Page0, Page4, Page2, Page1, Page5];
+            _dots = [Dot0, Dot1, Dot2, Dot3, Dot4];
 
             UpdateColorPreview(_selectedColor);
             HighlightPersonalityCard(_selectedPersonality);
@@ -51,7 +53,6 @@ public partial class SetupWindow : Window
             AnimatePageEntrance(Page0);
 
             await DetectHardwareAsync();
-            await LoadOllamaModelsAsync();
         };
     }
 
@@ -85,7 +86,7 @@ public partial class SetupWindow : Window
 
         // Pre-warm Edge TTS when entering the voice page so the first test
         // doesn't fall through to the low-quality Local WinRT voice.
-        if (target == 4 && _testSpeech == null)
+        if (target == 1 && _testSpeech == null)
         {
             _testSpeech = new SpeechEngine { SkipLocalFallback = true };
             _ = _testSpeech.WarmUpAsync();
@@ -181,22 +182,6 @@ public partial class SetupWindow : Window
         HighlightPerfModeCard(_selectedPerfMode);
     }
 
-    private async Task LoadOllamaModelsAsync()
-    {
-        try
-        {
-            var client = new OllamaClient();
-            var models = await client.GetInstalledModelsAsync();
-            if (models is { Count: > 0 })
-            {
-                ModelBox.ItemsSource = models;
-                if (models.Contains("qwen2.5:7b"))
-                    ModelBox.Text = "qwen2.5:7b";
-            }
-        }
-        catch { /* Ollama not running — user can type manually */ }
-    }
-
     // ═══════════════ Color ═══════════════
 
     private void Color_Click(object sender, RoutedEventArgs e)
@@ -261,8 +246,7 @@ public partial class SetupWindow : Window
             HighlightPerfModeCard(mode);
             AnimationHelper.BounceSelect(card);
 
-            // Auto-set the recommended model for each performance tier
-            ModelBox.Text = mode == "avanzado" ? "qwen2.5:14b" : "qwen2.5:7b";
+
         }
     }
 
@@ -334,7 +318,7 @@ public partial class SetupWindow : Window
         SetupInstallOllama.IsEnabled = false;
         OllamaProgressBorder.Visibility = Visibility.Visible;
 
-        var model = ModelBox.Text?.Trim() is { Length: > 0 } m ? m : "qwen2.5:7b";
+        var model = SelectedModel;
 
         try
         {
@@ -435,9 +419,7 @@ public partial class SetupWindow : Window
             OllamaInstallStatus.Foreground = (SolidColorBrush)FindResource("AccentBrush");
             SetupInstallOllama.Content = "✓  Instalado";
 
-            // Refresh the model list
-            await LoadOllamaModelsAsync();
-            ModelBox.Text = model;
+
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -499,7 +481,7 @@ public partial class SetupWindow : Window
             Personality = _selectedPersonality,
             PerformanceMode = _selectedPerfMode,
             AssistantName = name,
-            OllamaModel = ModelBox.Text?.Trim() is { Length: > 0 } m ? m : "qwen2.5:7b",
+            OllamaModel = SelectedModel,
             FontSize = fontSize,
             OverlayOpacity = OpacitySlider.Value,
             OverlayPosition = position,

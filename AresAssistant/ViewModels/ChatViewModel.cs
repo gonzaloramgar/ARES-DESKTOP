@@ -81,6 +81,7 @@ public class ChatViewModel : ViewModelBase
         _agentLoop.ResponseReceived += OnResponseReceived;
         _agentLoop.StatusChanged += OnStatusChanged;
         _agentLoop.TokenReceived += OnTokenReceived;
+        _agentLoop.ToolExecuting += OnToolExecuting;
 
         _agentLoop.InitSystemPrompt();
 
@@ -139,6 +140,18 @@ public class ChatViewModel : ViewModelBase
             else
             {
                 _streamingMessage.Content += token;
+            }
+        });
+    }
+
+    private void OnToolExecuting()
+    {
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (_streamingMessage != null)
+            {
+                Messages.Remove(_streamingMessage);
+                _streamingMessage = null;
             }
         });
     }

@@ -330,43 +330,52 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Grid Grid.Column="0">
-                        <TextBox x:Name="InputBox"
-                                 Style="{StaticResource AresTextBox}"
-                                 Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
-                                 KeyDown="Input_KeyDown"
-                                 TextWrapping="Wrap"
-                                 AcceptsReturn="False"
-                                 MinHeight="38" MaxHeight="120"
-                                 VerticalAlignment="Stretch"
-                                 VerticalScrollBarVisibility="Auto"
-                                 MaxLength="4000"/>
-                        <TextBlock Text="Escribe un mensaje..."
-                                   IsHitTestVisible="False"
-                                   Margin="14,10,0,0"
-                                   VerticalAlignment="Top"
-                                   Foreground="#3a3a50"
-                                   FontStyle="Italic"
-                                   FontSize="{DynamicResource FontSizeNormal}"
-                                   Visibility="{Binding InputText, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
-                    </Grid>
-
-                    <Button Grid.Column="1" Content="→"
-                            Style="{StaticResource AresButton}"
-                            Width="46" Height="38" Margin="8,0,0,0"
-                            FontSize="17"
-                            VerticalAlignment="Bottom"
-                            Click="Send_Click"
-                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}">
-                        <Button.Effect>
-                            <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.55" Color="#ff2222"/>
-                        </Button.Effect>
-                    </Button>
+                    <!-- Unified input container -->
+                    <Border
+                            x:Name="InputContainer"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1" CornerRadius="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <TextBox x:Name="InputBox"
+                                         Style="{StaticResource AresTextBox}"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
+                                         KeyDown="Input_KeyDown"
+                                         TextWrapping="Wrap"
+                                         AcceptsReturn="False"
+                                         MinHeight="38" MaxHeight="120"
+                                         VerticalAlignment="Stretch"
+                                         VerticalScrollBarVisibility="Auto"
+                                         MaxLength="4000"/>
+                                <TextBlock Text="Escribe un mensaje..."
+                                           IsHitTestVisible="False"
+                                           Margin="12,10,0,0"
+                                           VerticalAlignment="Top"
+                                           Foreground="#3a3a52"
+                                           FontStyle="Italic"
+                                           FontSize="{DynamicResource FontSizeNormal}"
+                                           Visibility="{Binding InputText, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
+                            </Grid>
+                            <Button Grid.Column="1" Content="→"
+                                    Style="{StaticResource AresButton}"
+                                    Width="40" Height="32" Margin="6,0,4,0"
+                                    FontSize="16"
+                                    VerticalAlignment="Center"
+                                    Click="Send_Click"
+                                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}">
+                                <Button.Effect>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="12" Opacity="0.5" Color="#ff2222"/>
+                                </Button.Effect>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>

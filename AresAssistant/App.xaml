@@ -12,18 +12,19 @@
             <helpers:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter"/>
             <helpers:HexToColorBrushConverter x:Key="HexToColorBrushConverter"/>
             <helpers:StringEmptyToVisibilityConverter x:Key="StringEmptyToVisibilityConverter"/>
+
             <!-- Dynamic accent resources — set by ThemeEngine at runtime -->
             <SolidColorBrush x:Key="AccentBrush" Color="#ff2222"/>
             <Color x:Key="AccentMediaColor">#ff2222</Color>
             <SolidColorBrush x:Key="AccentGlowBrush" Color="#66ff2222"/>
-            <!-- OverlayBackgroundBrush alpha = OverlayOpacity (default 0.85 = 0xD9) -->
-            <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#D90d0d0d"/>
-            <SolidColorBrush x:Key="BackgroundBrush" Color="#0d0d0d"/>
-            <SolidColorBrush x:Key="SurfaceBrush" Color="#1a1a1a"/>
-            <SolidColorBrush x:Key="SurfaceLightBrush" Color="#222222"/>
-            <SolidColorBrush x:Key="TextBrush" Color="#eeeeee"/>
-            <SolidColorBrush x:Key="SubtextBrush" Color="#a0a0a0"/>
-            <SolidColorBrush x:Key="BorderBrush" Color="#333333"/>
+            <!-- OverlayBackgroundBrush alpha = OverlayOpacity (default 0x90 = ~90%) -->
+            <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#e508080d"/>
+            <SolidColorBrush x:Key="BackgroundBrush" Color="#08080d"/>
+            <SolidColorBrush x:Key="SurfaceBrush" Color="#0d0d16"/>
+            <SolidColorBrush x:Key="SurfaceLightBrush" Color="#141420"/>
+            <SolidColorBrush x:Key="TextBrush" Color="#f0f0f8"/>
+            <SolidColorBrush x:Key="SubtextBrush" Color="#686880"/>
+            <SolidColorBrush x:Key="BorderBrush" Color="#22222e"/>
 
             <!-- Font sizes -->
             <sys:Double x:Key="FontSizeNormal" xmlns:sys="clr-namespace:System;assembly=mscorlib">14</sys:Double>
@@ -33,10 +34,10 @@
 
             <!-- ContextMenu dark theme -->
             <Style x:Key="DarkContextMenu" TargetType="ContextMenu">
-                <Setter Property="Background" Value="#1a1a1a"/>
-                <Setter Property="BorderBrush" Value="#333333"/>
+                <Setter Property="Background" Value="#0d0d16"/>
+                <Setter Property="BorderBrush" Value="#22222e"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Foreground" Value="#eeeeee"/>
+                <Setter Property="Foreground" Value="#f0f0f8"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="13"/>
                 <Setter Property="Padding" Value="2"/>
@@ -47,7 +48,10 @@
                             <Border Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6" Padding="2,4">
+                                    CornerRadius="8" Padding="3,5">
+                                <Border.Effect>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="20" Opacity="0.6" Color="#000000"/>
+                                </Border.Effect>
                                 <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
                             </Border>
                         </ControlTemplate>
@@ -56,25 +60,25 @@
             </Style>
 
             <Style x:Key="DarkMenuItem" TargetType="MenuItem">
-                <Setter Property="Foreground" Value="#eeeeee"/>
+                <Setter Property="Foreground" Value="#f0f0f8"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="13"/>
-                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="Padding" Value="10,7"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="MenuItem">
                             <Border x:Name="Bd" Background="Transparent"
-                                    CornerRadius="4" Padding="{TemplateBinding Padding}" Margin="2,1">
+                                    CornerRadius="5" Padding="{TemplateBinding Padding}" Margin="2,1">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{TemplateBinding Tag}" FontSize="14"
-                                               Width="20" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                               Width="20" VerticalAlignment="Center" Margin="0,0,9,0"/>
                                     <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsHighlighted" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="#2a2a2a"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="#141420"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -89,29 +93,54 @@
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
             </Style>
 
+            <!-- AresButton — gradient + glow -->
             <Style TargetType="Button" x:Key="AresButton">
-                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="12,6"/>
+                <Setter Property="Padding" Value="16,7"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
+                            <Border x:Name="Bd"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    CornerRadius="20" Padding="{TemplateBinding Padding}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#ff3333" Offset="0"/>
+                                        <GradientStop Color="#cc1111" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="14" Opacity="0.45" Color="#ff2222"/>
+                                </Border.Effect>
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Opacity" Value="0.85"/>
+                                    <Setter TargetName="Bd" Property="Background">
+                                        <Setter.Value>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#ff5555" Offset="0"/>
+                                                <GradientStop Color="#dd2222" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter TargetName="Bd" Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect ShadowDepth="0" BlurRadius="22" Opacity="0.65" Color="#ff2222"/>
+                                        </Setter.Value>
+                                    </Setter>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.75"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -119,6 +148,7 @@
                 </Setter>
             </Style>
 
+            <!-- GhostButton — transparent with smooth hover -->
             <Style TargetType="Button" x:Key="GhostButton">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
@@ -134,16 +164,17 @@
                             <Border x:Name="Bd" Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentGlowBrush}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="#141420"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#33333f"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="#0d0d16"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentGlowBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -151,13 +182,14 @@
                 </Setter>
             </Style>
 
+            <!-- AresTextBox — pill-ready, dark surface -->
             <Style TargetType="TextBox" x:Key="AresTextBox">
                 <Setter Property="OverridesDefaultStyle" Value="True"/>
                 <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="Padding" Value="12,8"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
                 <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}"/>
@@ -170,7 +202,7 @@
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6"
+                                    CornerRadius="20"
                                     Padding="{TemplateBinding Padding}">
                                 <ScrollViewer x:Name="PART_ContentHost"
                                               Background="Transparent"
@@ -181,16 +213,16 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#444444"/>
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                                    <Setter TargetName="Bd" Property="BorderBrush" Value="#33333f"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="#0f0f1a"/>
                                 </Trigger>
                                 <Trigger Property="IsFocused" Value="True">
                                     <Setter TargetName="Bd" Property="BorderBrush"
                                             Value="{DynamicResource AccentBrush}"/>
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                                    <Setter TargetName="Bd" Property="Background" Value="#0f0f1a"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -198,16 +230,63 @@
                 </Setter>
             </Style>
 
+            <!-- Scrollbar — 4px minimal -->
             <Style TargetType="ScrollBar">
                 <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Width" Value="6"/>
+                <Setter Property="Width" Value="4"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid>
+                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Rectangle Fill="Transparent"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Rectangle Fill="Transparent"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border x:Name="ThumbBd" CornerRadius="2"
+                                                            Background="#2a2a3a" Margin="0,2"/>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="ThumbBd" Property="Background" Value="#44444e"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsDragging" Value="True">
+                                                            <Setter TargetName="ThumbBd" Property="Background" Value="#66ff2222"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <!-- ComboBoxItem dark theme -->
             <Style TargetType="ComboBoxItem">
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                 <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
-                <Setter Property="Padding" Value="8,5"/>
+                <Setter Property="Padding" Value="10,6"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
                 <Setter Property="Template">
@@ -237,7 +316,7 @@
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="Padding" Value="10,7"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
                 <Setter Property="Template">
@@ -253,7 +332,7 @@
                                             <Border x:Name="Bd"
                                                     Background="{DynamicResource SurfaceBrush}"
                                                     BorderBrush="{DynamicResource BorderBrush}"
-                                                    BorderThickness="1" CornerRadius="4">
+                                                    BorderThickness="1" CornerRadius="6">
                                                 <Path Data="M 0,0 L 5,5 L 10,0"
                                                       Stroke="{DynamicResource SubtextBrush}"
                                                       StrokeThickness="1.5"
@@ -265,6 +344,7 @@
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="Bd" Property="BorderBrush"
                                                             Value="{DynamicResource AccentBrush}"/>
+                                                    <Setter TargetName="Bd" Property="Background" Value="#0f0f1a"/>
                                                 </Trigger>
                                                 <Trigger Property="IsChecked" Value="True">
                                                     <Setter TargetName="Bd" Property="BorderBrush"
@@ -279,14 +359,14 @@
                                                   IsHitTestVisible="False"
                                                   Content="{TemplateBinding SelectionBoxItem}"
                                                   ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                                  Margin="8,6,28,6"
+                                                  Margin="10,7,28,7"
                                                   VerticalAlignment="Center"
                                                   TextElement.Foreground="{DynamicResource TextBrush}"/>
 
                                 <TextBox x:Name="PART_EditableTextBox"
                                          Visibility="Hidden"
                                          IsReadOnly="{TemplateBinding IsReadOnly}"
-                                         Margin="8,6,28,6"
+                                         Margin="10,7,28,7"
                                          Background="Transparent"
                                          Foreground="{DynamicResource TextBrush}"
                                          BorderThickness="0"
@@ -299,7 +379,10 @@
                                     <Grid MinWidth="{TemplateBinding ActualWidth}" MaxHeight="300">
                                         <Border Background="{DynamicResource SurfaceBrush}"
                                                 BorderBrush="{DynamicResource AccentBrush}"
-                                                BorderThickness="1" CornerRadius="0,0,4,4">
+                                                BorderThickness="1" CornerRadius="0,0,6,6">
+                                            <Border.Effect>
+                                                <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.5" Color="#000000"/>
+                                            </Border.Effect>
                                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                                 <StackPanel IsItemsHost="True"/>
                                             </ScrollViewer>
@@ -329,20 +412,20 @@
                         <ControlTemplate TargetType="CheckBox">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Border x:Name="Box"
-                                        Width="16" Height="16"
+                                        Width="17" Height="17"
                                         Background="{DynamicResource SurfaceBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1" CornerRadius="3"
+                                        BorderThickness="1.5" CornerRadius="4"
                                         VerticalAlignment="Center">
                                     <Path x:Name="Mark"
                                           Data="M 2,8 L 6,12 L 13,3"
                                           Stroke="{DynamicResource AccentBrush}"
-                                          StrokeThickness="1.8"
+                                          StrokeThickness="2"
                                           Visibility="Collapsed"
                                           HorizontalAlignment="Center"
                                           VerticalAlignment="Center"/>
                                 </Border>
-                                <ContentPresenter Margin="7,0,0,0"
+                                <ContentPresenter Margin="8,0,0,0"
                                                   VerticalAlignment="Center"
                                                   RecognizesAccessKey="True"/>
                             </StackPanel>
@@ -350,12 +433,13 @@
                                 <Trigger Property="IsChecked" Value="True">
                                     <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
                                     <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter TargetName="Box" Property="Background" Value="#1a0808"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter TargetName="Box" Property="Opacity" Value="0.4"/>
+                                    <Setter TargetName="Box" Property="Opacity" Value="0.35"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -390,7 +474,7 @@
                                         <RepeatButton Command="Slider.IncreaseLarge">
                                             <RepeatButton.Template>
                                                 <ControlTemplate TargetType="RepeatButton">
-                                                    <Border Height="4" CornerRadius="2" Background="#222222"/>
+                                                    <Border Height="4" CornerRadius="2" Background="#1a1a26"/>
                                                 </ControlTemplate>
                                             </RepeatButton.Template>
                                         </RepeatButton>
@@ -401,7 +485,11 @@
                                                 <ControlTemplate TargetType="Thumb">
                                                     <Ellipse x:Name="Dot" Width="14" Height="14"
                                                              Fill="{DynamicResource AccentBrush}"
-                                                             Stroke="#0a0a0a" StrokeThickness="2"/>
+                                                             Stroke="#08080d" StrokeThickness="2">
+                                                        <Ellipse.Effect>
+                                                            <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.5" Color="#ff2222"/>
+                                                        </Ellipse.Effect>
+                                                    </Ellipse>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter TargetName="Dot" Property="Width" Value="17"/>
@@ -430,13 +518,18 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ProgressBar">
                             <Grid>
-                                <Border x:Name="PART_Track" Background="#111111" CornerRadius="3"/>
+                                <Border x:Name="PART_Track" Background="#0d0d16" CornerRadius="3"/>
                                 <Border x:Name="PART_Indicator" HorizontalAlignment="Left"
-                                        CornerRadius="3"
-                                        Background="{DynamicResource AccentBrush}">
+                                        CornerRadius="3">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#cc1111" Offset="0"/>
+                                            <GradientStop Color="#ff3333" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
                                     <Border.Effect>
-                                        <DropShadowEffect ShadowDepth="0" BlurRadius="10"
-                                                          Opacity="0.6" Color="#ff2222"/>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="12"
+                                                          Opacity="0.65" Color="#ff2222"/>
                                     </Border.Effect>
                                 </Border>
                             </Grid>

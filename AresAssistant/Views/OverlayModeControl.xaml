@@ -3,58 +3,79 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Width="380" Height="600">
 
-    <Border Background="{DynamicResource OverlayBackgroundBrush}" CornerRadius="10"
-            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
+    <!-- Outer shell: 1.5px border, accent glow -->
+    <Border Background="{DynamicResource OverlayBackgroundBrush}" CornerRadius="12"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="0" BlurRadius="40" Opacity="0.45" Color="#ff2222"/>
+        </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="44"/>     <!-- Header -->
-                <RowDefinition Height="*"/>       <!-- Chat -->
-                <RowDefinition Height="Auto"/>    <!-- Status -->
-                <RowDefinition Height="Auto"/>    <!-- Input -->
+                <RowDefinition Height="46"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Border Grid.Row="0" CornerRadius="10,10,0,0"
+            <!-- Header — glass gradient with bottom accent separator -->
+            <Border Grid.Row="0" CornerRadius="12,12,0,0"
                     MouseLeftButtonDown="Header_MouseLeftButtonDown">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#141414" Offset="0"/>
-                        <GradientStop Color="#080808" Offset="1"/>
+                        <GradientStop Color="#12121e" Offset="0"/>
+                        <GradientStop Color="#0a0a14" Offset="1"/>
                     </LinearGradientBrush>
                 </Border.Background>
-                <Grid Margin="12,0">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Diamond logo mini -->
-                        <Path Data="M 8,0 L 16,11 L 8,22 L 0,11 Z"
-                              Fill="{DynamicResource AccentBrush}" Width="16" Height="22"
-                              Margin="0,0,8,0"/>
-                        <TextBlock Text="{Binding AssistantName, FallbackValue='ARES'}"
-                                   FontFamily="Consolas" FontSize="15" FontWeight="Bold"
-                                   Foreground="{DynamicResource AccentBrush}"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
+                <Grid>
+                    <!-- Bottom accent separator line -->
+                    <Rectangle VerticalAlignment="Bottom" Height="1.5" Margin="0">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00ff2222" Offset="0"/>
+                                <GradientStop Color="#88ff2222" Offset="0.4"/>
+                                <GradientStop Color="#44ff2222" Offset="0.7"/>
+                                <GradientStop Color="#00ff2222" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <Grid Margin="14,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Diamond logo -->
+                            <Path Data="M 8,0 L 16,11 L 8,22 L 0,11 Z"
+                                  Fill="{DynamicResource AccentBrush}" Width="16" Height="22"
+                                  Margin="0,0,9,0">
+                                <Path.Effect>
+                                    <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.6" Color="#ff2222"/>
+                                </Path.Effect>
+                            </Path>
+                            <TextBlock Text="{Binding AssistantName, FallbackValue='ARES'}"
+                                       FontFamily="Consolas" FontSize="15" FontWeight="Bold"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                VerticalAlignment="Center">
-                        <Button ToolTip="Cambiar a modo HUD completo"
-                                Click="ToggleMode_Click"
-                                Style="{DynamicResource GhostButton}"
-                                Height="26" Padding="6,0" FontSize="11" Margin="0,0,4,0">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="⊞" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="HUD" FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource SubtextBrush}"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Content="⚙" ToolTip="Ajustes"
-                                Click="Settings_Click"
-                                Style="{DynamicResource GhostButton}"
-                                Width="28" Height="28" Padding="0" FontSize="14" Margin="0,0,4,0"/>
-                        <Button Content="✕" ToolTip="Cerrar"
-                                Click="Close_Click"
-                                Style="{DynamicResource GhostButton}"
-                                Width="28" Height="28" Padding="0" FontSize="14"/>
-                    </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
+                            <Button ToolTip="Cambiar a modo HUD completo"
+                                    Click="ToggleMode_Click"
+                                    Style="{DynamicResource GhostButton}"
+                                    Height="26" Padding="7,0" FontSize="11" Margin="0,0,4,0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="⊞" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="HUD" FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource SubtextBrush}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Content="⚙" ToolTip="Ajustes"
+                                    Click="Settings_Click"
+                                    Style="{DynamicResource GhostButton}"
+                                    Width="28" Height="28" Padding="0" FontSize="14" Margin="0,0,4,0"/>
+                            <Button Content="✕" ToolTip="Cerrar"
+                                    Click="Close_Click"
+                                    Style="{DynamicResource GhostButton}"
+                                    Width="28" Height="28" Padding="0" FontSize="14"/>
+                        </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
 
@@ -62,13 +83,13 @@
             <ScrollViewer Grid.Row="1" x:Name="ChatScroll"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
-                          Padding="12,8">
+                          Padding="14,10">
                 <ItemsControl ItemsSource="{Binding Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="0,6,0,0" Loaded="MessageBubble_Loaded"
+                            <StackPanel Margin="0,8,0,0" Loaded="MessageBubble_Loaded"
                                         HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignConverter}}">
-                                <Border MaxWidth="310" MinWidth="140" Margin="4,0">
+                                <Border MaxWidth="316" MinWidth="140" Margin="4,0">
                                     <Border.ContextMenu>
                                         <ContextMenu Style="{StaticResource DarkContextMenu}">
                                             <MenuItem Header="Copiar" Tag="📋" Style="{StaticResource DarkMenuItem}" Click="CopyMessage_Click"/>
@@ -78,86 +99,131 @@
                                     </Border.ContextMenu>
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#1a1a1a"/>
-                                            <Setter Property="CornerRadius" Value="14,14,14,4"/>
-                                            <Setter Property="Padding" Value="11,9"/>
-                                            <Setter Property="BorderBrush" Value="#282828"/>
+                                            <Setter Property="CornerRadius" Value="16,16,16,4"/>
+                                            <Setter Property="Padding" Value="13,10"/>
                                             <Setter Property="BorderThickness" Value="1"/>
                                             <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsUser}" Value="False">
+                                                    <Setter Property="BorderBrush" Value="#1e1e2e"/>
+                                                    <Setter Property="Background">
+                                                        <Setter.Value>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                <GradientStop Color="#111120" Offset="0"/>
+                                                                <GradientStop Color="#0d0d18" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding IsUser}" Value="True">
-                                                    <Setter Property="Background" Value="#1e0909"/>
-                                                    <Setter Property="CornerRadius" Value="14,14,4,14"/>
+                                                    <Setter Property="CornerRadius" Value="16,16,4,16"/>
                                                     <Setter Property="BorderBrush" Value="{DynamicResource AccentGlowBrush}"/>
+                                                    <Setter Property="Background">
+                                                        <Setter.Value>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                <GradientStop Color="#200a0a" Offset="0"/>
+                                                                <GradientStop Color="#160606" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <StackPanel>
-                                        <!-- Header: icon + role + timestamp -->
-                                        <Grid Margin="0,0,0,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <!-- ARES diamond icon -->
-                                                <Path Data="M 3,0 L 6,5 L 3,10 L 0,5 Z"
-                                                      Width="6" Height="10"
-                                                      VerticalAlignment="Center" Margin="0,0,5,0">
-                                                    <Path.Style>
-                                                        <Style TargetType="Path">
-                                                            <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Path.Style>
-                                                </Path>
-                                                <!-- User dot -->
-                                                <Ellipse Width="8" Height="8"
-                                                         VerticalAlignment="Center" Margin="0,0,5,0">
-                                                    <Ellipse.Style>
-                                                        <Style TargetType="Ellipse">
-                                                            <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
+                                    <!-- ARES left accent bar -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Left accent bar — only for ARES messages -->
+                                        <Border Grid.Column="0" Width="3" CornerRadius="2"
+                                                Margin="0,0,9,0" VerticalAlignment="Stretch">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Background">
+                                                        <Setter.Value>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                <GradientStop Color="#ff2222" Offset="0"/>
+                                                                <GradientStop Color="#661111" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsUser}" Value="True">
                                                             <Setter Property="Visibility" Value="Collapsed"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Ellipse.Style>
-                                                </Ellipse>
-                                                <!-- Role name -->
-                                                <TextBlock FontSize="10" FontFamily="Consolas"
-                                                           FontWeight="SemiBold" VerticalAlignment="Center">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="ARES"/>
-                                                            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
-                                                                    <Setter Property="Text" Value="TÚ"/>
-                                                                    <Setter Property="Foreground" Value="#888888"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </StackPanel>
-                                            <TextBlock Grid.Column="1" Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
-                                                       VerticalAlignment="Center" Margin="8,0,0,0"
-                                                       FontSize="9" FontFamily="Consolas" Foreground="#454545"/>
-                                        </Grid>
-                                        <!-- Content -->
-                                        <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
-                                                   FontSize="{DynamicResource FontSizeNormal}"
-                                                   Foreground="{DynamicResource TextBrush}"
-                                                   LineHeight="20"/>
-                                    </StackPanel>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
+                                        <StackPanel Grid.Column="1">
+                                            <!-- Header: icon + role + timestamp -->
+                                            <Grid Margin="0,0,0,5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <!-- ARES diamond icon -->
+                                                    <Path Data="M 3,0 L 6,5 L 3,10 L 0,5 Z"
+                                                          Width="6" Height="10"
+                                                          VerticalAlignment="Center" Margin="0,0,5,0">
+                                                        <Path.Style>
+                                                            <Style TargetType="Path">
+                                                                <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Path.Style>
+                                                    </Path>
+                                                    <!-- User dot -->
+                                                    <Ellipse Width="8" Height="8"
+                                                             VerticalAlignment="Center" Margin="0,0,5,0">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                    <!-- Role name -->
+                                                    <TextBlock FontSize="10" FontFamily="Consolas"
+                                                               FontWeight="SemiBold" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="ARES"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                                        <Setter Property="Text" Value="TÚ"/>
+                                                                        <Setter Property="Foreground" Value="#686880"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           FontSize="9" FontFamily="Consolas" Foreground="#3a3a50"/>
+                                            </Grid>
+                                            <!-- Content -->
+                                            <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
+                                                       FontSize="{DynamicResource FontSizeNormal}"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       LineHeight="21"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </Border>
                             </StackPanel>
                         </DataTemplate>
@@ -165,90 +231,104 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Status / Thinking indicator -->
-            <Grid Grid.Row="2" Height="22">
-                <!-- Status text when idle -->
-                <TextBlock Text="{Binding StatusText}"
-                           Foreground="{DynamicResource SubtextBrush}"
-                           FontSize="11" FontStyle="Italic"
-                           Margin="14,0" VerticalAlignment="Center">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Visible"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+            <!-- Status / Thinking indicator — with left accent indicator bar -->
+            <Grid Grid.Row="2" Height="26">
+                <Border Background="#09090f" BorderBrush="#15151f" BorderThickness="0,1,0,0">
+                    <!-- Status text when idle -->
+                    <Grid>
+                        <!-- Left accent indicator bar -->
+                        <Rectangle Width="2" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                                   Margin="0" Fill="{DynamicResource AccentBrush}" Opacity="0.5"/>
+                        <TextBlock Text="{Binding StatusText}"
+                                   Foreground="{DynamicResource SubtextBrush}"
+                                   FontSize="11" FontStyle="Italic"
+                                   Margin="14,0,14,0" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
 
-                <!-- Spinning arc when thinking -->
-                <StackPanel Orientation="Horizontal" Margin="14,0" VerticalAlignment="Center"
-                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <Canvas Width="18" Height="18" VerticalAlignment="Center">
-                        <Canvas.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever">
-                                        <DoubleAnimation
-                                            Storyboard.TargetName="OverlaySpinArc"
-                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                            From="0" To="360" Duration="0:0:0.8"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Canvas.Triggers>
-                        <Ellipse Width="18" Height="18"
-                                 Stroke="#2a2a2a" StrokeThickness="2.5" Fill="Transparent"/>
-                        <Path x:Name="OverlaySpinArc"
-                              Data="M 9,1.5 A 7.5,7.5 0 1 1 1.5,9"
-                              Stroke="{DynamicResource AccentBrush}"
-                              StrokeThickness="2.5"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round">
-                            <Path.RenderTransform>
-                                <RotateTransform CenterX="9" CenterY="9"/>
-                            </Path.RenderTransform>
-                            <Path.Effect>
-                                <DropShadowEffect ShadowDepth="0" BlurRadius="6" Opacity="0.7" Color="#ff2222"/>
-                            </Path.Effect>
-                        </Path>
-                    </Canvas>
-                    <TextBlock Text="Pensando" Margin="8,0,0,0"
-                               Foreground="{DynamicResource SubtextBrush}"
-                               FontFamily="Consolas"
-                               FontSize="11" VerticalAlignment="Center" FontStyle="Italic"/>
-                    <!-- Animated dots -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="1,2,0,0">
-                        <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Margin="0,0,2.5,0" Opacity="0.15">
-                            <Ellipse.Triggers>
-                                <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0"/>
-                                </Storyboard></BeginStoryboard></EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                        <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Margin="0,0,2.5,0" Opacity="0.15">
-                            <Ellipse.Triggers>
-                                <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0.15"/>
-                                </Storyboard></BeginStoryboard></EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                        <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Opacity="0.15">
-                            <Ellipse.Triggers>
-                                <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0.3"/>
-                                </Storyboard></BeginStoryboard></EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
-                    </StackPanel>
-                </StackPanel>
+                        <!-- Spinning arc when thinking -->
+                        <StackPanel Orientation="Horizontal" Margin="14,0" VerticalAlignment="Center"
+                                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Canvas Width="18" Height="18" VerticalAlignment="Center">
+                                <Canvas.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="OverlaySpinArc"
+                                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                    From="0" To="360" Duration="0:0:0.8"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Canvas.Triggers>
+                                <Ellipse Width="18" Height="18"
+                                         Stroke="#1e1e2e" StrokeThickness="2.5" Fill="Transparent"/>
+                                <Path x:Name="OverlaySpinArc"
+                                      Data="M 9,1.5 A 7.5,7.5 0 1 1 1.5,9"
+                                      Stroke="{DynamicResource AccentBrush}"
+                                      StrokeThickness="2.5"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                    <Path.RenderTransform>
+                                        <RotateTransform CenterX="9" CenterY="9"/>
+                                    </Path.RenderTransform>
+                                    <Path.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="6" Opacity="0.7" Color="#ff2222"/>
+                                    </Path.Effect>
+                                </Path>
+                            </Canvas>
+                            <TextBlock Text="Pensando" Margin="8,0,0,0"
+                                       Foreground="{DynamicResource SubtextBrush}"
+                                       FontFamily="Consolas"
+                                       FontSize="11" VerticalAlignment="Center" FontStyle="Italic"/>
+                            <!-- Animated dots -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="1,2,0,0">
+                                <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Margin="0,0,2.5,0" Opacity="0.15">
+                                    <Ellipse.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0"/>
+                                        </Storyboard></BeginStoryboard></EventTrigger>
+                                    </Ellipse.Triggers>
+                                </Ellipse>
+                                <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Margin="0,0,2.5,0" Opacity="0.15">
+                                    <Ellipse.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0.15"/>
+                                        </Storyboard></BeginStoryboard></EventTrigger>
+                                    </Ellipse.Triggers>
+                                </Ellipse>
+                                <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource SubtextBrush}" Opacity="0.15">
+                                    <Ellipse.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.12" To="0.85" Duration="0:0:0.45" AutoReverse="True" BeginTime="0:0:0.3"/>
+                                        </Storyboard></BeginStoryboard></EventTrigger>
+                                    </Ellipse.Triggers>
+                                </Ellipse>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
 
-            <!-- Input row -->
-            <Border Grid.Row="3" Background="#0a0a0a" CornerRadius="0,0,10,10"
-                    Padding="10,8">
+            <!-- Input row — pill input, wider send button -->
+            <Border Grid.Row="3" CornerRadius="0,0,12,12"
+                    BorderBrush="#15151f" BorderThickness="0,1,0,0"
+                    Padding="12,10,12,12">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#0a0a12" Offset="0"/>
+                        <GradientStop Color="#07070f" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -268,9 +348,9 @@
                                  MaxLength="4000"/>
                         <TextBlock Text="Escribe un mensaje..."
                                    IsHitTestVisible="False"
-                                   Margin="10,8,0,0"
+                                   Margin="14,10,0,0"
                                    VerticalAlignment="Top"
-                                   Foreground="#505050"
+                                   Foreground="#3a3a50"
                                    FontStyle="Italic"
                                    FontSize="{DynamicResource FontSizeNormal}"
                                    Visibility="{Binding InputText, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
@@ -278,13 +358,13 @@
 
                     <Button Grid.Column="1" Content="→"
                             Style="{StaticResource AresButton}"
-                            Width="38" Height="34" Margin="6,0,0,0"
-                            FontSize="16"
+                            Width="46" Height="38" Margin="8,0,0,0"
+                            FontSize="17"
                             VerticalAlignment="Bottom"
                             Click="Send_Click"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}">
                         <Button.Effect>
-                            <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.5" Color="#ff2222"/>
+                            <DropShadowEffect ShadowDepth="0" BlurRadius="16" Opacity="0.55" Color="#ff2222"/>
                         </Button.Effect>
                     </Button>
                 </Grid>

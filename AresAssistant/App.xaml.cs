@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using AresAssistant.Config;
+using AresAssistant.Core;
 using AresAssistant.Views;
 
 namespace AresAssistant;
@@ -52,6 +53,9 @@ public partial class App : Application
                 var splash = new SplashWindow(isFirstLaunch);
                 splash.Show();
             }
+
+            // Check for updates silently in the background
+            _ = CheckForUpdatesAsync();
         }
         catch (Exception ex)
         {
@@ -59,6 +63,25 @@ public partial class App : Application
             AresMessageBox.Show($"Error al iniciar ARES:\n\n{ex.Message}\n\nRevisa los archivos crash_*.log en la carpeta data/",
                 "ARES — Error");
             Shutdown(1);
+        }
+    }
+
+    private static async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var release = await UpdateChecker.CheckAsync();
+            if (release == null || !UpdateChecker.IsNewer(release.TagName)) return;
+
+            await Current.Dispatcher.InvokeAsync(() =>
+            {
+                var win = new UpdateWindow(release);
+                win.Show();
+            });
+        }
+        catch
+        {
+            // No internet or API error — silently ignore
         }
     }
 

@@ -213,9 +213,36 @@
                                                         </TextBlock.Style>
                                                     </TextBlock>
                                                 </StackPanel>
-                                                <TextBlock Grid.Column="1" Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
-                                                           VerticalAlignment="Center" Margin="8,0,0,0"
-                                                           FontSize="9" FontFamily="Consolas" Foreground="#3a3a50"/>
+                                                <Border Grid.Column="1" VerticalAlignment="Center"
+                                                        Margin="8,0,0,0" Padding="6,2"
+                                                        CornerRadius="5" BorderThickness="1">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#121822"/>
+                                                            <Setter Property="BorderBrush" Value="#2a3242"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                                    <Setter Property="Background" Value="#241010"/>
+                                                                    <Setter Property="BorderBrush" Value="#4a1a1a"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
+                                                               FontSize="10" FontFamily="Consolas"
+                                                               FontWeight="SemiBold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#9fb0c8"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#e0a5a5"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
                                             </Grid>
                                             <!-- Content -->
                                             <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
@@ -233,7 +260,7 @@
 
             <!-- Status / Thinking indicator — with left accent indicator bar -->
             <Grid Grid.Row="2" Height="26">
-                <Border Background="#09090f" BorderBrush="#15151f" BorderThickness="0,1,0,0">
+                <Border Background="Transparent" BorderBrush="#221515" BorderThickness="0,1,0,0">
                     <!-- Status text when idle -->
                     <Grid>
                         <!-- Left accent indicator bar -->
@@ -346,6 +373,9 @@
                                          Style="{StaticResource AresTextBox}"
                                          Background="Transparent"
                                          BorderThickness="0"
+                                         Padding="2,8,8,8"
+                                         TextAlignment="Left"
+                                         HorizontalContentAlignment="Left"
                                          Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
                                          KeyDown="Input_KeyDown"
                                          TextWrapping="Wrap"
@@ -356,20 +386,51 @@
                                          MaxLength="4000"/>
                                 <TextBlock Text="Escribe un mensaje..."
                                            IsHitTestVisible="False"
-                                           Margin="12,10,0,0"
+                                           Margin="3,10,0,0"
                                            VerticalAlignment="Top"
                                            Foreground="#3a3a52"
                                            FontStyle="Italic"
-                                           FontSize="{DynamicResource FontSizeNormal}"
-                                           Visibility="{Binding InputText, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
+                                           FontSize="{DynamicResource FontSizeNormal}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Text, ElementName=InputBox}" Value=""/>
+                                                        <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=InputBox}" Value="False"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Text, ElementName=InputBox}" Value="{x:Null}"/>
+                                                        <Condition Binding="{Binding IsKeyboardFocusWithin, ElementName=InputBox}" Value="False"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </Grid>
-                            <Button Grid.Column="1" Content="→"
+                            <Button Grid.Column="1"
                                     Style="{StaticResource AresButton}"
-                                    Width="40" Height="32" Margin="6,0,4,0"
-                                    FontSize="16"
+                                    Width="34" Height="34" Margin="6,0,4,0"
+                                    Padding="0"
                                     VerticalAlignment="Center"
                                     Click="Send_Click"
                                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertBoolConverter}}">
+                                <Viewbox Width="14" Height="14" Stretch="Uniform">
+                                    <Canvas Width="16" Height="16">
+                                        <Path Data="M2,8 L12.2,8 M8.6,4.4 L12.2,8 L8.6,11.6"
+                                              Stroke="White"
+                                              StrokeThickness="2"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              StrokeLineJoin="Round"/>
+                                    </Canvas>
+                                </Viewbox>
                                 <Button.Effect>
                                     <DropShadowEffect ShadowDepth="0" BlurRadius="12" Opacity="0.5" Color="#ff2222"/>
                                 </Button.Effect>

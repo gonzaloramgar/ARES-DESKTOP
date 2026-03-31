@@ -14,8 +14,8 @@
             Opacity="0">
         <Border.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#0f0f0f" Offset="0"/>
-                <GradientStop Color="#070707" Offset="1"/>
+                <GradientStop Color="#0c0c14" Offset="0"/>
+                <GradientStop Color="#06060c" Offset="1"/>
             </LinearGradientBrush>
         </Border.Background>
         <Border.RenderTransform>
@@ -127,12 +127,12 @@
                 </TextBlock>
 
                 <TextBlock Text="AUTONOMOUS  RESPONSE  ENGINE  SYSTEM"
-                           FontSize="9" Foreground="#5a5a5a"
+                           FontSize="9" Foreground="{DynamicResource SubtextBrush}"
                            HorizontalAlignment="Center" FontFamily="Consolas"
                            Margin="0,0,0,4"/>
 
                 <TextBlock Text="{x:Static local:App.AppVersion}"
-                           FontSize="10" Foreground="#444444"
+                           FontSize="10" Foreground="#44445a"
                            HorizontalAlignment="Center" FontFamily="Consolas"
                            Margin="0,0,0,28"/>
 

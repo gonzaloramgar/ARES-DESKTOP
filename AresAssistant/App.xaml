@@ -190,6 +190,10 @@
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding" Value="12,8"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
+                <Setter Property="TextAlignment" Value="Left"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="VerticalContentAlignment" Value="Top"/>
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
                 <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}"/>

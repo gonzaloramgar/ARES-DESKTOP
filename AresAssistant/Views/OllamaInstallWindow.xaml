@@ -8,10 +8,19 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
 
-    <Border Background="#0f0f0f" CornerRadius="12"
-            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
+    <Border x:Name="RootBorder" CornerRadius="12"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5" Opacity="0">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#0c0c14" Offset="0"/>
+                <GradientStop Color="#06060c" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.RenderTransform>
+            <TranslateTransform x:Name="RootTranslate" Y="15"/>
+        </Border.RenderTransform>
         <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="30" Opacity="0.5" Color="#ff2222"/>
+            <DropShadowEffect ShadowDepth="0" BlurRadius="34" Opacity="0.55" Color="#ff2222"/>
         </Border.Effect>
         <Grid Margin="28,22,28,22">
             <Grid.RowDefinitions>
@@ -36,7 +45,7 @@
             <!-- Step description -->
             <TextBlock x:Name="TxtStep" Grid.Row="1"
                        Text="Preparando descarga..."
-                       FontSize="13" Foreground="#d0d0d0" FontFamily="Consolas"
+                       FontSize="13" Foreground="{DynamicResource TextBrush}" FontFamily="Consolas"
                        Margin="0,0,0,12"/>
 
             <!-- Progress bar -->
@@ -76,4 +85,23 @@
                     Click="BtnCancel_Click"/>
         </Grid>
     </Border>
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="RootBorder"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0" To="1" Duration="0:0:0.35"/>
+                    <DoubleAnimation Storyboard.TargetName="RootTranslate"
+                                     Storyboard.TargetProperty="Y"
+                                     From="15" To="0" Duration="0:0:0.4">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
 </Window>

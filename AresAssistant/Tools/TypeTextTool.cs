@@ -25,8 +25,8 @@ public class TypeTextTool : ITool
     private const int MaxLength = 500;
     private static readonly string[] DangerousSequences =
     {
-        "%{F4}", "^{ESC}", "{DEL}", "+{DEL}", "^+{ESC}",
-        "%{TAB}", "^w", "^q", "%{F4}"
+        "%{f4}", "^{esc}", "{del}", "+{del}", "^+{esc}",
+        "%{tab}", "^w", "^q"
     };
 
     public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
@@ -42,7 +42,7 @@ public class TypeTextTool : ITool
         var lower = text.ToLowerInvariant();
         foreach (var seq in DangerousSequences)
         {
-            if (lower.Contains(seq.ToLowerInvariant()))
+            if (lower.Contains(seq))
                 return Task.FromResult(new ToolResult(false, $"Secuencia de teclas peligrosa bloqueada: {seq}"));
         }
 

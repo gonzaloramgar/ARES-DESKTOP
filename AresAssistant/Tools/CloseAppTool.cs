@@ -28,9 +28,10 @@ public class CloseAppTool : ITool
 
         var processes = Process.GetProcesses()
             .Where(p =>
-                (!string.IsNullOrEmpty(p.MainWindowTitle) &&
-                 p.MainWindowTitle.Contains(appName, StringComparison.OrdinalIgnoreCase)) ||
-                p.ProcessName.Contains(appName, StringComparison.OrdinalIgnoreCase))
+                p.ProcessName.Contains(appName, StringComparison.OrdinalIgnoreCase) ||
+                (p.MainWindowHandle != IntPtr.Zero &&
+                 !string.IsNullOrEmpty(p.MainWindowTitle) &&
+                 p.MainWindowTitle.Contains(appName, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         if (processes.Count == 0)

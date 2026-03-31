@@ -22,7 +22,7 @@ public class ListWindowsTool : ITool
     public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
         var windows = Process.GetProcesses()
-            .Where(p => !string.IsNullOrWhiteSpace(p.MainWindowTitle))
+            .Where(p => p.MainWindowHandle != IntPtr.Zero && !string.IsNullOrWhiteSpace(p.MainWindowTitle))
             .Select(p => $"{p.ProcessName}: {p.MainWindowTitle}")
             .ToList();
 
@@ -54,7 +54,8 @@ public class MinimizeWindowTool : ITool
     {
         var title = args.TryGetValue("title", out var t) ? t.ToString() : "";
         var proc = Process.GetProcesses()
-            .FirstOrDefault(p => p.MainWindowTitle.Contains(title, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(p => p.MainWindowHandle != IntPtr.Zero &&
+                                 p.MainWindowTitle.Contains(title, StringComparison.OrdinalIgnoreCase));
 
         if (proc == null)
             return Task.FromResult(new ToolResult(false, $"No se encontró ventana con título '{title}'."));
@@ -85,7 +86,8 @@ public class MaximizeWindowTool : ITool
     {
         var title = args.TryGetValue("title", out var t) ? t.ToString() : "";
         var proc = Process.GetProcesses()
-            .FirstOrDefault(p => p.MainWindowTitle.Contains(title, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(p => p.MainWindowHandle != IntPtr.Zero &&
+                                 p.MainWindowTitle.Contains(title, StringComparison.OrdinalIgnoreCase));
 
         if (proc == null)
             return Task.FromResult(new ToolResult(false, $"No se encontró ventana con título '{title}'."));

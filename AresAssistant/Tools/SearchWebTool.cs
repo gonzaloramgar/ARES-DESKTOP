@@ -28,7 +28,14 @@ public class SearchWebTool : ITool
         var encoded = HttpUtility.UrlEncode(query);
         var url = $"https://www.google.com/search?q={encoded}";
 
-        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        return Task.FromResult(new ToolResult(true, $"Búsqueda abierta: {query}"));
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            return Task.FromResult(new ToolResult(true, $"Búsqueda abierta: {query}"));
+        }
+        catch (Exception ex)
+        {
+            return Task.FromResult(new ToolResult(false, $"Error al abrir el navegador: {ex.Message}"));
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace AresAssistant.Tools;
 public class DeleteFolderTool : ITool
 {
     public string Name => "delete_folder";
-    public string Description => "Elimina una carpeta y todo su contenido permanentemente. Esta acción no se puede deshacer.";
+    public string Description => "Elimina una carpeta y todo su contenido enviándola a la papelera de reciclaje.";
 
     public ToolParameterSchema Parameters { get; } = new()
     {

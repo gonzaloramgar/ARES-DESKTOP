@@ -48,11 +48,7 @@ public class GenericOpenAppTool : ITool
 
         // Check if the app is already running before launching a new instance
         var exeName = Path.GetFileNameWithoutExtension(match.Value.path);
-        var alreadyRunning = Process.GetProcesses().Any(p =>
-        {
-            try { return p.ProcessName.Equals(exeName, StringComparison.OrdinalIgnoreCase); }
-            catch { return false; }
-        });
+        var alreadyRunning = Process.GetProcessesByName(exeName).Length > 0;
 
         if (alreadyRunning)
             return Task.FromResult(new ToolResult(true,

@@ -24,7 +24,7 @@ public class SystemInfoTool : ITool
     {
         try
         {
-            var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            using var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             cpuCounter.NextValue(); // first call always 0
             await Task.Delay(100);
             var cpu = cpuCounter.NextValue();

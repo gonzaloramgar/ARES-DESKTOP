@@ -28,10 +28,12 @@ public class CreateFolderTool : ITool
             return Task.FromResult(new ToolResult(false, "Ruta no especificada."));
 
         var resolved = PathResolver.Resolve(rawPath);
+        try { resolved = Path.GetFullPath(resolved); }
+        catch { return Task.FromResult(new ToolResult(false, "Ruta inválida.")); }
 
         // Safety: never create inside Windows or System32
         var blocked = new[] { @"C:\Windows", @"C:\System", Environment.GetFolderPath(Environment.SpecialFolder.System) };
-        if (blocked.Any(b => resolved.StartsWith(b, StringComparison.OrdinalIgnoreCase)))
+        if (blocked.Any(b => resolved.StartsWith(Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase)))
             return Task.FromResult(new ToolResult(false, "No se puede crear carpetas en rutas del sistema."));
 
         try

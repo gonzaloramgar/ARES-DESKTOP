@@ -207,7 +207,7 @@
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsUser}" Value="True">
                                                                         <Setter Property="Text" Value="TÚ"/>
-                                                                        <Setter Property="Foreground" Value="#686880"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -389,7 +389,7 @@
                                            IsHitTestVisible="False"
                                            Margin="3,10,0,0"
                                            VerticalAlignment="Top"
-                                           Foreground="#3a3a52"
+                                           Foreground="{DynamicResource SubtextBrush}"
                                            FontStyle="Italic"
                                            FontSize="{DynamicResource FontSizeNormal}">
                                     <TextBlock.Style>

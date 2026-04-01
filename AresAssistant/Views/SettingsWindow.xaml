@@ -21,6 +21,9 @@
         <Border.RenderTransform>
             <TranslateTransform x:Name="RootTranslate" Y="20"/>
         </Border.RenderTransform>
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="45" ShadowDepth="0" Opacity="0.72"/>
+        </Border.Effect>
 
         <Grid>
             <Grid.RowDefinitions>
@@ -252,7 +255,7 @@
 
                                 <!-- Ollama status + check button — FIX: proper layout -->
                                 <Border Grid.Row="2" Grid.ColumnSpan="2"
-                                        Background="#1a0a0a14" CornerRadius="10"
+                                        Background="{DynamicResource GlassBrush}" CornerRadius="10"
                                         BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1"
                                         Padding="12,8" Margin="0,2,0,0">
                                     <Grid>
@@ -287,7 +290,7 @@
                             </StackPanel>
 
                             <!-- Hardware info -->
-                            <Border Background="#1a080812" CornerRadius="10" Padding="12,8" Margin="0,0,0,10"
+                            <Border Background="{DynamicResource GlassBrush}" CornerRadius="10" Padding="12,8" Margin="0,0,0,10"
                                     BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1">
                                 <StackPanel>
                                     <TextBlock Text="{Binding HwCpuInfo}" FontSize="10"
@@ -380,7 +383,7 @@
                                       IsChecked="{Binding VoiceEnabled}" Margin="0,6,0,0"/>
 
                             <!-- TTS engine status + volume -->
-                            <Border Margin="0,8,0,0" Background="#1a0a0a14" CornerRadius="10"
+                            <Border Margin="0,8,0,0" Background="{DynamicResource GlassBrush}" CornerRadius="10"
                                     BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="12,10">
                                 <StackPanel>
                                     <!-- Voice gender -->

@@ -54,7 +54,7 @@
             <TranslateTransform x:Name="RootTranslate" Y="15"/>
         </Border.RenderTransform>
         <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="40" Opacity="0.55" Color="#ff2222"/>
+            <DropShadowEffect ShadowDepth="0" BlurRadius="45" Opacity="0.7" Color="Black"/>
         </Border.Effect>
         <StackPanel Margin="18,16,18,18">
 
@@ -105,7 +105,7 @@
                                    Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="1" Background="#0f0f0f" CornerRadius="6"
+                <Border Grid.Column="1" Background="{DynamicResource GlassBrush}" CornerRadius="10"
                         Padding="0,7" Margin="3,0">
                     <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="G" FontFamily="Consolas" FontSize="9" FontWeight="Bold"
@@ -114,7 +114,7 @@
                                    Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="2" Background="#0f0f0f" CornerRadius="6"
+                <Border Grid.Column="2" Background="{DynamicResource GlassBrush}" CornerRadius="10"
                         Padding="0,7" Margin="3,0,0,0">
                     <StackPanel HorizontalAlignment="Center">
                         <TextBlock Text="B" FontFamily="Consolas" FontSize="9" FontWeight="Bold"

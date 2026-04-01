@@ -29,6 +29,7 @@ public class AgentLoop
     private string? _lastPersonality;
     private string? _lastResponseLength;
     private string? _lastAssistantName;
+    private string? _lastPerformanceMode;
 
     public AgentLoop(
         OllamaClient ollamaClient,
@@ -67,16 +68,18 @@ public class AgentLoop
 
     private string BuildSystemPrompt()
     {
-        // Cache: only rebuild when personality/length/name changes
+        // Cache: only rebuild when personality/length/name/mode changes
         if (_cachedSystemPrompt != null
             && _lastPersonality == _config.Personality
             && _lastResponseLength == _config.ResponseLength
-            && _lastAssistantName == _config.AssistantName)
+            && _lastAssistantName == _config.AssistantName
+            && _lastPerformanceMode == _config.PerformanceMode)
             return _cachedSystemPrompt;
 
         _lastPersonality = _config.Personality;
         _lastResponseLength = _config.ResponseLength;
         _lastAssistantName = _config.AssistantName;
+        _lastPerformanceMode = _config.PerformanceMode;
 
         var desktop   = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -90,20 +93,55 @@ public class AgentLoop
         sb.AppendLine("Eres directo, eficiente y ligeramente formal.");
         sb.AppendLine();
 
-        sb.AppendLine("## HERRAMIENTAS — REGLA ABSOLUTA");
-        sb.AppendLine("Tienes herramientas para controlar el PC. ÚSALAS siempre que el usuario pida una acción. NUNCA describas sin ejecutar.");
-        sb.AppendLine("open_app/open_folder • close_app • create_folder • delete_folder • recycle_bin");
-        sb.AppendLine("read_file • write_file • search_web • search_browser • run_command • screenshot");
-        sb.AppendLine("type_text • system_info • volume • list_open_windows • minimize_window • maximize_window");
-        sb.AppendLine("clipboard_read • clipboard_write • remember_app • get_location • get_weather");
-        sb.AppendLine("Clima: usa get_location primero, luego get_weather. Herramienta PRIMERO, explicación breve DESPUÉS.");
-        sb.AppendLine("Si la herramienta dice que ya está hecho, informa sin reintentar. Si open_app no encuentra la app y el usuario da la ruta, usa remember_app.");
-        sb.AppendLine();
-
-        sb.AppendLine("## CONTEXTO");
-        sb.AppendLine("Recuerda acciones anteriores. 'bórrala', 'deshaz eso' → mira mensajes previos e identifica el objetivo exacto.");
-        sb.AppendLine("Nunca borres archivos del sistema. Si una acción es rechazada, no la reintentas.");
-        sb.AppendLine();
+        if (_config.PerformanceMode == "avanzado")
+        {
+            // qwen2.5:14b — modelo capaz, prompt compacto (~200 tokens menos de prefill)
+            sb.AppendLine("## HERRAMIENTAS");
+            sb.AppendLine("Llama siempre a la herramienta ANTES de responder. Nunca describas una acción sin ejecutarla primero.");
+            sb.AppendLine("Disponibles: open_app, open_folder, close_app, create_folder, delete_folder, recycle_bin,");
+            sb.AppendLine("  read_file, write_file, search_web, search_browser, run_command, screenshot, type_text,");
+            sb.AppendLine("  system_info, volume, list_open_windows, minimize_window, maximize_window,");
+            sb.AppendLine("  clipboard_read, clipboard_write, remember_app, get_location, get_weather.");
+            sb.AppendLine("Clima: get_location primero, luego get_weather. App desconocida con ruta: remember_app.");
+            sb.AppendLine("Resultado de herramienta → informa brevemente, no repitas la misma herramienta.");
+            sb.AppendLine();
+            sb.AppendLine("## CONTEXTO");
+            sb.AppendLine("Referencias a acciones previas ('bórrala', 'deshaz eso') → consulta historial, ejecuta la herramienta adecuada.");
+            sb.AppendLine("No borres sistema ni mates procesos críticos. Acción rechazada → no reintentas.");
+            sb.AppendLine();
+        }
+        else
+        {
+            // qwen2.5:7b — modelo ligero, necesita instrucciones explícitas
+            sb.AppendLine("## USO DE HERRAMIENTAS — REGLA ABSOLUTA");
+            sb.AppendLine("Tienes herramientas para controlar el ordenador. DEBES USARLAS siempre que el usuario pida una acción.");
+            sb.AppendLine("NUNCA describas una acción sin ejecutarla. NUNCA digas 'voy a...', 'procedo a...' sin haber llamado a la herramienta.");
+            sb.AppendLine("Si el usuario pide:");
+            sb.AppendLine("  - abrir algo             → open_app o open_folder");
+            sb.AppendLine("  - cerrar algo             → close_app");
+            sb.AppendLine("  - crear carpeta           → create_folder");
+            sb.AppendLine("  - eliminar algo           → delete_folder");
+            sb.AppendLine("  - papelera                → recycle_bin");
+            sb.AppendLine("  - leer/escribir archivo   → read_file / write_file");
+            sb.AppendLine("  - buscar en internet      → search_web o search_browser");
+            sb.AppendLine("  - ejecutar comando        → run_command");
+            sb.AppendLine("  - captura de pantalla     → screenshot");
+            sb.AppendLine("  - escribir texto          → type_text");
+            sb.AppendLine("  - info del sistema        → system_info");
+            sb.AppendLine("  - volumen                 → volume");
+            sb.AppendLine("  - ventanas                → list_open_windows, minimize_window, maximize_window");
+            sb.AppendLine("  - portapapeles            → clipboard_read, clipboard_write");
+            sb.AppendLine("  - recordar app            → remember_app");
+            sb.AppendLine("  - ubicación/clima         → get_location PRIMERO, luego get_weather");
+            sb.AppendLine("Usa la herramienta PRIMERO. Explica brevemente lo que hiciste DESPUÉS.");
+            sb.AppendLine("Cuando la herramienta devuelve un resultado, informa al usuario con una frase breve. NO repitas la misma herramienta.");
+            sb.AppendLine("Si open_app no encuentra una app y el usuario da la ruta, usa remember_app para guardarla.");
+            sb.AppendLine();
+            sb.AppendLine("## CONTEXTO CONVERSACIONAL");
+            sb.AppendLine("Recuerda las acciones que acabas de realizar. Si el usuario dice 'bórrala', 'deshaz eso' → mira mensajes anteriores, identifica el objetivo y ejecuta la herramienta.");
+            sb.AppendLine("Nunca borres archivos del sistema ni mates procesos críticos. Si una acción es rechazada, no la reintentas.");
+            sb.AppendLine();
+        }
 
         sb.AppendLine("## RUTAS DEL SISTEMA");
         sb.AppendLine($"  Usuario: {userName}");

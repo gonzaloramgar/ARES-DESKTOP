@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:AresAssistant"
-        Title="ARES" Height="450" Width="520"
+        Title="ARES" Height="500" Width="520"
         WindowStyle="None" AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
@@ -13,18 +13,22 @@
             BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
             Opacity="0">
         <Border.Background>
-            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#0c0c14" Offset="0"/>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0.4,1">
+                <GradientStop Color="#0e0e18" Offset="0"/>
                 <GradientStop Color="#06060c" Offset="1"/>
             </LinearGradientBrush>
         </Border.Background>
         <Border.RenderTransform>
             <TranslateTransform x:Name="SplashTranslate" Y="30"/>
         </Border.RenderTransform>
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="55" ShadowDepth="0" Opacity="0.75"/>
+        </Border.Effect>
+
         <Grid>
-            <!-- Horizontal accent glow at top -->
+            <!-- Top accent glow line -->
             <Border VerticalAlignment="Top" Height="1" CornerRadius="22,22,0,0"
-                    Margin="80,0" Opacity="0.8" IsHitTestVisible="False">
+                    Margin="70,0" Opacity="0.9" IsHitTestVisible="False">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="Transparent" Offset="0"/>
@@ -33,7 +37,20 @@
                     </LinearGradientBrush>
                 </Border.Background>
             </Border>
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-8,0,0">
+
+            <!-- Bottom accent glow line -->
+            <Border VerticalAlignment="Bottom" Height="1" CornerRadius="0,0,22,22"
+                    Margin="120,0" Opacity="0.35" IsHitTestVisible="False">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="Transparent" Offset="0"/>
+                        <GradientStop Color="#ff2222" Offset="0.5"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-6,0,0">
 
                 <!-- Animated ARES Logo -->
                 <Canvas Width="140" Height="140" HorizontalAlignment="Center" Margin="0,0,0,20">
@@ -79,6 +96,36 @@
                     <Line X1="140" Y1="128" X2="140" Y2="140" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
                     <Line X1="128" Y1="140" X2="140" Y2="140" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Opacity="0.5"/>
 
+                    <!-- Dashed rotating ring (between inner and mid) -->
+                    <Ellipse Width="90" Height="90" Canvas.Left="25" Canvas.Top="25"
+                             Stroke="{DynamicResource AccentBrush}" StrokeThickness="1"
+                             StrokeDashArray="4 3" Opacity="0.35"
+                             RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="DashRingRotate" Angle="0"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <!-- Radar ping 1 -->
+                    <Ellipse x:Name="Ping1" Width="130" Height="130"
+                             Canvas.Left="5" Canvas.Top="5"
+                             Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5"
+                             Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="Ping1Scale" ScaleX="0.3" ScaleY="0.3"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <!-- Radar ping 2 (offset phase) -->
+                    <Ellipse x:Name="Ping2" Width="130" Height="130"
+                             Canvas.Left="5" Canvas.Top="5"
+                             Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5"
+                             Opacity="0" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="Ping2Scale" ScaleX="0.3" ScaleY="0.3"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
                     <!-- Diamond outer (border only) — rotates -->
                     <Path Canvas.Left="42" Canvas.Top="28"
                           Fill="Transparent"
@@ -107,6 +154,27 @@
                         </Path.Effect>
                     </Path>
 
+                    <!-- Orbiting dot 1 — clockwise, radius 52 -->
+                    <Ellipse Width="5" Height="5"
+                             Canvas.Left="119.5" Canvas.Top="67.5"
+                             Fill="{DynamicResource AccentBrush}" Opacity="0.9">
+                        <Ellipse.Effect>
+                            <DropShadowEffect Color="#ff2222" BlurRadius="7" ShadowDepth="0" Opacity="0.9"/>
+                        </Ellipse.Effect>
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="Orbit1Rotate" Angle="0" CenterX="-49.5" CenterY="2.5"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <!-- Orbiting dot 2 — counter-clockwise, radius 38 -->
+                    <Ellipse Width="3.5" Height="3.5"
+                             Canvas.Left="106.25" Canvas.Top="68.25"
+                             Fill="{DynamicResource AccentBrush}" Opacity="0.55">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="Orbit2Rotate" Angle="0" CenterX="-36.25" CenterY="1.75"/>
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
                     <!-- Center dot -->
                     <Ellipse Width="6" Height="6"
                              Canvas.Left="67" Canvas.Top="67"
@@ -132,32 +200,85 @@
                            Margin="0,0,0,4"/>
 
                 <TextBlock Text="{x:Static local:App.AppVersion}"
-                           FontSize="10" Foreground="#44445a"
+                           FontSize="10" Foreground="{DynamicResource SubtextBrush}"
+                           Opacity="0.5"
                            HorizontalAlignment="Center" FontFamily="Consolas"
-                           Margin="0,0,0,28"/>
+                           Margin="0,0,0,22"/>
 
+                <!-- Separator -->
+                <Border Height="1" Width="300" Margin="0,0,0,18" HorizontalAlignment="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="Transparent" Offset="0"/>
+                            <GradientStop Color="#28ffffff" Offset="0.5"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
 
-                <!-- Status -->
-                <TextBlock Text="{Binding StatusText}"
-                           FontSize="12" Foreground="{DynamicResource SubtextBrush}"
-                           HorizontalAlignment="Center" FontFamily="Consolas"
-                           Margin="0,0,0,10"/>
+                <!-- Glass loading panel -->
+                <Border Background="{DynamicResource GlassBrush}"
+                        BorderBrush="{DynamicResource GlassBorderBrush}"
+                        BorderThickness="1" CornerRadius="12"
+                        Padding="20,14,20,14" Width="370">
+                    <StackPanel>
 
-                <!-- Progress bar (uses App.xaml custom style) -->
-                <ProgressBar Value="{Binding Progress}" Width="320" Height="4"
-                             Minimum="0" Maximum="100" Margin="0,0,0,6"/>
+                        <!-- Status line with prefix and blinking cursor -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="›" Foreground="{DynamicResource AccentBrush}"
+                                       FontFamily="Consolas" FontSize="11"
+                                       Margin="0,0,7,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding StatusText}"
+                                       FontSize="11" Foreground="{DynamicResource SubtextBrush}"
+                                       FontFamily="Consolas" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="BlinkCursor" Text="█"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       FontFamily="Consolas" FontSize="10"
+                                       Margin="4,0,0,0" VerticalAlignment="Center" Opacity="1"/>
+                        </StackPanel>
 
-                <!-- Progress percentage -->
-                <TextBlock Text="{Binding Progress, StringFormat='{}{0}%'}"
-                           FontSize="10" Foreground="{DynamicResource AccentBrush}"
-                           HorizontalAlignment="Center" FontFamily="Consolas"/>
+                        <!-- Scan line sweep -->
+                        <Canvas Height="1" Width="330" ClipToBounds="True" Margin="0,0,0,8">
+                            <Border x:Name="ScanLine" Width="110" Height="1" Canvas.Top="0">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="ScanTx" X="-110"/>
+                                </Border.RenderTransform>
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="Transparent" Offset="0"/>
+                                        <GradientStop Color="#99ff2222" Offset="0.5"/>
+                                        <GradientStop Color="Transparent" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                        </Canvas>
+
+                        <!-- Progress bar + percentage inline -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="36"/>
+                            </Grid.ColumnDefinitions>
+                            <ProgressBar Grid.Column="0"
+                                         Value="{Binding Progress}"
+                                         Height="5" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Progress, StringFormat='{}{0}%'}"
+                                       FontSize="10" Foreground="{DynamicResource AccentBrush}"
+                                       FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+
+                    </StackPanel>
+                </Border>
+
             </StackPanel>
         </Grid>
     </Border>
 
     <Window.Triggers>
         <EventTrigger RoutedEvent="Loaded">
-            <!-- Entrance animation (one-shot: fade in + slide up) -->
+            <!-- Entrance: fade in + slide up -->
             <BeginStoryboard>
                 <Storyboard>
                     <DoubleAnimation Storyboard.TargetName="RootBorder"
@@ -172,7 +293,7 @@
                     </DoubleAnimation>
                 </Storyboard>
             </BeginStoryboard>
-            <!-- Logo spin + pulse (forever) -->
+            <!-- Logo spin + pulse + orbits (forever) -->
             <BeginStoryboard>
                 <Storyboard RepeatBehavior="Forever">
                     <DoubleAnimation Storyboard.TargetName="DiamondRotate"
@@ -181,6 +302,15 @@
                     <DoubleAnimation Storyboard.TargetName="DiamondOuterRotate"
                                      Storyboard.TargetProperty="Angle"
                                      From="360" To="0" Duration="0:0:10"/>
+                    <DoubleAnimation Storyboard.TargetName="DashRingRotate"
+                                     Storyboard.TargetProperty="Angle"
+                                     From="0" To="360" Duration="0:0:8"/>
+                    <DoubleAnimation Storyboard.TargetName="Orbit1Rotate"
+                                     Storyboard.TargetProperty="Angle"
+                                     From="0" To="360" Duration="0:0:3.5"/>
+                    <DoubleAnimation Storyboard.TargetName="Orbit2Rotate"
+                                     Storyboard.TargetProperty="Angle"
+                                     From="0" To="-360" Duration="0:0:5.5"/>
                     <DoubleAnimation Storyboard.TargetName="Ring1Scale"
                                      Storyboard.TargetProperty="ScaleX"
                                      From="0.85" To="1.1" Duration="0:0:2"
@@ -197,6 +327,55 @@
                                      Storyboard.TargetProperty="ScaleY"
                                      From="1.0" To="1.08" Duration="0:0:1.5"
                                      AutoReverse="True" BeginTime="0:0:0.5"/>
+                </Storyboard>
+            </BeginStoryboard>
+            <!-- Radar ping 1 (forever) -->
+            <BeginStoryboard>
+                <Storyboard RepeatBehavior="Forever">
+                    <DoubleAnimation Storyboard.TargetName="Ping1Scale"
+                                     Storyboard.TargetProperty="ScaleX"
+                                     From="0.25" To="1.35" Duration="0:0:2.2"/>
+                    <DoubleAnimation Storyboard.TargetName="Ping1Scale"
+                                     Storyboard.TargetProperty="ScaleY"
+                                     From="0.25" To="1.35" Duration="0:0:2.2"/>
+                    <DoubleAnimation Storyboard.TargetName="Ping1"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0.5" To="0" Duration="0:0:2.2"/>
+                </Storyboard>
+            </BeginStoryboard>
+            <!-- Radar ping 2 — offset 1.1s (forever) -->
+            <BeginStoryboard>
+                <Storyboard RepeatBehavior="Forever" BeginTime="0:0:1.1">
+                    <DoubleAnimation Storyboard.TargetName="Ping2Scale"
+                                     Storyboard.TargetProperty="ScaleX"
+                                     From="0.25" To="1.35" Duration="0:0:2.2"/>
+                    <DoubleAnimation Storyboard.TargetName="Ping2Scale"
+                                     Storyboard.TargetProperty="ScaleY"
+                                     From="0.25" To="1.35" Duration="0:0:2.2"/>
+                    <DoubleAnimation Storyboard.TargetName="Ping2"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0.5" To="0" Duration="0:0:2.2"/>
+                </Storyboard>
+            </BeginStoryboard>
+            <!-- Scan line sweep (forever) -->
+            <BeginStoryboard>
+                <Storyboard RepeatBehavior="Forever">
+                    <DoubleAnimation Storyboard.TargetName="ScanTx"
+                                     Storyboard.TargetProperty="X"
+                                     From="-110" To="440" Duration="0:0:2.2">
+                        <DoubleAnimation.EasingFunction>
+                            <SineEase EasingMode="EaseInOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+            <!-- Cursor blink (forever) -->
+            <BeginStoryboard>
+                <Storyboard RepeatBehavior="Forever">
+                    <DoubleAnimation Storyboard.TargetName="BlinkCursor"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="1" To="0" Duration="0:0:0.5"
+                                     AutoReverse="True"/>
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>

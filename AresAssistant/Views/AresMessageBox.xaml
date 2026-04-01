@@ -9,43 +9,113 @@
         ResizeMode="NoResize"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
-    <Border Background="{DynamicResource BackgroundBrush}" CornerRadius="18"
-            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
+    <Border x:Name="RootBorder" CornerRadius="20"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+            Opacity="0">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0.4,1">
+                <GradientStop Color="#10101c" Offset="0"/>
+                <GradientStop Color="#08080f" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.RenderTransform>
+            <TranslateTransform x:Name="RootTranslate" Y="12"/>
+        </Border.RenderTransform>
         <Border.Effect>
-            <DropShadowEffect Color="Black" BlurRadius="30" ShadowDepth="0" Opacity="0.6"/>
+            <DropShadowEffect Color="Black" BlurRadius="45" ShadowDepth="0" Opacity="0.75"/>
         </Border.Effect>
-        <Grid Margin="24,20,24,20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>  <!-- Header -->
-                <RowDefinition Height="Auto"/>  <!-- Message -->
-                <RowDefinition Height="Auto"/>  <!-- Buttons -->
-            </Grid.RowDefinitions>
 
-            <!-- Header: icon + title -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-                <Path x:Name="IconPath"
-                      Data="M 8,0 L 16,11 L 8,22 L 0,11 Z"
-                      Fill="{DynamicResource AccentBrush}" Width="14" Height="20"
-                      Margin="0,0,10,0" VerticalAlignment="Center"/>
-                <TextBlock x:Name="TitleText" Text="ARES"
-                           FontSize="15" FontWeight="Bold"
-                           Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"
-                           VerticalAlignment="Center"/>
-            </StackPanel>
-
-            <!-- Message body -->
-            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Padding="16,14">
-                <TextBlock x:Name="MessageText"
-                           Foreground="{DynamicResource TextBrush}" FontSize="13"
-                           FontFamily="Consolas" LineHeight="20"
-                           TextWrapping="Wrap"/>
+        <Grid>
+            <!-- Top accent glow line -->
+            <Border VerticalAlignment="Top" Height="1" CornerRadius="20,20,0,0"
+                    Margin="50,0" Opacity="0.85" IsHitTestVisible="False">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="Transparent" Offset="0"/>
+                        <GradientStop Color="#ff2222" Offset="0.5"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
             </Border>
 
-            <!-- Buttons -->
-            <StackPanel x:Name="ButtonPanel" Grid.Row="2" Orientation="Horizontal"
-                        HorizontalAlignment="Right" Margin="0,18,0,0">
-                <!-- Buttons are added programmatically -->
+            <StackPanel>
+
+                <!-- Header -->
+                <Border CornerRadius="20,20,0,0" Padding="20,16,20,14">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#1a1428" Offset="0"/>
+                            <GradientStop Color="#0e0e1a" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Orientation="Horizontal">
+                        <Path x:Name="IconPath"
+                              Data="M 8,0 L 16,11 L 8,22 L 0,11 Z"
+                              Fill="{DynamicResource AccentBrush}" Width="12" Height="18"
+                              Margin="0,0,10,0" VerticalAlignment="Center">
+                            <Path.Effect>
+                                <DropShadowEffect Color="#ff2222" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                            </Path.Effect>
+                        </Path>
+                        <TextBlock x:Name="TitleText" Text="ARES"
+                                   FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Separator -->
+                <Border Height="1">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="Transparent" Offset="0"/>
+                            <GradientStop Color="#33ffffff" Offset="0.5"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
+
+                <!-- Message body -->
+                <Border Padding="20,16,20,16">
+                    <Border Padding="14,12"
+                            CornerRadius="10"
+                            BorderBrush="#2a2a3e" BorderThickness="1">
+                        <Border.Background>
+                            <SolidColorBrush Color="#12121e"/>
+                        </Border.Background>
+                        <TextBlock x:Name="MessageText"
+                                   Foreground="{DynamicResource TextBrush}" FontSize="13"
+                                   FontFamily="Consolas" LineHeight="22"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+                </Border>
+
+                <!-- Buttons -->
+                <Border Padding="20,0,20,18">
+                    <StackPanel x:Name="ButtonPanel" Orientation="Horizontal"
+                                HorizontalAlignment="Right"/>
+                </Border>
+
             </StackPanel>
         </Grid>
     </Border>
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="RootBorder"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0" To="1" Duration="0:0:0.28"/>
+                    <DoubleAnimation Storyboard.TargetName="RootTranslate"
+                                     Storyboard.TargetProperty="Y"
+                                     From="12" To="0" Duration="0:0:0.32">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
 </Window>

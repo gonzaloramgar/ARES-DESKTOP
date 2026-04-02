@@ -2,18 +2,43 @@
 
 ARES es un asistente de IA para Windows construido en WPF y .NET 8, que corre sobre modelos de lenguaje locales a través de [Ollama](https://ollama.ai). Diseñado para operar como HUD flotante sobre el escritorio, permite controlar el sistema con lenguaje natural sin salir de lo que estés haciendo.
 
-## Características
+---
 
-## Roadmap
+## Interfaz
 
-- Plan ejecutable 30/60/90: [docs/ROADMAP_30_60_90_ARES.md](docs/ROADMAP_30_60_90_ARES.md)
+### Dos modos de visualización
+- **Modo Overlay** (380×600) — Panel compacto anclado a una esquina de la pantalla. Muestra el chat y el indicador de actividad de forma no intrusiva
+- **Modo HUD Completo** (1200×800) — Interfaz completa con tres columnas: lista de herramientas disponibles, chat central y dashboard de información
 
-### Dos modos de interfaz
-- **Modo Overlay** (380×600) — Panel compacto anclado a una esquina de la pantalla
-- **Modo HUD Completo** (1200×800) — Interfaz completa con lista de herramientas, chat y estado del sistema
+### Estética glassmorphism
+Toda la interfaz usa un sistema de diseño cohesivo oscuro con efectos de cristal:
+- Fondos con gradientes profundos (`#0e0e18` → `#06060c`)
+- Paneles translúcidos (`GlassBrush` + `GlassBorderBrush`) sobre las superficies
+- Línea de brillo de acento en la parte superior de cada ventana
+- Icono diamante como identificador visual del asistente
+- Animaciones de entrada (fade + slide) en todas las ventanas y diálogos
+- **Color de acento completamente personalizable** — afecta bordes, iconos, botones y efectos de brillo en toda la UI en tiempo real sin reinicio
 
-### Síntesis de voz (TTS) — Sistema de 3 niveles
-ARES puede leer sus respuestas en voz alta con un sistema de TTS de 3 niveles con fallback automático:
+### Dashboard (HUD Completo — panel derecho)
+El panel derecho del HUD Completo muestra información en tiempo real mediante widgets configurables:
+
+| Widget | Contenido |
+|---|---|
+| **Reloj local** | Hora actual actualizada cada segundo |
+| **Estado del asistente** | Texto de actividad (Pensando / Esperando...) |
+| **Clima** | Temperatura, descripción y humedad de la ciudad configurada (wttr.in) |
+| **Hora mundial** | Hora simultánea en zonas horarias adicionales |
+| **Sistema en vivo** | Uso de CPU % y RAM usada/total en tiempo real |
+| **Tareas rápidas** | Bloc de notas integrado persistente |
+
+### Badge de modelo por mensaje
+Cada mensaje del asistente muestra una etiqueta discreta con el modelo de IA que generó la respuesta, visible tanto en Overlay como en HUD Completo.
+
+---
+
+## Síntesis de voz (TTS) — Sistema de 3 niveles
+
+ARES puede leer sus respuestas en voz alta con fallback automático:
 
 | Nivel | Motor | Tipo | Requisitos |
 |---|---|---|---|
@@ -24,28 +49,53 @@ ARES puede leer sus respuestas en voz alta con un sistema de TTS de 3 niveles co
 - **Selección de género de voz** — Masculino (Piper `davefx` → Edge Álvaro → WinRT Pablo) o Femenino (Piper `sharvard` speaker F → Edge Dalia/Elvira → SAPI femenino)
 - **Control de volumen** en tiempo real desde Ajustes
 - **Botón de prueba** para escuchar la voz configurada
-- Configurable desde el asistente de configuración inicial y desde Ajustes
 
-### Asistente de configuración inicial (Setup Wizard)
-Al primer arranque, ARES presenta un wizard de 5 pasos:
+---
+
+## Asistente de configuración inicial (Setup Wizard)
+
+Al primer arranque, ARES presenta un wizard de 5 pasos con animaciones de transición entre páginas:
+
 1. **Bienvenida + Nombre** — Presentación del asistente y nombre personalizado
 2. **Voz** — Activar/desactivar TTS, seleccionar género, ajustar volumen, probar voz y descargar voces Piper offline
 3. **Inteligencia Artificial** — Personalidad, longitud de respuestas, detección de hardware, selección de modo de rendimiento (Ligero/Avanzado) e instalación automática de Ollama + modelo
 4. **Apariencia** — Color de acento, opacidad, tamaño de fuente y posición del overlay
 5. **Sistema** — Hotkeys, inicio con Windows, historial, bandeja del sistema y tiempo de descarga del modelo
 
-#### Instalación automática de Ollama
-Desde el wizard, el botón **"Instalar todo"** abre una ventana de progreso dedicada (`OllamaInstallWindow`) con 3 fases:
+### Instalación automática de Ollama
+Desde el wizard, el botón **"Instalar todo"** abre `OllamaInstallWindow` con 3 fases:
 1. **Descarga** del instalador desde ollama.com (0–60%) — muestra MB descargados en tiempo real
 2. **Instalación** silenciosa con elevación de permisos UAC (60–80%)
 3. **Espera** a que la API de Ollama responda (80–100%)
 
-Una vez instalado, descarga automáticamente el modelo correspondiente al modo de rendimiento elegido mediante otra ventana de progreso dedicada (`ModelDownloadWindow`) que muestra porcentaje, tamaño descargado/total y estado de cada capa.
+Una vez instalado, descarga automáticamente el modelo correspondiente al modo elegido mediante `ModelDownloadWindow`, que muestra porcentaje, tamaño descargado/total y estado de cada capa.
 
-#### Descarga de voces offline
-El botón **"Descargar voces offline"** en la página de voz descarga los modelos Piper para ambos géneros (~60 MB total), habilitando TTS neural sin conexión a internet.
+---
 
-### Herramientas integradas
+## Rendimiento de IA
+
+### Modos de rendimiento
+
+| Parámetro | Ligero (`qwen2.5:7b`) | Avanzado (`qwen2.5:14b`) |
+|---|---|---|
+| `num_ctx` | 4096 | 4096 |
+| `num_predict` | 512 | 512 |
+| `num_batch` | 512 | 1024 |
+| `num_thread` | auto | auto |
+| Historial máximo | 20 mensajes | 20 mensajes |
+
+- **Ligero** — Modelo 7b, rápido, ideal para hardware modesto (8–16 GB RAM)
+- **Avanzado** — Modelo 14b, mejor calidad de respuesta y tool-calling. Requiere ~16 GB RAM o GPU con 10+ GB VRAM
+
+### Optimizaciones de velocidad
+- **Precarga del modelo** al iniciar — `PreloadModelAsync` carga el modelo en RAM sin hacer inferencia, eliminando el cold-start del primer mensaje
+- **`keep_alive` configurable** — El modelo permanece en RAM entre mensajes (por defecto 30 min), configurable desde Ajustes
+- **Buffer de streaming reducido** — Los primeros tokens aparecen en UI en menos de 50 caracteres buffereados
+- **System prompts diferenciados** — El modelo 7b recibe instrucciones explícitas de mapeo acción→herramienta; el 14b recibe un prompt compacto optimizado para su mayor capacidad
+
+---
+
+## Herramientas integradas
 
 | Herramienta | Descripción |
 |---|---|
@@ -76,59 +126,44 @@ El botón **"Descargar voces offline"** en la página de voz descarga los modelo
 ### Escaneo de aplicaciones inteligente
 - **Registry + Start Menu** — Detecta aplicaciones instaladas vía registro de Windows y accesos directos del menú Inicio
 - **Steam** — Escanea todas las bibliotecas de Steam (parsea `libraryfolders.vdf`) y encuentra el ejecutable correcto de cada juego
-- **Epic Games** — Lee los manifiestos `.item` de Epic Games Launcher para detectar juegos instalados (Fortnite, etc.)
+- **Epic Games** — Lee los manifiestos `.item` para detectar juegos instalados
 - **Escritorio** — Escanea accesos directos `.lnk` y `.url` (incluye URLs `steam://`)
-- **Memoria de apps personalizadas** — Si un juego o app no se detecta, el usuario proporciona la ruta una vez y ARES la recuerda para siempre (`data/custom-apps.json`). La herramienta `remember_app` permite al modelo guardar nuevas apps durante la conversación
+- **Memoria de apps personalizadas** — Si una app no se detecta, el usuario proporciona la ruta una vez y ARES la recuerda para siempre (`data/custom-apps.json`)
 
-### Respuesta en streaming
-Las respuestas se muestran token a token en tiempo real. El sistema usa streaming para el primer turno de conversación y cambia automáticamente al modo no-streaming cuando hay llamadas a herramientas pendientes.
+---
 
-### Modos de rendimiento
-Ambos modos usan el mismo tamaño de contexto y límite de historial, optimizados para velocidad:
+## Seguridad y estabilidad
 
-| Parámetro | Ligero (`qwen2.5:7b`) | Avanzado (`qwen2.5:14b`) |
-|---|---|---|
-| `num_ctx` | 4096 | 4096 |
-| `num_predict` | 512 | 512 |
-| `num_batch` | 512 | 1024 |
-| `num_thread` | 4 (fijo) | auto (Ollama decide) |
-| Historial | 20 mensajes | 20 mensajes |
-
-- **Ligero** — Modelo 7b, rápido, ideal para hardware modesto (8–16 GB RAM)
-- **Avanzado** — Modelo 14b, mejor calidad de respuesta y tool-calling, `num_batch` alto para evaluar prompts grandes rápidamente. Requiere ~16 GB RAM
-
-El modelo se selecciona automáticamente según el modo de rendimiento elegido (no hay selector manual de modelo en el wizard).
-
-### Gestión de memoria de modelo
-ARES descarga automáticamente el modelo de la RAM de Ollama tras un período de inactividad configurable (`ModelKeepAliveMinutes`). También descarga el modelo al cerrar la aplicación.
-
-### Seguridad y estabilidad
-- **Canonicalización de rutas** — `PermissionManager` y `DeleteFolderTool` usan `Path.GetFullPath()` para prevenir bypass por traversal (`C:\Windows\..\..\target`)
+- **Canonicalización de rutas** — `PermissionManager` usa `Path.GetFullPath()` para prevenir path traversal
 - **Timeout de comandos** — `RunCommandTool` mata procesos que excedan 30 segundos
-- **Patrones bloqueados ampliados** — `powershell -command`, `python -c`, `downloadstring`, `downloadfile`, `set-executionpolicy`, etc.
+- **Patrones bloqueados** — `powershell -command`, `python -c`, `downloadstring`, `set-executionpolicy`, etc.
 - **Thread safety** — `ConversationHistory` protegida con locks en todas las operaciones
-- **I/O asíncrono** — `ReadFileTool`, `WriteFileTool` y `SystemInfoTool` usan operaciones async para no bloquear el hilo de UI
+- **I/O asíncrono** — Herramientas de ficheros usan `async/await` para no bloquear la UI
 - **Ejecución de herramientas** fuera del hilo de UI (`Task.Run` en `ToolDispatcher`)
+- **Crash logs automáticos** en `data/crash_*.log` (uno por sesión)
 
-### Otras funcionalidades
-- Tema oscuro con **selector de color de acento** personalizable (ColorPicker integrado)
-- Opacidad del overlay configurable en tiempo real
+---
+
+## Otras funcionalidades
+
+- **Bandeja del sistema** — Icono en la barra de tareas con menú contextual (Abrir / Salir). Comportamiento de "minimizar a bandeja" al cerrar configurable
+- **Hotkeys globales** configurables y rerregistrables sin reiniciar
 - Historial de chat persistente con truncado automático
-- Hotkeys globales configurables y rerregistrables sin reiniciar
-- Escáner de sistema en cada arranque (detecta apps de Steam, Epic Games, escritorio, navegadores y carpetas)
 - Purga automática de historial envenenado (elimina respuestas "app no encontrada" obsoletas al iniciar)
 - Parámetros de inferencia anti-alucinación (`temperature: 0.7`, `repeat_penalty: 1.1`)
 - Confirmación interactiva antes de ejecutar acciones sensibles (desactivable)
-- Auto-unload del modelo tras inactividad configurable
-- Icono en la bandeja del sistema con opción de minimizar-a-bandeja al cerrar
-- Crash logs automáticos en `data/crash_*.log`
-- Debug log de peticiones/respuestas de Ollama en `data/logs/ollama_debug.log` (solo en build Debug)
+- Escáner de sistema en cada arranque (apps, navegadores, carpetas)
+- Debug log en `data/logs/ollama_debug.log` (solo en build Debug)
+
+---
 
 ## Requisitos
 
 - Windows 10 / 11 (x64)
 - [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Ollama](https://ollama.ai) instalado y corriendo localmente
+
+---
 
 ## Modelos compatibles
 
@@ -137,14 +172,16 @@ ARES usa la API nativa de herramientas de Ollama. Solo ciertos modelos generan `
 | Modelo | Tool calling | Tamaño aprox. | Notas |
 |---|---|---|---|
 | `qwen2.5:7b` | ✅ Muy bueno | ~5 GB | **Recomendado** — Mejor relación calidad/velocidad. Default |
-| `qwen2.5:14b` | ✅ Muy bueno | ~9 GB | **Recomendado** — Mejor calidad de respuesta, más lento. Requiere ~16 GB RAM |
+| `qwen2.5:14b` | ✅ Muy bueno | ~9 GB | **Recomendado** — Mejor calidad, más lento. Requiere ~16 GB RAM |
 | `qwen2.5:32b` | ✅ Excelente | ~20 GB | Requiere GPU potente |
 | `llama3.1:8b` | ✅ Bueno | ~5 GB | |
 | `llama3.2:3b` | ✅ Funcional | ~2 GB | Tool-calling poco fiable |
 | `mistral-nemo` | ✅ Bueno | ~7 GB | |
 | `phi4`, `gemma`, `deepseek-r1` | ❌ No soportado | — | No generan `tool_calls` |
 
-> **qwen2.5:7b** es el modelo por defecto y el más probado con ARES. **qwen2.5:14b** ofrece respuestas notablemente mejores y más fiables en tool-calling si el hardware lo permite (recomendado con 16+ GB de RAM o GPU con 10+ GB VRAM).
+> **qwen2.5:7b** es el modelo por defecto y el más probado con ARES. **qwen2.5:14b** ofrece respuestas notablemente mejores si el hardware lo permite (recomendado con 16+ GB RAM o GPU con 10+ GB VRAM).
+
+---
 
 ## Instalación
 
@@ -161,11 +198,11 @@ git clone https://github.com/gonzaloramgar/ARES.git
 cd ARES
 dotnet publish "AresAssistant/AresAssistant.csproj" -c Release -r win-x64 --self-contained false -o "Build/"
 ```
-Resultado: `Build/AresAssistant.exe`. Al ejecutarlo por primera vez, el asistente de configuración instala Ollama y el modelo automáticamente.
+Resultado: `Build/AresAssistant.exe`.
+
+---
 
 ## Configuración
-
-Al primer arranque, ARES escanea el sistema para detectar aplicaciones, navegadores y carpetas. Esto crea `data/tools.json`.
 
 La configuración se guarda en `data/config.json` y se puede modificar desde el panel de Ajustes:
 
@@ -185,10 +222,10 @@ La configuración se guarda en `data/config.json` y se puede modificar desde el 
 | `LaunchWithWindows` | `true` / `false` | Inicio automático con Windows |
 | `CloseToTray` | `true` / `false` | Minimizar a bandeja al cerrar |
 | `ConfirmationAlertsEnabled` | `true` / `false` | Diálogos de confirmación |
-| `PerformanceMode` | `ligero`, `avanzado` | Modo de rendimiento (control de contexto, threads e historial) |
-| `ModelKeepAliveMinutes` | Entero (`0` = nunca) | Minutos de inactividad antes de descargar el modelo |
+| `PerformanceMode` | `ligero`, `avanzado` | Modo de rendimiento |
+| `ModelKeepAliveMinutes` | Entero (`0` = nunca) | Minutos antes de descargar el modelo de RAM |
 | `VoiceEnabled` | `true` / `false` | Activar síntesis de voz (TTS) |
-| `TtsVoiceGender` | `masculino`, `femenino` | Género de la voz del asistente |
+| `TtsVoiceGender` | `masculino`, `femenino` | Género de la voz |
 | `TtsVolume` | `0.0` – `1.0` | Volumen de la voz |
 
 ## Hotkeys predeterminadas
@@ -198,67 +235,71 @@ La configuración se guarda en `data/config.json` y se puede modificar desde el 
 | `Ctrl+Space` | Mostrar / ocultar ARES |
 | `Ctrl+Shift+Space` | Cambiar entre Overlay y HUD Completo |
 
+---
+
 ## Estructura del proyecto
 
 ```
 AresAssistant/
 ├── App.xaml / App.xaml.cs        # Entrada, recursos globales, tray icon, crash handling
-├── Views/                         # UI completa (Windows y Controles)
+├── Views/
 │   ├── MainWindow                 # Shell principal, hotkeys, animaciones, idle timer
-│   ├── SettingsWindow             # Panel de ajustes
-│   ├── SplashWindow               # Pantalla de carga / primer arranque
-│   ├── ColorPickerWindow          # Selector de color de acento
-│   ├── SetupWindow                 # Wizard de configuración inicial (5 pasos)
-│   ├── OverlayModeControl         # UI modo compacto
-│   ├── FullHudModeControl         # UI modo HUD completo
-│   ├── OllamaInstallWindow        # Descarga e instalación automática de Ollama (3 fases con progreso)
+│   ├── SettingsWindow             # Panel de ajustes completo
+│   ├── SplashWindow               # Pantalla de carga animada (radar, órbitas, scanline)
+│   ├── ColorPickerWindow          # Selector HSV de color de acento
+│   ├── SetupWindow                # Wizard de configuración inicial (5 pasos)
+│   ├── OverlayModeControl         # UI modo compacto con badge de modelo
+│   ├── FullHudModeControl         # UI HUD completo con dashboard de widgets
+│   ├── OllamaInstallWindow        # Instalación automática de Ollama (3 fases)
 │   ├── ModelDownloadWindow        # Descarga de modelos Ollama con progreso en tiempo real
-│   ├── ConfirmationDialog         # Diálogo de confirmación de herramientas
-│   └── PurgeConfirmationDialog    # Confirmación de purga de historial
-├── ViewModels/                    # MVVM: Chat, Settings, Main, Splash
+│   ├── UpdateWindow               # Comprobación e instalación de actualizaciones
+│   ├── ConfirmationDialog         # Diálogo de confirmación de acciones
+│   ├── PurgeConfirmationDialog    # Confirmación de purga de datos
+│   └── AresMessageBox             # Diálogo de mensajes/alertas del sistema
+├── ViewModels/
 │   ├── ViewModelBase.cs           # Base INotifyPropertyChanged
-│   ├── ChatViewModel.cs           # Estado del chat y mensajes
+│   ├── ChatViewModel.cs           # Estado del chat, mensajes y streaming
 │   ├── SettingsViewModel.cs       # Todas las opciones con live-apply
 │   ├── MainViewModel.cs           # Toggle Overlay / HUD
-│   └── SplashViewModel.cs         # Progreso de carga
+│   └── SplashViewModel.cs        # Progreso de carga
 ├── Helpers/
-│   └── FormatHelper.cs            # Utilidad compartida: formateo de bytes (B/KB/MB/GB)
+│   └── FormatHelper.cs            # Formateo de bytes (B/KB/MB/GB)
 ├── Config/
-│   ├── AppConfig.cs               # Record de configuración
+│   ├── AppConfig.cs               # Record de configuración completo
 │   ├── ConfigManager.cs           # Serialización JSON
-│   └── ThemeEngine.cs             # Aplicación dinámica del tema
-├── Core/                          # Lógica de negocio y servicios
-│   ├── AgentLoop.cs               # Bucle de conversación (streaming + tool-call loop, max 10 iteraciones)
-│   ├── OllamaClient.cs            # Cliente HTTP: ChatAsync, ChatStreamAsync, UnloadModelAsync, PullModelAsync
-│   ├── ConversationHistory.cs     # Gestión del historial thread-safe con TrimToLast
-│   ├── SpeechEngine.cs            # TTS 3 niveles: Piper neural → Edge online → Windows local
+│   └── ThemeEngine.cs             # Aplicación dinámica del tema de acento
+├── Core/
+│   ├── AgentLoop.cs               # Bucle de conversación (streaming + tool-call loop)
+│   ├── OllamaClient.cs            # Cliente HTTP: Chat, Stream, Unload, Pull, Preload
+│   ├── ConversationHistory.cs     # Historial thread-safe con TrimToLast
+│   ├── SpeechEngine.cs            # TTS 3 niveles: Piper → Edge → Windows
 │   ├── OllamaMessage.cs           # Modelos de datos de mensajes
-│   ├── OllamaResponse.cs          # Respuesta + ToolArgumentsConverter (string/object)
+│   ├── OllamaResponse.cs          # Respuesta + ToolArgumentsConverter
 │   ├── ToolDefinition.cs          # Esquemas de herramientas (compatible OpenAI)
-│   ├── SystemScanner.cs           # Coordinador de escaneo
-│   ├── AppScanner.cs              # Escaneo: Registry, Start Menu, Steam, Epic Games, Desktop, custom apps
+│   ├── SystemScanner.cs           # Coordinador de escaneo de sistema
+│   ├── AppScanner.cs              # Registry, Start Menu, Steam, Epic, Desktop
 │   ├── BrowserScanner.cs / FolderScanner.cs
-│   ├── PermissionManager.cs       # Niveles Auto / Confirm / Blocked con canonicalización de rutas
+│   ├── PermissionManager.cs       # Niveles Auto / Confirm / Blocked
 │   ├── ActionLogger.cs            # Log de acciones ejecutadas
-│   ├── HardwareDetector.cs        # Detección de CPU/RAM para recomendación de modo
-│   ├── StartupManager.cs          # Autoarranque con Windows (registro HKCU)
+│   ├── HardwareDetector.cs        # Detección de CPU/RAM
+│   ├── StartupManager.cs          # Autoarranque con Windows (HKCU)
 │   ├── GlobalHotkeyManager.cs     # Hotkeys globales Win32
 │   └── WindowNativeMethods.cs     # P/Invoke para operaciones de ventanas
-└── Tools/                         # Implementaciones ITool
-    ├── PathResolver.cs             # Resolución de alias de rutas (compartido)
-    ├── GenericOpenAppTool.cs       # open_app con búsqueda aproximada
-    ├── GenericOpenFolderTool.cs    # open_folder con búsqueda aproximada
-    ├── RememberAppTool.cs         # Guarda apps custom en data/custom-apps.json
+└── Tools/
+    ├── PathResolver.cs
+    ├── GenericOpenAppTool.cs
+    ├── GenericOpenFolderTool.cs
+    ├── RememberAppTool.cs
     ├── CreateFolderTool.cs
-    ├── DeleteFolderTool.cs         # Mueve a papelera (requiere confirmación)
-    ├── RecycleBinTool.cs           # list / restore / restore_all (lee $I* metadata)
-    ├── LocationTool.cs             # Geolocalización por IP (ip-api.com)
-    ├── WeatherTool.cs              # Clima actual (Open-Meteo API, sin key)
-    ├── ClipboardTools.cs           # clipboard_read + clipboard_write
-    ├── WindowTools.cs              # list_open_windows, minimize_window, maximize_window
-    ├── VolumeTool.cs               # Control de volumen del sistema (NAudio)
-    ├── ToolRegistry.cs             # Registro y carga desde tools.json
-    └── ToolDispatcher.cs           # Permisos, confirmación y ejecución
+    ├── DeleteFolderTool.cs
+    ├── RecycleBinTool.cs
+    ├── LocationTool.cs
+    ├── WeatherTool.cs
+    ├── ClipboardTools.cs
+    ├── WindowTools.cs
+    ├── VolumeTool.cs
+    ├── ToolRegistry.cs
+    └── ToolDispatcher.cs
 ```
 
 ## Datos en tiempo de ejecución
@@ -267,31 +308,35 @@ AresAssistant/
 data/
 ├── config.json           # Configuración del usuario
 ├── chat-history.json     # Historial de conversaciones
-├── tools.json            # Herramientas generadas por el escáner (se regenera cada arranque)
-├── custom-apps.json      # Apps/juegos guardados manualmente por el usuario (persistente)
-├── tts/                  # Archivos de Piper TTS (descargados automáticamente)
+├── tools.json            # Herramientas del escáner (se regenera cada arranque)
+├── custom-apps.json      # Apps guardadas manualmente (persistente)
+├── tts/                  # Modelos Piper TTS (descargados automáticamente)
 ├── logs/
-│   ├── actions_*.log     # Log de acciones ejecutadas por el asistente
-│   └── ollama_debug.log  # Log de peticiones/respuestas (solo build Debug)
+│   ├── actions_*.log     # Log de acciones ejecutadas
+│   └── ollama_debug.log  # Log de peticiones/respuestas (solo Debug)
 └── crash_*.log           # Crash logs (uno por sesión)
 ```
 
+---
+
 ## Stack tecnológico
 
-- **WPF .NET 8** (TFM: `net8.0-windows10.0.19041.0`) — Framework de UI
+- **WPF .NET 8** (`net8.0-windows10.0.19041.0`) — Framework de UI
 - **C# 12** — Namespaces por archivo, records, pattern matching, `IAsyncEnumerable`
 - **Ollama HTTP API** — Modelos de lenguaje locales (streaming + tool calling)
 - **Newtonsoft.Json** — Serialización
 - **NAudio 2.2.1** — Control de volumen del sistema + reproducción de audio TTS
-- **Piper TTS** — Motor de síntesis neural offline (descarga automática)
-- **Edge TTS** — Síntesis neural online vía WebSocket (voces de Microsoft Edge)
-- **Windows.Media.SpeechSynthesis** — WinRT OneCore como fallback local (voz masculina)
-- **System.Speech** — SAPI 5 como fallback local femenino (`SelectVoiceByHints`)
-- **System.Windows.Forms** — NotifyIcon para la bandeja del sistema
+- **Piper TTS** — Motor de síntesis neural offline
+- **Edge TTS** — Síntesis neural online vía WebSocket
+- **Windows.Media.SpeechSynthesis** — WinRT OneCore (fallback local masculino)
+- **System.Speech** — SAPI 5 (fallback local femenino)
+- **System.Windows.Forms** — NotifyIcon para bandeja del sistema
 - **Microsoft.VisualBasic.FileIO** — Operaciones de papelera de reciclaje
-- **System.Management** — Detección de hardware (CPU, RAM) para modos de rendimiento
+- **System.Management** — Detección de hardware (CPU, RAM)
 - **System.Drawing.Common** — Capturas de pantalla
 - **MVVM** — Patrón de arquitectura UI
+
+---
 
 ## Licencia
 

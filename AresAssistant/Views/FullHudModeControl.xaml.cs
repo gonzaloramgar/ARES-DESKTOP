@@ -112,4 +112,9 @@ public partial class FullHudModeControl : UserControl
         if (sender is MenuItem mi && mi.DataContext is ChatMessage msg)
             Vm.RemoveMessage(msg);
     }
+
+    private async void RefreshProductivitySummary_Click(object sender, RoutedEventArgs e)
+    {
+        await Vm.RefreshProductivitySummaryAsync();
+    }
 }

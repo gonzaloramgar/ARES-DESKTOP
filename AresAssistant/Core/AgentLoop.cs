@@ -16,9 +16,13 @@ public class AgentLoop
     private readonly ToolRegistry _toolRegistry;
     private readonly ToolDispatcher _toolDispatcher;
     private readonly AppConfig _config;
+    private readonly PersistentMemoryStore? _memoryStore;
+    private readonly ProcessContextProvider? _processContextProvider;
 
     /// <summary>Fired when the complete response is ready (after streaming ends).</summary>
     public event Action<string>? ResponseReceived;
+    /// <summary>Fired when a response has been generated with a concrete model.</summary>
+    public event Action<string>? ModelUsed;
     /// <summary>Fired for each streaming token so the UI can display text word by word.</summary>
     public event Action<string>? TokenReceived;
     public event Action<string>? StatusChanged;
@@ -30,19 +34,25 @@ public class AgentLoop
     private string? _lastResponseLength;
     private string? _lastAssistantName;
     private string? _lastPerformanceMode;
+    private string? _lastContextProfile;
+    private int _lastMemoryVersion = -1;
 
     public AgentLoop(
         OllamaClient ollamaClient,
         ConversationHistory history,
         ToolRegistry toolRegistry,
         ToolDispatcher toolDispatcher,
-        AppConfig config)
+        AppConfig config,
+        PersistentMemoryStore? memoryStore = null,
+        ProcessContextProvider? processContextProvider = null)
     {
         _ollamaClient = ollamaClient;
         _history = history;
         _toolRegistry = toolRegistry;
         _toolDispatcher = toolDispatcher;
         _config = config;
+        _memoryStore = memoryStore;
+        _processContextProvider = processContextProvider;
     }
 
     public void InitSystemPrompt()
@@ -73,13 +83,17 @@ public class AgentLoop
             && _lastPersonality == _config.Personality
             && _lastResponseLength == _config.ResponseLength
             && _lastAssistantName == _config.AssistantName
-            && _lastPerformanceMode == _config.PerformanceMode)
+            && _lastPerformanceMode == _config.PerformanceMode
+            && _lastContextProfile == _config.ContextProfile
+            && _lastMemoryVersion == (_memoryStore?.Version ?? -1))
             return _cachedSystemPrompt;
 
         _lastPersonality = _config.Personality;
         _lastResponseLength = _config.ResponseLength;
         _lastAssistantName = _config.AssistantName;
         _lastPerformanceMode = _config.PerformanceMode;
+        _lastContextProfile = _config.ContextProfile;
+        _lastMemoryVersion = _memoryStore?.Version ?? -1;
 
         var desktop   = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -91,6 +105,20 @@ public class AgentLoop
         sb.AppendLine("SIEMPRE respondes en español de España. NUNCA cambies de idioma bajo ninguna circunstancia.");
         sb.AppendLine("No escribas en chino, inglés, ni ningún otro idioma. Solo español.");
         sb.AppendLine("Eres directo, eficiente y ligeramente formal.");
+        sb.AppendLine($"Perfil activo: {_config.ContextProfile}.");
+        if (_config.MultiModelEnabled)
+            sb.AppendLine("Multimodelo gratuito activo: usa solo modelos locales de Ollama y cambia de modelo según la tarea con fallback automático.");
+        if (_config.AutonomousMode)
+            sb.AppendLine("Modo autónomo activo: encadena acciones sin pedir confirmación adicional salvo bloqueos de seguridad.");
+        if (_config.ProcessContextEnabled)
+            sb.AppendLine("Usa el contexto de apps/procesos abiertos cuando aporte utilidad real a la tarea actual.");
+        sb.AppendLine();
+
+        sb.AppendLine("## MEMORIA PERSISTENTE");
+        sb.AppendLine("Usa memory_write para recordar hechos útiles del usuario/proyecto entre sesiones.");
+        sb.AppendLine("Usa memory_read cuando el usuario pregunte por algo pasado o contexto previo.");
+        sb.AppendLine("Memoria actual:");
+        sb.AppendLine(_memoryStore?.BuildPromptContext(8) ?? "(sin memoria persistente disponible)");
         sb.AppendLine();
 
         if (_config.PerformanceMode == "avanzado")
@@ -99,9 +127,11 @@ public class AgentLoop
             sb.AppendLine("## HERRAMIENTAS");
             sb.AppendLine("Llama siempre a la herramienta ANTES de responder. Nunca describas una acción sin ejecutarla primero.");
             sb.AppendLine("Disponibles: open_app, open_folder, close_app, create_folder, delete_folder, recycle_bin,");
-            sb.AppendLine("  read_file, write_file, search_web, search_browser, run_command, screenshot, type_text,");
+            sb.AppendLine("  read_file, write_file, search_web, search_browser, run_command, screenshot, analyze_screen, type_text,");
             sb.AppendLine("  system_info, volume, list_open_windows, minimize_window, maximize_window,");
-            sb.AppendLine("  clipboard_read, clipboard_write, remember_app, get_location, get_weather.");
+            sb.AppendLine("  clipboard_read, clipboard_write, remember_app, get_location, get_weather,");
+            sb.AppendLine("  memory_write, memory_read, memory_forget, action_history,");
+            sb.AppendLine("  schedule_add, schedule_list, schedule_remove.");
             sb.AppendLine("Clima: get_location primero, luego get_weather. App desconocida con ruta: remember_app.");
             sb.AppendLine("Resultado de herramienta → informa brevemente, no repitas la misma herramienta.");
             sb.AppendLine();
@@ -126,6 +156,7 @@ public class AgentLoop
             sb.AppendLine("  - buscar en internet      → search_web o search_browser");
             sb.AppendLine("  - ejecutar comando        → run_command");
             sb.AppendLine("  - captura de pantalla     → screenshot");
+            sb.AppendLine("  - analizar pantalla/error → analyze_screen");
             sb.AppendLine("  - escribir texto          → type_text");
             sb.AppendLine("  - info del sistema        → system_info");
             sb.AppendLine("  - volumen                 → volume");
@@ -133,6 +164,9 @@ public class AgentLoop
             sb.AppendLine("  - portapapeles            → clipboard_read, clipboard_write");
             sb.AppendLine("  - recordar app            → remember_app");
             sb.AppendLine("  - ubicación/clima         → get_location PRIMERO, luego get_weather");
+            sb.AppendLine("  - recordar contexto       → memory_write / memory_read / memory_forget");
+            sb.AppendLine("  - historial de acciones   → action_history");
+            sb.AppendLine("  - automatizaciones diarias→ schedule_add / schedule_list / schedule_remove");
             sb.AppendLine("Usa la herramienta PRIMERO. Explica brevemente lo que hiciste DESPUÉS.");
             sb.AppendLine("Cuando la herramienta devuelve un resultado, informa al usuario con una frase breve. NO repitas la misma herramienta.");
             sb.AppendLine("Si open_app no encuentra una app y el usuario da la ruta, usa remember_app para guardarla.");
@@ -173,8 +207,16 @@ public class AgentLoop
 
     public async Task RunAsync(string userMessage)
     {
+        if (_config.ProcessContextEnabled && _processContextProvider != null)
+        {
+            var ctx = _processContextProvider.GetCompactContext();
+            userMessage = $"[Contexto apps activas: {ctx}]\n\n{userMessage}";
+        }
+
         var (numCtx, numThread, historyLimit, numPredict, numBatch) = _config.GetPerformanceParams();
         var keepAlive = _config.ModelKeepAliveMinutes > 0 ? $"{_config.ModelKeepAliveMinutes}m" : "-1";
+        var modelCandidates = await ResolveModelCandidatesAsync(userMessage).ConfigureAwait(false);
+        var modelIndex = 0;
 
         _history.Add(new OllamaMessage("user", userMessage));
         _history.TrimToLast(historyLimit);
@@ -184,6 +226,7 @@ public class AgentLoop
         while (iterations < MaxIterations)
         {
             iterations++;
+            var activeModel = modelCandidates[Math.Clamp(modelIndex, 0, modelCandidates.Count - 1)];
 
             // If this is a tool-call loop iteration, use non-streaming to get tool_calls
             // For the potential final text response, try streaming first
@@ -192,7 +235,7 @@ public class AgentLoop
             if (useStreaming)
             {
                 // Attempt streaming — gives instant token-by-token feedback
-                var streamed = await TryStreamResponseAsync(numCtx, numThread, numPredict, numBatch, keepAlive).ConfigureAwait(false);
+                var streamed = await TryStreamResponseAsync(activeModel, numCtx, numThread, numPredict, numBatch, keepAlive).ConfigureAwait(false);
                 if (streamed.HasValue)
                 {
                     if (streamed.Value.toolResponse != null)
@@ -226,6 +269,7 @@ public class AgentLoop
 
                         _history.Add(new OllamaMessage("assistant", content));
                         StatusChanged?.Invoke("");
+                        ModelUsed?.Invoke(activeModel);
                         ResponseReceived?.Invoke(content);
                         return;
                     }
@@ -236,11 +280,11 @@ public class AgentLoop
             OllamaResponse response;
             try
             {
-                StatusChanged?.Invoke("Pensando...");
+                StatusChanged?.Invoke($"Pensando... ({activeModel})");
                 response = await _ollamaClient.ChatAsync(
                     _history.ToList(),
                     _toolRegistry.GetToolDefinitions(),
-                    _config.OllamaModel,
+                    activeModel,
                     numCtx,
                     numThread,
                     numPredict,
@@ -249,12 +293,16 @@ public class AgentLoop
             }
             catch (Exception ex)
             {
+                if (TrySwitchModel(modelCandidates, ref modelIndex))
+                    continue;
                 ResponseReceived?.Invoke($"Error al conectar con Ollama: {ex.Message}");
                 return;
             }
 
             if (!string.IsNullOrEmpty(response.Error))
             {
+                if (TrySwitchModel(modelCandidates, ref modelIndex))
+                    continue;
                 ResponseReceived?.Invoke($"Error de Ollama: {response.Error}");
                 return;
             }
@@ -287,6 +335,7 @@ public class AgentLoop
 
                 _history.Add(new OllamaMessage("assistant", content));
                 StatusChanged?.Invoke("");
+                ModelUsed?.Invoke(activeModel);
                 ResponseReceived?.Invoke(content);
                 return;
             }
@@ -294,6 +343,26 @@ public class AgentLoop
 
         var fallback = "ARES: He alcanzado el límite de acciones consecutivas. Por favor, reformula tu petición.";
         ResponseReceived?.Invoke(fallback);
+    }
+
+    private static bool TrySwitchModel(List<string> candidates, ref int index)
+    {
+        if (index + 1 >= candidates.Count) return false;
+        index++;
+        return true;
+    }
+
+    private async Task<List<string>> ResolveModelCandidatesAsync(string userMessage)
+    {
+        try
+        {
+            var installed = await _ollamaClient.GetInstalledModelsAsync().ConfigureAwait(false);
+            var candidates = ModelRouter.BuildCandidates(userMessage, _config, installed);
+            if (candidates.Count > 0) return candidates;
+        }
+        catch { /* fallback below */ }
+
+        return new List<string> { _config.OllamaModel };
     }
 
     private bool HasPendingToolResults()
@@ -370,7 +439,7 @@ public class AgentLoop
     /// Returns null if streaming fails (caller should fall back to non-streaming).
     /// Buffers initial tokens to detect text-based tool calls before emitting to the UI.
     /// </summary>
-    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync(int numCtx, int numThread, int numPredict, int numBatch, string keepAlive)
+    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync(string model, int numCtx, int numThread, int numPredict, int numBatch, string keepAlive)
     {
         try
         {
@@ -385,7 +454,7 @@ public class AgentLoop
             await foreach (var chunk in _ollamaClient.ChatStreamAsync(
                 _history.ToList(),
                 _toolRegistry.GetToolDefinitions(),
-                _config.OllamaModel,
+                model,
                 numCtx,
                 numThread,
                 numPredict,

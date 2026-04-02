@@ -14,9 +14,27 @@ namespace AresAssistant.Views;
 
 public partial class SetupWindow : Window
 {
-    private const int TotalPages = 5;
+    private const int TotalPages = 6;
 
-    private string SelectedModel => _selectedPerfMode == "avanzado" ? "qwen2.5:14b" : "qwen2.5:7b";
+    private string SelectedModel => _selectedPerfMode switch
+    {
+        "avanzado" => "qwen2.5:14b",
+        "equilibrado" => "qwen2.5:7b",
+        _ => "qwen2.5:3b"
+    };
+
+    private string SelectedCodingModel => _selectedPerfMode switch
+    {
+        "avanzado" => "qwen2.5-coder:7b",
+        "equilibrado" => "qwen2.5-coder:7b",
+        _ => "qwen2.5-coder:3b"
+    };
+
+    private string SelectedVisionModel => _selectedPerfMode switch
+    {
+        "avanzado" => "llava:7b",
+        _ => "moondream:latest"
+    };
     private int _currentPage;
 
     private string _selectedColor = "#ff2222";
@@ -31,17 +49,23 @@ public partial class SetupWindow : Window
     private Ellipse[] _dots = [];
     private SpeechEngine? _testSpeech;
     private Task? _warmUpTask;
+    private readonly bool _isOnboardingRefresh;
+    private readonly bool _openSplashOnFinish;
 
-    public SetupWindow()
+    public SetupWindow(bool isOnboardingRefresh = false, bool openSplashOnFinish = true)
     {
+        _isOnboardingRefresh = isOnboardingRefresh;
+        _openSplashOnFinish = openSplashOnFinish;
         InitializeComponent();
         Loaded += async (_, _) =>
         {
             _personalityCards = [CardFormal, CardCasual, CardSarcastico, CardTecnico];
             _perfModeCards = [CardLigero, CardAvanzado];
             _voiceGenderCards = [CardMasculino, CardFemenino];
-            _pages = [Page0, Page4, Page2, Page1, Page5];
-            _dots = [Dot0, Dot1, Dot2, Dot3, Dot4];
+            _pages = [Page0, Page4, Page2, Page1, Page5, Page6];
+            _dots = [Dot0, Dot1, Dot2, Dot3, Dot4, Dot5];
+
+            ApplyConfigToControls(App.ConfigManager.Config);
 
             UpdateColorPreview(_selectedColor);
             HighlightPersonalityCard(_selectedPersonality);
@@ -58,7 +82,54 @@ public partial class SetupWindow : Window
             AnimatePageEntrance(Page0);
 
             await DetectHardwareAsync();
+
+            if (_isOnboardingRefresh)
+                BtnNext.Content = "CONTINUAR →";
         };
+    }
+
+    private void ApplyConfigToControls(AppConfig cfg)
+    {
+        _selectedColor = cfg.AccentColor;
+        _selectedPersonality = cfg.Personality;
+        _selectedPerfMode = cfg.PerformanceMode;
+        _selectedVoiceGender = cfg.TtsVoiceGender;
+
+        NameBox.Text = string.IsNullOrWhiteSpace(cfg.AssistantName) ? "ARES" : cfg.AssistantName;
+        OpacitySlider.Value = cfg.OverlayOpacity;
+        HotkeyShowBox.Text = string.IsNullOrWhiteSpace(cfg.ShowHideHotkey) ? "Ctrl+Space" : cfg.ShowHideHotkey;
+        HotkeyModeBox.Text = string.IsNullOrWhiteSpace(cfg.ToggleModeHotkey) ? "Ctrl+Shift+Space" : cfg.ToggleModeHotkey;
+
+        ChkLaunchWindows.IsChecked = cfg.LaunchWithWindows;
+        ChkSaveChat.IsChecked = cfg.SaveChatHistory;
+        ChkCloseToTray.IsChecked = cfg.CloseToTray;
+        ChkConfirmation.IsChecked = cfg.ConfirmationAlertsEnabled;
+        ChkVoice.IsChecked = cfg.VoiceEnabled;
+        SetupVolumeSlider.Value = cfg.TtsVolume;
+
+        ChkWidgetWeather.IsChecked = cfg.WidgetWeatherEnabled;
+        ChkWidgetWorldClock.IsChecked = cfg.WidgetWorldClockEnabled;
+        ChkWidgetSystemLive.IsChecked = cfg.WidgetSystemLiveEnabled;
+        ChkWidgetTasks.IsChecked = cfg.WidgetTasksEnabled;
+        ChkWidgetProductivity.IsChecked = cfg.WidgetProductivityEnabled;
+
+        SelectComboByTag(FontSizeBox, cfg.FontSize);
+        SelectComboByTag(PositionBox, cfg.OverlayPosition);
+        SelectComboByTag(ResponseLengthBox, cfg.ResponseLength);
+        SelectComboByTag(KeepAliveBox, cfg.ModelKeepAliveMinutes.ToString());
+    }
+
+    private static void SelectComboByTag(System.Windows.Controls.ComboBox combo, string? tag)
+    {
+        if (string.IsNullOrWhiteSpace(tag)) return;
+        foreach (var item in combo.Items)
+        {
+            if (item is System.Windows.Controls.ComboBoxItem cb && string.Equals(cb.Tag?.ToString(), tag, StringComparison.OrdinalIgnoreCase))
+            {
+                combo.SelectedItem = cb;
+                return;
+            }
+        }
     }
 
     // ═══════════════ Navigation ═══════════════
@@ -325,6 +396,15 @@ public partial class SetupWindow : Window
         OllamaProgressBorder.Visibility = Visibility.Visible;
 
         var model = SelectedModel;
+        var requiredModels = new[]
+        {
+            model,
+            SelectedCodingModel,
+            SelectedVisionModel
+        }
+        .Where(m => !string.IsNullOrWhiteSpace(m))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
 
         try
         {
@@ -363,33 +443,48 @@ public partial class SetupWindow : Window
                 }
             }
 
-            // Step 5: Check if model already exists
-            SetStatus($"Comprobando modelo {model}...");
-            SetProgress(0.52);
+            // Step 5: Ensure all required models are installed
             var installed = await client.GetInstalledModelsAsync();
-            bool modelExists = installed.Any(n => n.StartsWith(model.Split(':')[0]) &&
-                                                   (model.Contains(':') ? n == model : true));
-
-            if (!modelExists)
+            for (int i = 0; i < requiredModels.Count; i++)
             {
-                // Step 6: Pull model
-                SetStatus($"Descargando {model}...");
+                var req = requiredModels[i];
+                var stepStart = 0.5 + (i * 0.45 / requiredModels.Count);
+                var stepEnd = 0.5 + ((i + 1) * 0.45 / requiredModels.Count);
+                SetProgress(stepStart);
 
-                var dlWindow = new ModelDownloadWindow(client, model) { Owner = this };
-                var dlResult = dlWindow.ShowDialog();
-
-                if (dlResult != true)
+                bool exists = installed.Any(n => n.Equals(req, StringComparison.OrdinalIgnoreCase));
+                if (!exists)
                 {
-                    SetStatus("Descarga cancelada");
-                    SetupInstallOllama.IsEnabled = true;
-                    OllamaProgressBorder.Visibility = Visibility.Collapsed;
-                    return;
+                    SetStatus($"Descargando {req} ({i + 1}/{requiredModels.Count})...");
+                    var dlWindow = new ModelDownloadWindow(client, req) { Owner = this };
+                    var dlResult = dlWindow.ShowDialog();
+
+                    if (dlResult != true)
+                    {
+                        SetStatus("Descarga cancelada");
+                        SetupInstallOllama.IsEnabled = true;
+                        OllamaProgressBorder.Visibility = Visibility.Collapsed;
+                        return;
+                    }
+
+                    installed = await client.GetInstalledModelsAsync();
+                    exists = installed.Any(n => n.Equals(req, StringComparison.OrdinalIgnoreCase));
+                    if (!exists)
+                    {
+                        SetStatus($"Error: {req} no quedó instalado correctamente.");
+                        SetupInstallOllama.IsEnabled = true;
+                        OllamaProgressBorder.Visibility = Visibility.Collapsed;
+                        return;
+                    }
                 }
+
+                SetProgress(stepEnd);
             }
 
             // Done
             SetProgress(1.0);
-            SetStatus($"✓ Ollama + {model} listos");
+            Dispatcher.Invoke(() => SetProgress(1.0));
+            SetStatus($"✓ Ollama + modelos listos ({string.Join(", ", requiredModels)})");
             OllamaInstallStatus.Foreground = (SolidColorBrush)FindResource("AccentBrush");
             SetupInstallOllama.Content = "✓  Instalado";
 
@@ -408,7 +503,9 @@ public partial class SetupWindow : Window
         void SetProgress(double pct)
         {
             pct = Math.Clamp(pct, 0, 1);
-            OllamaProgressFill.Width = OllamaProgressBorder.ActualWidth * pct;
+            OllamaProgressBorder.UpdateLayout();
+            var totalWidth = Math.Max(0, OllamaProgressBorder.ActualWidth - 2);
+            OllamaProgressFill.Width = totalWidth * pct;
         }
     }
 
@@ -456,6 +553,12 @@ public partial class SetupWindow : Window
             PerformanceMode = _selectedPerfMode,
             AssistantName = name,
             OllamaModel = SelectedModel,
+            MultiModelReasoningModel = SelectedModel,
+            MultiModelCodingModel = SelectedCodingModel,
+            MultiModelVisionModel = SelectedVisionModel,
+            MultiModelFallbacks = _selectedPerfMode == "avanzado"
+                ? "qwen2.5:7b,qwen2.5-coder:7b,llava:7b"
+                : "qwen2.5:3b,qwen2.5-coder:3b,moondream:latest",
             FontSize = fontSize,
             OverlayOpacity = OpacitySlider.Value,
             OverlayPosition = position,
@@ -469,8 +572,14 @@ public partial class SetupWindow : Window
             VoiceEnabled = ChkVoice.IsChecked == true,
             TtsVolume = (float)SetupVolumeSlider.Value,
             TtsVoiceGender = _selectedVoiceGender,
+            WidgetWeatherEnabled = ChkWidgetWeather.IsChecked == true,
+            WidgetWorldClockEnabled = ChkWidgetWorldClock.IsChecked == true,
+            WidgetSystemLiveEnabled = ChkWidgetSystemLive.IsChecked == true,
+            WidgetTasksEnabled = ChkWidgetTasks.IsChecked == true,
+            WidgetProductivityEnabled = ChkWidgetProductivity.IsChecked == true,
             ModelKeepAliveMinutes = keepAlive,
-            SetupCompleted = true
+            SetupCompleted = true,
+            OnboardingVersionSeen = App.CurrentOnboardingVersion
         });
         ThemeEngine.Apply(App.ConfigManager.Config);
 
@@ -483,8 +592,17 @@ public partial class SetupWindow : Window
         _testSpeech?.Dispose();
         _testSpeech = null;
 
-        var splash = new SplashWindow(isFirstLaunch: true);
-        splash.Show();
-        Close();
+        if (_openSplashOnFinish)
+        {
+            var splash = new SplashWindow(isFirstLaunch: !File.Exists("data/tools.json"));
+            splash.Show();
+            Close();
+            return;
+        }
+
+        if (Owner is not null)
+            DialogResult = true;
+        else
+            Close();
     }
 }

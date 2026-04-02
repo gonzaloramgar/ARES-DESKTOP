@@ -38,6 +38,7 @@ public class OllamaClient
             {
                 role = m.Role,
                 content = m.Content,
+                images = m.Images,
                 tool_calls = m.ToolCalls,
                 tool_call_id = m.ToolCallId
             }),
@@ -96,6 +97,7 @@ public class OllamaClient
             {
                 role = m.Role,
                 content = m.Content,
+                images = m.Images,
                 tool_calls = m.ToolCalls,
                 tool_call_id = m.ToolCallId
             }),

@@ -1,4 +1,5 @@
 using System.Windows;
+using AresAssistant.Config;
 using AresAssistant.Core;
 using AresAssistant.ViewModels;
 
@@ -23,6 +24,7 @@ public partial class SplashWindow : Window
         {
             // Always re-scan so new apps / Steam games / desktop shortcuts are detected
             await RunFirstLaunchScanAsync();
+            await EnsureRequiredModelsAsync();
 
             OpenMainWindow();
         }
@@ -80,5 +82,62 @@ public partial class SplashWindow : Window
         var mainWindow = new MainWindow();
         mainWindow.Show();
         Close();
+    }
+
+    private async Task EnsureRequiredModelsAsync()
+    {
+        var cfg = App.ConfigManager.Config;
+
+        // If multi-model is off, no strict model bundle enforcement is needed.
+        if (!cfg.MultiModelEnabled)
+            return;
+
+        UpdateStatus("Verificando modelos locales...", 96);
+
+        var client = new OllamaClient();
+        var ready = await client.IsAvailableAsync();
+        if (!ready)
+            ready = await client.TryStartAsync(12);
+
+        if (!ready)
+        {
+            AresMessageBox.Show(
+                "Ollama no está disponible al iniciar, no pude verificar modelos.\n\nAbre Ajustes > IA para instalar modelos requeridos.",
+                "ARES — Verificación de modelos");
+            return;
+        }
+
+        var installed = await client.GetInstalledModelsAsync();
+        var missing = ModelRouter.GetMissingPreferredModels(cfg, installed);
+        if (missing.Count == 0)
+            return;
+
+        var installNow = AresMessageBox.Show(
+            "Faltan modelos requeridos para multimodelo:\n\n" +
+            string.Join("\n", missing.Select(m => $"• {m}")) +
+            "\n\n¿Quieres instalarlos ahora?",
+            "ARES — Modelos faltantes",
+            MessageBoxButton.YesNo);
+
+        if (installNow != MessageBoxResult.Yes)
+            return;
+
+        foreach (var model in missing)
+        {
+            UpdateStatus($"Instalando {model}...", 98);
+            var dl = new ModelDownloadWindow(client, model) { Owner = this };
+            var ok = dl.ShowDialog() == true;
+            if (!ok) break;
+        }
+
+        var after = await client.GetInstalledModelsAsync();
+        var stillMissing = ModelRouter.GetMissingPreferredModels(cfg, after);
+        if (stillMissing.Count > 0)
+        {
+            AresMessageBox.Show(
+                "No se pudieron instalar todos los modelos:\n\n" +
+                string.Join("\n", stillMissing.Select(m => $"• {m}")),
+                "ARES — Modelos pendientes");
+        }
     }
 }

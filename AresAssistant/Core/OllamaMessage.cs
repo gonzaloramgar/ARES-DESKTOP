@@ -14,6 +14,9 @@ public class OllamaMessage
     [JsonProperty("content")]
     public string Content { get; set; }
 
+    [JsonProperty("images", NullValueHandling = NullValueHandling.Ignore)]
+    public List<string>? Images { get; set; }
+
     [JsonProperty("tool_calls", NullValueHandling = NullValueHandling.Ignore)]
     public List<OllamaToolCall>? ToolCalls { get; set; }
 

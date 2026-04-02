@@ -4,6 +4,10 @@ ARES es un asistente de IA para Windows construido en WPF y .NET 8, que corre so
 
 ## Características
 
+## Roadmap
+
+- Plan ejecutable 30/60/90: [docs/ROADMAP_30_60_90_ARES.md](docs/ROADMAP_30_60_90_ARES.md)
+
 ### Dos modos de interfaz
 - **Modo Overlay** (380×600) — Panel compacto anclado a una esquina de la pantalla
 - **Modo HUD Completo** (1200×800) — Interfaz completa con lista de herramientas, chat y estado del sistema

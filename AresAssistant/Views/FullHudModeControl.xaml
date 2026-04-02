@@ -280,6 +280,11 @@
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
+                                                    <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="4"
+                                                            Background="#151d2b" BorderBrush="#2f3f62" BorderThickness="1"
+                                                            Visibility="{Binding ModelUsed, Converter={StaticResource StringEmptyToVisibilityConverter}}">
+                                                        <TextBlock Text="{Binding ModelUsed}" FontSize="9" FontFamily="Consolas" Foreground="#9fb0c8"/>
+                                                    </Border>
                                                 </StackPanel>
                                                 <Border Grid.Column="1" VerticalAlignment="Center"
                                                         Margin="10,0,0,0" Padding="6,2"
@@ -339,7 +344,7 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Right panel: System status -->
+            <!-- Right panel: Personal dashboard -->
             <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="2"
                     BorderBrush="#22222e" BorderThickness="1,0,0,0"
                     Padding="14,14,14,14">
@@ -350,9 +355,8 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <DockPanel>
-                    <!-- Section header with bottom accent line -->
                     <StackPanel DockPanel.Dock="Top" Margin="0,0,0,2">
-                        <TextBlock DockPanel.Dock="Top" Text="ESTADO" FontSize="10"
+                        <TextBlock DockPanel.Dock="Top" Text="DASHBOARD" FontSize="10"
                                    Foreground="{DynamicResource AccentBrush}"
                                    FontFamily="Consolas" FontWeight="Bold" Margin="0,0,0,5"/>
                         <Rectangle Height="1" Margin="0,0,0,0">
@@ -363,12 +367,110 @@
                                 </LinearGradientBrush>
                             </Rectangle.Fill>
                         </Rectangle>
+                        <TextBlock Text="{Binding DashboardClock}" FontSize="11"
+                                   FontFamily="Consolas" Foreground="{DynamicResource TextBrush}"
+                                   Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding StatusText, FallbackValue='Esperando...'}"
+                                   FontSize="10" FontFamily="Consolas"
+                                   Foreground="{DynamicResource SubtextBrush}"
+                                   TextWrapping="Wrap" Margin="0,4,0,8"/>
                     </StackPanel>
-                    <TextBlock x:Name="SystemStatus"
-                               Text="{Binding StatusText, FallbackValue='Esperando...'}"
-                               FontSize="11" DockPanel.Dock="Top"
-                               FontFamily="Consolas" Foreground="{DynamicResource SubtextBrush}"
-                               TextWrapping="Wrap" Margin="0,10,0,0"/>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Border Visibility="{Binding WidgetWeatherEnabled, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Background="{DynamicResource GlassBrush}" BorderBrush="{DynamicResource GlassBorderBrush}"
+                                    BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="CLIMA" FontSize="10" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="{Binding WeatherText}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                               FontSize="11" Foreground="{DynamicResource TextBrush}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Visibility="{Binding WidgetWorldClockEnabled, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Background="{DynamicResource GlassBrush}" BorderBrush="{DynamicResource GlassBorderBrush}"
+                                    BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="HORA MUNDIAL" FontSize="10" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="{Binding WorldClockNy}" Margin="0,4,0,0" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBlock Text="{Binding WorldClockTokyo}" Margin="0,2,0,0" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TextBrush}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Visibility="{Binding WidgetSystemLiveEnabled, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Background="{DynamicResource GlassBrush}" BorderBrush="{DynamicResource GlassBorderBrush}"
+                                    BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="SISTEMA EN VIVO" FontSize="10" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="{Binding CpuText}" Margin="0,4,0,0" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBlock Text="{Binding RamText}" Margin="0,2,0,0" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TextBrush}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Visibility="{Binding WidgetTasksEnabled, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Background="{DynamicResource GlassBrush}" BorderBrush="{DynamicResource GlassBorderBrush}"
+                                    BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="PRÓXIMAS TAREAS" FontSize="10" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
+                                    <ItemsControl ItemsSource="{Binding UpcomingTasks}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,6,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{Binding Label}" FontSize="10" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"/>
+                                                        <TextBlock Text="{Binding InText}" FontSize="9" Foreground="{DynamicResource SubtextBrush}"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Time}" FontSize="10" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Visibility="{Binding WidgetProductivityEnabled, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Background="{DynamicResource GlassBrush}" BorderBrush="{DynamicResource GlassBorderBrush}"
+                                    BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="PRODUCTIVIDAD" FontSize="10" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
+                                        <Button Grid.Column="1" Content="Resumen IA" Height="24" Padding="8,0" Margin="6,0,0,0"
+                                                Style="{StaticResource GhostButton}" Click="RefreshProductivitySummary_Click"/>
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding ProductivityApps}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,7,0,0">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding AppName}" FontSize="10" Foreground="{DynamicResource TextBrush}"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding TimeText}" FontSize="10" FontFamily="Consolas" Foreground="{DynamicResource SubtextBrush}"/>
+                                                    </Grid>
+                                                    <ProgressBar Height="6" Maximum="100" Value="{Binding Percentage}" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="{Binding ShareText}" FontSize="9" FontFamily="Consolas" Foreground="{DynamicResource SubtextBrush}" HorizontalAlignment="Right"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Border Background="#120d0d15" BorderBrush="#2a2a3a" BorderThickness="1" CornerRadius="8" Padding="8" Margin="0,8,0,0">
+                                        <TextBlock Text="{Binding DailyProductivitySummary}" TextWrapping="Wrap" FontSize="10" Foreground="{DynamicResource SubtextBrush}"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
                 </DockPanel>
             </Border>
 

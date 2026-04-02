@@ -220,6 +220,8 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,6,10">
                                     <TextBlock Text="Modelo de Ollama" FontSize="11"
@@ -253,14 +255,68 @@
                                     </ComboBox>
                                 </StackPanel>
 
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,6,10">
+                                    <TextBlock Text="Perfil de contexto" FontSize="11"
+                                               Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,5"/>
+                                    <ComboBox SelectedValue="{Binding ContextProfile}" SelectedValuePath="Tag">
+                                        <ComboBoxItem Content="Trabajo" Tag="trabajo"/>
+                                        <ComboBoxItem Content="Gaming" Tag="gaming"/>
+                                        <ComboBoxItem Content="Estudio" Tag="estudio"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="6,0,0,10">
+                                    <CheckBox Style="{StaticResource AresCheckBox}"
+                                              Content="Modo agente autónomo"
+                                              IsChecked="{Binding AutonomousMode}"/>
+                                    <CheckBox Style="{StaticResource AresCheckBox}" Margin="0,6,0,0"
+                                              Content="Usar contexto de apps abiertas"
+                                              IsChecked="{Binding ProcessContextEnabled}"/>
+                                </StackPanel>
+
+                                <Border Grid.Row="3" Grid.ColumnSpan="2"
+                                        Background="{DynamicResource GlassBrush}" CornerRadius="10"
+                                        BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1"
+                                        Padding="12,10" Margin="0,0,0,8">
+                                    <StackPanel>
+                                        <CheckBox Style="{StaticResource AresCheckBox}"
+                                                  Content="Multimodelo local gratis (Ollama)"
+                                                  IsChecked="{Binding MultiModelEnabled}"/>
+                                        <Grid Margin="0,8,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                                <TextBlock Text="Modelo coding" FontSize="10" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                                                <TextBox Style="{StaticResource AresTextBox}" Text="{Binding MultiModelCodingModel, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="6,0,6,0">
+                                                <TextBlock Text="Modelo reasoning" FontSize="10" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                                                <TextBox Style="{StaticResource AresTextBox}" Text="{Binding MultiModelReasoningModel, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Margin="6,0,0,0">
+                                                <TextBlock Text="Modelo visión" FontSize="10" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
+                                                <TextBox Style="{StaticResource AresTextBox}" Text="{Binding MultiModelVisionModel, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock Text="Fallbacks (coma):" FontSize="10" Foreground="{DynamicResource SubtextBrush}" Margin="0,8,0,4"/>
+                                        <TextBox Style="{StaticResource AresTextBox}" Text="{Binding MultiModelFallbacks, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- Ollama status + check button — FIX: proper layout -->
-                                <Border Grid.Row="2" Grid.ColumnSpan="2"
+                                <Border Grid.Row="4" Grid.ColumnSpan="2"
                                         Background="{DynamicResource GlassBrush}" CornerRadius="10"
                                         BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1"
                                         Padding="12,8" Margin="0,2,0,0">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="{Binding OllamaStatus}" FontSize="11"
@@ -271,6 +327,20 @@
                                                 Style="{StaticResource GhostButton}"
                                                 Height="30" Padding="14,0"
                                                 Margin="10,0,0,0" Click="CheckOllama_Click"/>
+                                        <Button Grid.Column="2" Content="Diagnóstico routing"
+                                                Style="{StaticResource GhostButton}"
+                                                Height="30" Padding="14,0"
+                                            Margin="8,0,0,0" ToolTip="Muestra cómo enruta modelos sin ejecutar inferencia"
+                                            Click="TestModelRouting_Click"/>
+                                        <Button Grid.Column="3" Content="Probar visión"
+                                                Style="{StaticResource GhostButton}"
+                                                Height="30" Padding="14,0"
+                                                Margin="8,0,0,0" Click="TestVision_Click"/>
+                                        <Button Grid.Column="4" Content="Reparar todo IA"
+                                            Style="{StaticResource AresButton}"
+                                            Height="30" Padding="14,0"
+                                            Margin="8,0,0,0" Click="QuickRepairAi_Click"
+                                            ToolTip="Repara faltantes de routing y modelo de visión en un solo paso"/>
                                     </Grid>
                                 </Border>
                             </Grid>
@@ -379,8 +449,32 @@
                                       Content="Pedir confirmación en acciones peligrosas"
                                       IsChecked="{Binding ConfirmationAlertsEnabled}" Margin="0,6,0,0"/>
                             <CheckBox Style="{StaticResource AresCheckBox}"
+                                      Content="Automatizaciones programadas (diarias)"
+                                      IsChecked="{Binding ScheduledAutomationsEnabled}" Margin="0,6,0,0"/>
+                            <CheckBox Style="{StaticResource AresCheckBox}"
+                                      Content="Portapapeles inteligente (sugerencias)"
+                                      IsChecked="{Binding ClipboardSmartEnabled}" Margin="0,6,0,0"/>
+                            <CheckBox Style="{StaticResource AresCheckBox}"
                                       Content="Voz del asistente (leer respuestas en voz alta)"
                                       IsChecked="{Binding VoiceEnabled}" Margin="0,6,0,0"/>
+                                <TextBlock Text="Widgets del dashboard HUD" FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AccentBrush}" Margin="0,10,0,4"/>
+                                <CheckBox Style="{StaticResource AresCheckBox}"
+                                      Content="Widget clima"
+                                      IsChecked="{Binding WidgetWeatherEnabled}"/>
+                                <CheckBox Style="{StaticResource AresCheckBox}"
+                                      Content="Widget hora mundial"
+                                      IsChecked="{Binding WidgetWorldClockEnabled}" Margin="0,6,0,0"/>
+                                <CheckBox Style="{StaticResource AresCheckBox}"
+                                      Content="Widget CPU/RAM en vivo"
+                                      IsChecked="{Binding WidgetSystemLiveEnabled}" Margin="0,6,0,0"/>
+                                <CheckBox Style="{StaticResource AresCheckBox}"
+                                      Content="Widget próximas tareas"
+                                      IsChecked="{Binding WidgetTasksEnabled}" Margin="0,6,0,0"/>
+                                <CheckBox Style="{StaticResource AresCheckBox}"
+                                      Content="Widget productividad + resumen IA"
+                                      IsChecked="{Binding WidgetProductivityEnabled}" Margin="0,6,0,0"/>
 
                             <!-- TTS engine status + volume -->
                             <Border Margin="0,8,0,0" Background="{DynamicResource GlassBrush}" CornerRadius="10"
@@ -469,6 +563,40 @@
                                         Height="30" Padding="14,0"
                                         Click="Rescan_Click"/>
                             </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ═══════════════════ AYUDA Y ONBOARDING ═══════════════════ -->
+                    <Border Background="{DynamicResource GlassBrush}" CornerRadius="16"
+                            BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="18,14" Margin="0,0,0,12">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"
+                                           Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text="AYUDA Y ONBOARDING" FontFamily="Consolas" FontSize="10"
+                                           FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
+                                           VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+
+                            <Border Background="#1410161f" BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1"
+                                    CornerRadius="10" Padding="10" Margin="0,0,0,10">
+                                <TextBlock Text="Si quieres recordar para qué sirve cada ajuste o enseñar ARES a otro usuario, puedes relanzar el tutorial completo o abrir la guía rápida aquí mismo."
+                                           TextWrapping="Wrap" FontSize="11" FontFamily="Consolas"
+                                           Foreground="{DynamicResource SubtextBrush}"/>
+                            </Border>
+
+                            <WrapPanel>
+                                <Button Content="⟲ Repetir tutorial"
+                                        Style="{StaticResource GhostButton}"
+                                        Height="32" Padding="14,0" Margin="0,0,8,0"
+                                        ToolTip="Abre el onboarding visual paso a paso"
+                                        Click="ReplayTutorial_Click"/>
+                                <Button Content="Guía rápida de funciones"
+                                        Style="{StaticResource GhostButton}"
+                                        Height="32" Padding="14,0"
+                                        ToolTip="Resumen de todo lo que puede hacer ARES"
+                                        Click="QuickGuide_Click"/>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
 

@@ -8,6 +8,8 @@ namespace AresAssistant;
 
 public partial class App : Application
 {
+    public const string CurrentOnboardingVersion = "2.0";
+
     /// <summary>App version displayed in splash and setup screens.</summary>
     public static string AppVersion =>
         $"v{typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.1.0"}";
@@ -41,10 +43,15 @@ public partial class App : Application
             if (ConfigManager.Config.CloseToTray)
                 InitTrayIcon();
 
-            // First time? Show the onboarding setup screen
+            // First time? Show full setup. On upgrades, show refreshed onboarding/tutorial.
             if (!ConfigManager.Config.SetupCompleted)
             {
                 var setup = new SetupWindow();
+                setup.Show();
+            }
+            else if (!string.Equals(ConfigManager.Config.OnboardingVersionSeen, CurrentOnboardingVersion, StringComparison.Ordinal))
+            {
+                var setup = new SetupWindow(isOnboardingRefresh: true);
                 setup.Show();
             }
             else

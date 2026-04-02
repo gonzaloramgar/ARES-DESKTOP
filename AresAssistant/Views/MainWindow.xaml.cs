@@ -19,12 +19,20 @@ public partial class MainWindow : Window
 
     // Inactivity timer — unloads the model from Ollama RAM after idle period
     private DispatcherTimer? _idleTimer;
+    private DispatcherTimer? _clipboardHintTimer;
     private OllamaClient? _ollamaClient;
+    private SchedulerService? _scheduler;
+    private ClipboardMonitor? _clipboardMonitor;
+    private ProductivityTracker? _productivityTracker;
 
     public static ChatViewModel ChatViewModel { get; private set; } = null!;
     public static AgentLoop AgentLoop { get; private set; } = null!;
     public static ToolRegistry ToolRegistry { get; private set; } = null!;
+    public static PermissionManager PermissionManager { get; private set; } = null!;
+    public static PersistentMemoryStore MemoryStore { get; private set; } = null!;
+    public static ScheduledTaskStore ScheduledTaskStore { get; private set; } = null!;
     public static SpeechEngine SpeechEngine { get; private set; } = null!;
+    public static ProductivityTracker ProductivityTracker { get; private set; } = null!;
     public static Task? WarmUpTask { get; private set; }
 
     public MainWindow()
@@ -50,13 +58,21 @@ public partial class MainWindow : Window
 
         var history = new ConversationHistory();
         var registry = new ToolRegistry();
-        var permManager = new PermissionManager();
+        var permManager = new PermissionManager
+        {
+            AutoApproveConfirmations = config.AutonomousMode
+        };
+        var memoryStore = new PersistentMemoryStore("data/memory.json");
+        var processContextProvider = new ProcessContextProvider();
+        var scheduledStore = new ScheduledTaskStore("data/scheduled-tasks.json");
+        var productivityTracker = new ProductivityTracker("data/productivity.json");
         var logger = new ActionLogger("data/logs");
         var dispatcher = new ToolDispatcher(registry, permManager, logger);
 
         // Register built-in tools
         registry.Register(new CloseAppTool());
         registry.Register(new ScreenshotTool());
+        registry.Register(new AnalyzeScreenTool(ollamaClient, App.ConfigManager));
         registry.Register(new ReadFileTool());
         registry.Register(new WriteFileTool());
         registry.Register(new RunCommandTool());
@@ -75,6 +91,13 @@ public partial class MainWindow : Window
         registry.Register(new RememberAppTool(registry));
         registry.Register(new LocationTool());
         registry.Register(new WeatherTool());
+        registry.Register(new ActionHistoryTool());
+        registry.Register(new ScheduleAddTool(scheduledStore));
+        registry.Register(new ScheduleListTool(scheduledStore));
+        registry.Register(new ScheduleRemoveTool(scheduledStore));
+        registry.Register(new MemoryWriteTool(memoryStore));
+        registry.Register(new MemoryReadTool(memoryStore));
+        registry.Register(new MemoryForgetTool(memoryStore));
 
         // Load auto-generated tools from scan (also loads data/custom-apps.json)
         registry.LoadFromJson("data/tools.json");
@@ -90,7 +113,7 @@ public partial class MainWindow : Window
             history.PurgeToolFailures();
         }
 
-        var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config);
+        var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config, memoryStore, processContextProvider);
         _ = agentLoop.WarmUpAsync(); // Pre-load model into RAM to eliminate cold-start delay
 
         var speech = new SpeechEngine { Enabled = config.VoiceEnabled, Volume = config.TtsVolume, VoiceGender = config.TtsVoiceGender, SkipLocalFallback = true };
@@ -98,8 +121,12 @@ public partial class MainWindow : Window
         SpeechEngine = speech;
 
         ToolRegistry = registry;
+        PermissionManager = permManager;
+        MemoryStore = memoryStore;
+        ScheduledTaskStore = scheduledStore;
+        ProductivityTracker = productivityTracker;
         AgentLoop = agentLoop;
-        ChatViewModel = new ChatViewModel(agentLoop, history, config, registry, speech);
+        ChatViewModel = new ChatViewModel(agentLoop, history, config, registry, speech, scheduledStore, productivityTracker, ollamaClient);
 
         OverlayControl.DataContext = ChatViewModel;
         FullHudControl.DataContext = ChatViewModel;
@@ -107,6 +134,45 @@ public partial class MainWindow : Window
         // Reset inactivity timer every time the agent produces a response
         AgentLoop.ResponseReceived += _ => ResetIdleTimer();
         ResetIdleTimer();
+
+        _scheduler = new SchedulerService(scheduledStore, async task =>
+        {
+            await dispatcher.ExecuteAsync("run_command", new Dictionary<string, Newtonsoft.Json.Linq.JToken>
+            {
+                ["command"] = task.Command
+            }).ConfigureAwait(false);
+        })
+        {
+            Enabled = config.ScheduledAutomationsEnabled
+        };
+        _scheduler.Start();
+
+        _clipboardMonitor = new ClipboardMonitor
+        {
+            Enabled = config.ClipboardSmartEnabled
+        };
+        _clipboardMonitor.ClipboardSmartHint += (_, hint) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (ChatViewModel.IsBusy) return;
+                ChatViewModel.StatusText = hint;
+
+                _clipboardHintTimer?.Stop();
+                _clipboardHintTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
+                _clipboardHintTimer.Tick += (_, _) =>
+                {
+                    _clipboardHintTimer?.Stop();
+                    if (!ChatViewModel.IsBusy)
+                        ChatViewModel.StatusText = "";
+                };
+                _clipboardHintTimer.Start();
+            });
+        };
+        _clipboardMonitor.Start();
+
+        _productivityTracker = productivityTracker;
+        _productivityTracker.Start();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -142,6 +208,18 @@ public partial class MainWindow : Window
             _hotkeyManager.Unregister(id);
         _hotkeyIds.Clear();
         RegisterHotkeys();
+    }
+
+    public void ApplyRuntimeConfig()
+    {
+        var cfg = App.ConfigManager.Config;
+        if (PermissionManager != null)
+            PermissionManager.AutoApproveConfirmations = cfg.AutonomousMode;
+        if (_scheduler != null)
+            _scheduler.Enabled = cfg.ScheduledAutomationsEnabled;
+        if (_clipboardMonitor != null)
+            _clipboardMonitor.Enabled = cfg.ClipboardSmartEnabled;
+        ChatViewModel?.RefreshRuntimeConfig(cfg);
     }
 
     private void ToggleVisibility()
@@ -231,6 +309,10 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _idleTimer?.Stop();
+        _scheduler?.Stop();
+        _clipboardMonitor?.Stop();
+        _productivityTracker?.Stop();
+        _clipboardHintTimer?.Stop();
         // Unload the model so Ollama releases RAM when ARES exits
         _ = _ollamaClient?.UnloadModelAsync(App.ConfigManager.Config.OllamaModel);
         _hotkeyManager.Dispose();

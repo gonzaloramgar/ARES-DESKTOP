@@ -3,15 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:AresAssistant"
         Title="ARES — Setup"
-        Width="600" Height="700"
+        Width="740" Height="860"
         WindowStyle="None" AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
 
     <Border x:Name="RootBorder"
-            CornerRadius="20"
-            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+            CornerRadius="24"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.2"
             Opacity="0">
         <Border.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -30,6 +30,26 @@
                 <RowDefinition Height="Auto"/>  <!-- Navigation -->
             </Grid.RowDefinitions>
 
+            <!-- Atmospheric background glows -->
+            <Ellipse Width="560" Height="560" HorizontalAlignment="Left" VerticalAlignment="Top"
+                     Margin="-300,-260,0,0" IsHitTestVisible="False" Opacity="0.28" Grid.RowSpan="3">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#66ff3b3b" Offset="0"/>
+                        <GradientStop Color="#00ff3b3b" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Width="460" Height="460" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                     Margin="0,0,-220,-220" IsHitTestVisible="False" Opacity="0.2" Grid.RowSpan="3">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#44ffffff" Offset="0"/>
+                        <GradientStop Color="#00ffffff" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
             <!-- Horizontal accent glow at top -->
             <Border VerticalAlignment="Top" Height="1" CornerRadius="20,20,0,0"
                     Margin="80,0" Opacity="0.8" IsHitTestVisible="False" Grid.RowSpan="3">
@@ -43,29 +63,34 @@
             </Border>
 
             <!-- ══════════  STEP INDICATOR  ══════════ -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center"
-                        Margin="0,16,0,6">
-                <Ellipse x:Name="Dot0" Width="10" Height="10" Margin="4,0"
-                         Fill="{DynamicResource AccentBrush}" Opacity="1"/>
-                <Ellipse x:Name="Dot1" Width="8" Height="8" Margin="4,0"
-                         Fill="#2a2a42" Opacity="0.5"/>
-                <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="4,0"
-                         Fill="#2a2a42" Opacity="0.5"/>
-                <Ellipse x:Name="Dot3" Width="8" Height="8" Margin="4,0"
-                         Fill="#2a2a42" Opacity="0.5"/>
-                <Ellipse x:Name="Dot4" Width="8" Height="8" Margin="4,0"
-                         Fill="#2a2a42" Opacity="0.5"/>
-            </StackPanel>
+            <Border Grid.Row="0" HorizontalAlignment="Center" Margin="0,14,0,6"
+                    Background="#1a101827" BorderBrush="#2d2a3e" BorderThickness="1"
+                    CornerRadius="999" Padding="12,7">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse x:Name="Dot0" Width="10" Height="10" Margin="4,0"
+                             Fill="{DynamicResource AccentBrush}" Opacity="1"/>
+                    <Ellipse x:Name="Dot1" Width="8" Height="8" Margin="4,0"
+                             Fill="#2a2a42" Opacity="0.5"/>
+                    <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="4,0"
+                             Fill="#2a2a42" Opacity="0.5"/>
+                    <Ellipse x:Name="Dot3" Width="8" Height="8" Margin="4,0"
+                             Fill="#2a2a42" Opacity="0.5"/>
+                    <Ellipse x:Name="Dot4" Width="8" Height="8" Margin="4,0"
+                             Fill="#2a2a42" Opacity="0.5"/>
+                    <Ellipse x:Name="Dot5" Width="8" Height="8" Margin="4,0"
+                             Fill="#2a2a42" Opacity="0.5"/>
+                </StackPanel>
+            </Border>
 
             <!-- ══════════  PAGE CONTAINER  ══════════ -->
-            <Grid Grid.Row="1" ClipToBounds="True" Margin="0">
+            <Grid Grid.Row="1" ClipToBounds="True" Margin="0,2,0,0">
 
                 <!-- ────── PAGE 0: Bienvenida + Nombre ────── -->
                 <Grid x:Name="Page0" Visibility="Visible">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0">
-                        <StackPanel HorizontalAlignment="Center" Margin="50,10,50,10">
+                        <StackPanel HorizontalAlignment="Center" Margin="58,16,58,10">
                             <!-- ARES Logo -->
-                            <Canvas Width="100" Height="100" HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <Canvas Width="112" Height="112" HorizontalAlignment="Center" Margin="0,0,0,12">
                                 <Ellipse Width="94" Height="94" Canvas.Left="3" Canvas.Top="3"
                                          Stroke="{DynamicResource AccentGlowBrush}" StrokeThickness="5"
                                          RenderTransformOrigin="0.5,0.5">
@@ -91,7 +116,7 @@
                                 </Ellipse>
                             </Canvas>
 
-                            <TextBlock Text="BIENVENIDO A ARES" FontSize="26" FontWeight="Bold"
+                            <TextBlock Text="BIENVENIDO A ARES" FontSize="30" FontWeight="Bold"
                                        Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"
                                        FontFamily="Consolas" Margin="0,0,0,2">
                                 <TextBlock.Effect>
@@ -104,13 +129,20 @@
                                        HorizontalAlignment="Center" FontFamily="Consolas"
                                        Margin="0,0,0,4"/>
 
-                            <TextBlock Text="Vamos a personalizar tu asistente paso a paso"
-                                       FontSize="11" Foreground="{DynamicResource SubtextBrush}" HorizontalAlignment="Center"
-                                       FontFamily="Consolas" Margin="0,0,0,30"/>
+                            <TextBlock Text="Configuración guiada para dejar ARES listo en menos de 2 minutos"
+                                       FontSize="12" Foreground="{DynamicResource SubtextBrush}" HorizontalAlignment="Center"
+                                       FontFamily="Consolas" Margin="0,0,0,16" TextWrapping="Wrap" TextAlignment="Center"/>
+
+                            <Border Background="#1419242e" BorderBrush="#2f3648" BorderThickness="1"
+                                    CornerRadius="10" Padding="10,8" Margin="0,0,0,16">
+                                <TextBlock Text="Incluye: IA local multimodelo, voz, dashboard de productividad y tutorial final interactivo."
+                                           Foreground="{DynamicResource TextBrush}" FontSize="11" FontFamily="Consolas"
+                                           TextWrapping="Wrap" TextAlignment="Center"/>
+                            </Border>
 
                             <!-- Name -->
-                            <Border Background="{DynamicResource GlassBrush}" CornerRadius="14"
-                                    BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="22,18" Margin="0,0,0,16">
+                                <Border Background="{DynamicResource GlassBrush}" CornerRadius="16"
+                                    BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="24,20" Margin="0,0,0,16">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                         <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"
@@ -122,7 +154,7 @@
                                     <TextBlock Text="¿Cómo quieres que se llame tu IA?"
                                                FontSize="11" Foreground="#808080" FontFamily="Consolas" Margin="0,0,0,10"/>
                                     <TextBox x:Name="NameBox" Style="{StaticResource AresTextBox}"
-                                             Text="ARES" FontSize="15" FontFamily="Consolas"
+                                             Text="ARES" FontSize="16" FontFamily="Consolas"
                                              MaxLength="20"/>
                                 </StackPanel>
                             </Border>
@@ -515,6 +547,30 @@
                                     </ComboBox>
                                 </StackPanel>
                             </Border>
+
+                            <!-- Dashboard widgets -->
+                            <Border Background="{DynamicResource GlassBrush}" CornerRadius="14"
+                                    BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="22,16" Margin="0,14,0,0">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                        <Rectangle Width="2.5" Height="13" RadiusX="1" RadiusY="1"
+                                                   Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="WIDGETS DEL DASHBOARD" FontFamily="Consolas" FontSize="10"
+                                                   FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
+                                                   VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="ChkWidgetWeather" Style="{StaticResource AresCheckBox}"
+                                              Content="Clima" IsChecked="True"/>
+                                    <CheckBox x:Name="ChkWidgetWorldClock" Style="{StaticResource AresCheckBox}"
+                                              Content="Hora mundial" IsChecked="True" Margin="0,8,0,0"/>
+                                    <CheckBox x:Name="ChkWidgetSystemLive" Style="{StaticResource AresCheckBox}"
+                                              Content="CPU/RAM en vivo" IsChecked="True" Margin="0,8,0,0"/>
+                                    <CheckBox x:Name="ChkWidgetTasks" Style="{StaticResource AresCheckBox}"
+                                              Content="Próximas tareas" IsChecked="True" Margin="0,8,0,0"/>
+                                    <CheckBox x:Name="ChkWidgetProductivity" Style="{StaticResource AresCheckBox}"
+                                              Content="Productividad + resumen IA" IsChecked="True" Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
@@ -680,36 +736,90 @@
                     </ScrollViewer>
                 </Grid>
 
+                <!-- ────── PAGE 6: Tutorial ────── -->
+                <Grid x:Name="Page6" Visibility="Collapsed">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0">
+                        <StackPanel HorizontalAlignment="Center" Margin="50,14,50,10">
+                            <TextBlock Text="🚀  TUTORIAL ARES" FontSize="20" FontWeight="Bold"
+                                       Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"
+                                       FontFamily="Consolas" Margin="0,0,0,6"/>
+                            <TextBlock Text="Esto es lo que ARES puede hacer y para qué sirve cada ajuste"
+                                       FontSize="11" Foreground="{DynamicResource SubtextBrush}" HorizontalAlignment="Center"
+                                       FontFamily="Consolas" Margin="0,0,0,22"/>
+
+                            <Border Background="{DynamicResource GlassBrush}" CornerRadius="14"
+                                    BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="18,14" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="AUTOMATIZACIÓN" FontFamily="Consolas" FontSize="10" FontWeight="Bold"
+                                               Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="• Abrir/cerrar apps, gestionar ventanas, comandos y carpetas." FontSize="11" Foreground="{DynamicResource TextBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Programar tareas diarias y usar memoria persistente." FontSize="11" Foreground="{DynamicResource TextBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource GlassBrush}" CornerRadius="14"
+                                    BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="18,14" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="IA LOCAL + MULTIMODELO" FontFamily="Consolas" FontSize="10" FontWeight="Bold"
+                                               Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="• Routing automático por tipo de tarea (coding, reasoning, visión)." FontSize="11" Foreground="{DynamicResource TextBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Análisis de pantalla local y fallback de modelos instalados." FontSize="11" Foreground="{DynamicResource TextBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource GlassBrush}" CornerRadius="14"
+                                    BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" Padding="18,14" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="HUD Y DASHBOARD" FontFamily="Consolas" FontSize="10" FontWeight="Bold"
+                                               Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="• Widgets en vivo: clima, hora mundial, CPU/RAM, tareas y productividad." FontSize="11" Foreground="{DynamicResource TextBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Text="• Resumen diario con IA de cómo usaste tus aplicaciones." FontSize="11" Foreground="{DynamicResource TextBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="{DynamicResource GlassBrush}" CornerRadius="14"
+                                    BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Padding="18,14">
+                                <StackPanel>
+                                    <TextBlock Text="TIP RÁPIDO" FontFamily="Consolas" FontSize="10" FontWeight="Bold"
+                                               Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="Empieza con comandos como: 'ábreme Spotify', 'haz una captura', 'programa una tarea a las 09:00' o 'analiza mi pantalla'."
+                                               FontSize="11" Foreground="{DynamicResource TextBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
             </Grid>
 
             <!-- ══════════  NAVIGATION  ══════════ -->
-            <Border Grid.Row="2" CornerRadius="0,0,20,20" Padding="24,10,24,16">
+            <Border Grid.Row="2" CornerRadius="0,0,24,24" Padding="24,12,24,18">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#0c0c0c" Offset="0"/>
-                        <GradientStop Color="#080808" Offset="1"/>
+                        <GradientStop Color="#12121d" Offset="0"/>
+                        <GradientStop Color="#0a0a12" Offset="1"/>
                     </LinearGradientBrush>
                 </Border.Background>
                 <Grid>
                     <Border VerticalAlignment="Top" Height="1" Background="#1a1a1a" Margin="-24,0"/>
 
                     <!-- Step label -->
-                    <TextBlock x:Name="StepLabel" Text="Paso 1 de 5" FontSize="10"
-                               Foreground="#505050" FontFamily="Consolas"
+                    <TextBlock x:Name="StepLabel" Text="Paso 1 de 6" FontSize="11"
+                               Foreground="#707895" FontFamily="Consolas"
                                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
                                 VerticalAlignment="Bottom" Margin="0,20,0,0">
                         <Button x:Name="BtnBack" Content="← ATRÁS"
                                 Style="{StaticResource GhostButton}"
-                                Width="130" Height="38"
+                            Width="134" Height="40"
                                 FontSize="12" FontWeight="Bold" FontFamily="Consolas"
                                 Click="Back_Click" Cursor="Hand"
                                 Visibility="Collapsed" Margin="0,0,12,0"/>
                         <Button x:Name="BtnNext" Content="SIGUIENTE →"
                                 Style="{StaticResource AresButton}"
-                                Width="180" Height="42"
-                                FontSize="13" FontWeight="Bold" FontFamily="Consolas"
+                            Width="196" Height="44"
+                            FontSize="13" FontWeight="Bold" FontFamily="Consolas"
                                 Click="Next_Click" Cursor="Hand"/>
                     </StackPanel>
                 </Grid>

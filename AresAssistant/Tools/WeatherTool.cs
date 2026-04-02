@@ -32,15 +32,15 @@ public class WeatherTool : ITool
     {
         try
         {
-            var lat = args.TryGetValue("latitude", out var la) ? la.ToObject<double>() : 0;
-            var lon = args.TryGetValue("longitude", out var lo) ? lo.ToObject<double>() : 0;
+            var lat = ReadDouble(args, "latitude", "latitud", "lat");
+            var lon = ReadDouble(args, "longitude", "longitud", "lon", "lng");
 
-            if (lat == 0 && lon == 0)
+            if (lat == null || lon == null)
                 return new ToolResult(false, "Coordenadas inválidas. Usa get_location primero para obtener lat/lon.");
 
             // Open-Meteo — free, no API key, excellent weather data
             var url = $"https://api.open-meteo.com/v1/forecast?" +
-                      $"latitude={lat}&longitude={lon}" +
+                      $"latitude={lat.Value}&longitude={lon.Value}" +
                       $"&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m" +
                       $"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max" +
                       $"&timezone=auto&forecast_days=3&language=es";
@@ -73,6 +73,26 @@ public class WeatherTool : ITool
         {
             return new ToolResult(false, $"Error al obtener el tiempo: {ex.Message}");
         }
+    }
+
+    private static double? ReadDouble(Dictionary<string, JToken> args, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!args.TryGetValue(key, out var token) || token == null) continue;
+
+            if (token.Type == JTokenType.Float || token.Type == JTokenType.Integer)
+                return token.Value<double>();
+
+            if (double.TryParse(token.ToString(), System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+                return parsed;
+
+            if (double.TryParse(token.ToString(), out parsed))
+                return parsed;
+        }
+
+        return null;
     }
 
     private static object[] BuildForecast(JToken? daily)

@@ -11,6 +11,8 @@ public enum PermissionLevel
 
 public class PermissionManager
 {
+    public bool AutoApproveConfirmations { get; set; }
+
     private static readonly HashSet<string> ConfirmTools = new()
     {
         "close_app", "write_file", "run_command", "clipboard_write", "type_text", "delete_folder"
@@ -29,6 +31,9 @@ public class PermissionManager
     {
         if (IsPathBlocked(toolName, args))
             return PermissionLevel.Blocked;
+
+        if (AutoApproveConfirmations && ConfirmTools.Contains(toolName))
+            return PermissionLevel.Auto;
 
         if (ConfirmTools.Contains(toolName))
             return PermissionLevel.Confirm;

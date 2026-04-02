@@ -9,6 +9,14 @@ namespace AresAssistant.Views;
 /// </summary>
 public partial class AresMessageBox : Window
 {
+    public enum RoutingDiagnosticAction
+    {
+        Close,
+        Copy,
+        InstallMissing,
+        RepairAll
+    }
+
     public MessageBoxResult Result { get; private set; } = MessageBoxResult.OK;
 
     private AresMessageBox()
@@ -34,6 +42,56 @@ public partial class AresMessageBox : Window
         dlg.BuildButtons(buttons);
         dlg.ShowDialog();
         return dlg.Result;
+    }
+
+    public static bool ShowInstallMissingPrompt(string message, string title = "ARES")
+    {
+        var owner = GetActiveWindow();
+        var dlg = new AresMessageBox();
+        dlg.TitleText.Text = title.Replace("ARES — ", "").Replace("ARES - ", "").Trim();
+        if (string.IsNullOrWhiteSpace(dlg.TitleText.Text)) dlg.TitleText.Text = "ARES";
+        dlg.MessageText.Text = message;
+        dlg.Owner = owner;
+
+        dlg.ButtonPanel.Children.Clear();
+        dlg.AddButton("Cerrar", "GhostButton", MessageBoxResult.No);
+        dlg.AddButton("Instalar faltantes", "AresButton", MessageBoxResult.Yes, primary: true);
+
+        dlg.ShowDialog();
+        return dlg.Result == MessageBoxResult.Yes;
+    }
+
+    public static RoutingDiagnosticAction ShowRoutingDiagnosticPrompt(
+        string message,
+        bool canInstallMissing,
+        bool canRepairAll,
+        string title = "ARES")
+    {
+        var owner = GetActiveWindow();
+        var dlg = new AresMessageBox();
+        dlg.TitleText.Text = title.Replace("ARES — ", "").Replace("ARES - ", "").Trim();
+        if (string.IsNullOrWhiteSpace(dlg.TitleText.Text)) dlg.TitleText.Text = "ARES";
+        dlg.MessageText.Text = message;
+        dlg.Owner = owner;
+
+        dlg.ButtonPanel.Children.Clear();
+        dlg.AddButton("Cerrar", "GhostButton", MessageBoxResult.Cancel);
+        dlg.AddButton("Copiar diagnóstico", "GhostButton", MessageBoxResult.No);
+
+        if (canRepairAll)
+            dlg.AddButton("Reparar todo IA", "AresButton", MessageBoxResult.Yes, primary: true);
+        else if (canInstallMissing)
+            dlg.AddButton("Instalar faltantes", "AresButton", MessageBoxResult.Yes, primary: true);
+
+        dlg.ShowDialog();
+
+        if (dlg.Result == MessageBoxResult.No)
+            return RoutingDiagnosticAction.Copy;
+
+        if (dlg.Result == MessageBoxResult.Yes)
+            return canRepairAll ? RoutingDiagnosticAction.RepairAll : RoutingDiagnosticAction.InstallMissing;
+
+        return RoutingDiagnosticAction.Close;
     }
 
     // ═══════════════════════════════════════════════════════════════

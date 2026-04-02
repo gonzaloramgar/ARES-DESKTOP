@@ -45,6 +45,20 @@ public record AppConfig
     public bool ScheduledAutomationsEnabled { get; init; } = true;
     /// <summary>Enable smart clipboard monitoring and contextual suggestions.</summary>
     public bool ClipboardSmartEnabled { get; init; } = true;
+    /// <summary>Enable local reliability telemetry (tools/models success-failure counters).</summary>
+    public bool ReliabilityTelemetryEnabled { get; init; } = true;
+    /// <summary>Automatically apply profile presets when context profile changes.</summary>
+    public bool AutoApplyContextProfilePresets { get; init; } = true;
+    /// <summary>Enable runtime adaptive routing based on current CPU/RAM pressure.</summary>
+    public bool RuntimeAdaptiveRouting { get; init; } = true;
+    /// <summary>Enable local JSON security policy engine.</summary>
+    public bool SecurityPolicyEnabled { get; init; } = true;
+    /// <summary>Load plugin tools from data/plugins manifests.</summary>
+    public bool PluginToolsEnabled { get; init; } = true;
+    /// <summary>Enable local HTTP API server for diagnostics/integration.</summary>
+    public bool LocalApiEnabled { get; init; } = true;
+    /// <summary>Local API server port (127.0.0.1 only).</summary>
+    public int LocalApiPort { get; init; } = 5077;
     /// <summary>Show weather widget in Full HUD dashboard.</summary>
     public bool WidgetWeatherEnabled { get; init; } = true;
     /// <summary>Show world clock widget in Full HUD dashboard.</summary>

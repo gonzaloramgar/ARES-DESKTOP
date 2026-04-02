@@ -19,39 +19,68 @@ public sealed class PersistentMemoryStore
         Load();
     }
 
-    public List<MemoryItem> GetAll()
-    {
-        lock (_lock) return _items.OrderByDescending(i => i.UpdatedAt).ToList();
-    }
-
-    public string BuildPromptContext(int maxItems = 8)
+    public List<MemoryItem> GetAll(string? projectScope = null, bool includeGeneral = true)
     {
         lock (_lock)
         {
+            PruneExpiredLocked();
+
+            if (string.IsNullOrWhiteSpace(projectScope))
+                return _items.OrderByDescending(i => i.UpdatedAt).ToList();
+
+            var scope = projectScope.Trim();
+            return _items
+                .Where(i => i.ProjectScope.Equals(scope, StringComparison.OrdinalIgnoreCase)
+                         || (includeGeneral && string.IsNullOrWhiteSpace(i.ProjectScope)))
+                .OrderByDescending(i => i.UpdatedAt)
+                .ToList();
+        }
+    }
+
+    public string BuildPromptContext(int maxItems = 8, string? projectScope = null)
+    {
+        lock (_lock)
+        {
+            PruneExpiredLocked();
             if (_items.Count == 0) return "(sin memoria persistente guardada)";
 
-            var lines = _items
+            var baseItems = string.IsNullOrWhiteSpace(projectScope)
+                ? _items
+                : _items.Where(i => i.ProjectScope.Equals(projectScope, StringComparison.OrdinalIgnoreCase)
+                                 || string.IsNullOrWhiteSpace(i.ProjectScope)).ToList();
+
+            var lines = baseItems
                 .OrderByDescending(i => i.UpdatedAt)
                 .Take(Math.Max(1, maxItems))
-                .Select(i => $"- [{i.Category}] {i.Note}");
+                .Select(i =>
+                {
+                    var scopeTag = string.IsNullOrWhiteSpace(i.ProjectScope) ? "general" : i.ProjectScope;
+                    return $"- [{i.Category}/{scopeTag}] {i.Note}";
+                });
 
             return string.Join(Environment.NewLine, lines);
         }
     }
 
-    public bool Upsert(string note, string category = "general")
+    public bool Upsert(string note, string category = "general", string? projectScope = null, int ttlDays = 0)
     {
         note = (note ?? string.Empty).Trim();
         category = string.IsNullOrWhiteSpace(category) ? "general" : category.Trim().ToLowerInvariant();
+        projectScope = string.IsNullOrWhiteSpace(projectScope) ? "" : projectScope.Trim();
         if (string.IsNullOrWhiteSpace(note)) return false;
 
         lock (_lock)
         {
-            var existing = _items.FirstOrDefault(i => i.Note.Equals(note, StringComparison.OrdinalIgnoreCase));
+            PruneExpiredLocked();
+
+            var existing = _items.FirstOrDefault(i =>
+                i.Note.Equals(note, StringComparison.OrdinalIgnoreCase)
+                && i.ProjectScope.Equals(projectScope, StringComparison.OrdinalIgnoreCase));
             if (existing != null)
             {
                 existing.Category = category;
                 existing.UpdatedAt = DateTime.UtcNow;
+                existing.ExpiresAtUtc = ttlDays > 0 ? DateTime.UtcNow.AddDays(ttlDays) : null;
             }
             else
             {
@@ -59,8 +88,10 @@ public sealed class PersistentMemoryStore
                 {
                     Category = category,
                     Note = note,
+                    ProjectScope = projectScope,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
+                    ExpiresAtUtc = ttlDays > 0 ? DateTime.UtcNow.AddDays(ttlDays) : null
                 });
             }
 
@@ -76,14 +107,18 @@ public sealed class PersistentMemoryStore
         }
     }
 
-    public bool Forget(string note)
+    public bool Forget(string note, string? projectScope = null)
     {
         note = (note ?? string.Empty).Trim();
+        projectScope = string.IsNullOrWhiteSpace(projectScope) ? "" : projectScope.Trim();
         if (string.IsNullOrWhiteSpace(note)) return false;
 
         lock (_lock)
         {
-            var removed = _items.RemoveAll(i => i.Note.Equals(note, StringComparison.OrdinalIgnoreCase));
+            PruneExpiredLocked();
+            var removed = _items.RemoveAll(i =>
+                i.Note.Equals(note, StringComparison.OrdinalIgnoreCase)
+                && i.ProjectScope.Equals(projectScope, StringComparison.OrdinalIgnoreCase));
             if (removed <= 0) return false;
             Save();
             Version++;
@@ -103,7 +138,11 @@ public sealed class PersistentMemoryStore
         {
             var raw = File.ReadAllText(_path);
             var data = JsonConvert.DeserializeObject<List<MemoryItem>>(raw) ?? new List<MemoryItem>();
-            lock (_lock) _items = data;
+            lock (_lock)
+            {
+                _items = data;
+                PruneExpiredLocked();
+            }
         }
         catch
         {
@@ -117,12 +156,34 @@ public sealed class PersistentMemoryStore
         var json = JsonConvert.SerializeObject(_items, Formatting.Indented);
         File.WriteAllText(_path, json);
     }
+
+    private void PruneExpiredLocked()
+    {
+        var now = DateTime.UtcNow;
+        _items.RemoveAll(i => i.ExpiresAtUtc.HasValue && i.ExpiresAtUtc.Value <= now);
+    }
+
+    public static string GetCurrentProjectScope()
+    {
+        try
+        {
+            var cwd = Directory.GetCurrentDirectory();
+            var name = new DirectoryInfo(cwd).Name;
+            return string.IsNullOrWhiteSpace(name) ? "general" : name;
+        }
+        catch
+        {
+            return "general";
+        }
+    }
 }
 
 public sealed class MemoryItem
 {
     public string Category { get; set; } = "general";
     public string Note { get; set; } = "";
+    public string ProjectScope { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public DateTime? ExpiresAtUtc { get; set; }
 }

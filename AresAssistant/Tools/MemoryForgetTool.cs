@@ -12,7 +12,8 @@ public class MemoryForgetTool(PersistentMemoryStore memoryStore) : ITool
     {
         Properties = new()
         {
-            ["note"] = new() { Type = "string", Description = "Texto exacto de la nota a eliminar" }
+            ["note"] = new() { Type = "string", Description = "Texto exacto de la nota a eliminar" },
+            ["project_scope"] = new() { Type = "string", Description = "Ámbito de proyecto opcional. Si no se indica, usa el proyecto actual." }
         },
         Required = new() { "note" }
     };
@@ -20,7 +21,8 @@ public class MemoryForgetTool(PersistentMemoryStore memoryStore) : ITool
     public Task<ToolResult> ExecuteAsync(Dictionary<string, JToken> args)
     {
         var note = args.TryGetValue("note", out var n) ? n.ToString() : "";
-        var ok = memoryStore.Forget(note);
+        var scope = args.TryGetValue("project_scope", out var s) ? s.ToString().Trim() : PersistentMemoryStore.GetCurrentProjectScope();
+        var ok = memoryStore.Forget(note, scope);
         return Task.FromResult(ok
             ? new ToolResult(true, "Memoria eliminada.")
             : new ToolResult(false, "No se encontró esa nota en memoria."));

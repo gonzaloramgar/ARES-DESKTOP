@@ -15,6 +15,7 @@ namespace AresAssistant.Views;
 public partial class SetupWindow : Window
 {
     private const int TotalPages = 6;
+    private double _ollamaProgressPct;
 
     private string SelectedModel => _selectedPerfMode switch
     {
@@ -391,9 +392,19 @@ public partial class SetupWindow : Window
     // ═══════════════ Ollama Auto-Install ═══════════════
 
     private async void SetupInstallOllama_Click(object sender, RoutedEventArgs e)
+        => await RunOllamaSetupAsync(repairMode: false);
+
+    private async void SetupRepairAllAi_Click(object sender, RoutedEventArgs e)
+        => await RunOllamaSetupAsync(repairMode: true);
+
+    private async Task RunOllamaSetupAsync(bool repairMode)
     {
         SetupInstallOllama.IsEnabled = false;
+        SetupRepairAllAi.IsEnabled = false;
         OllamaProgressBorder.Visibility = Visibility.Visible;
+
+        SetupInstallOllama.Content = repairMode ? "🔧  Reparando..." : "⏳  Instalando...";
+        SetupRepairAllAi.Content = repairMode ? "🔧  Reparando..." : "🛠  Reparar IA";
 
         var model = SelectedModel;
         var requiredModels = new[]
@@ -436,7 +447,10 @@ public partial class SetupWindow : Window
                     {
                         SetStatus("Instalación cancelada");
                         SetupInstallOllama.IsEnabled = true;
+                        SetupRepairAllAi.IsEnabled = true;
                         OllamaProgressBorder.Visibility = Visibility.Collapsed;
+                        SetupInstallOllama.Content = "⬇  Instalar todo";
+                        SetupRepairAllAi.Content = "🛠  Reparar IA";
                         return;
                     }
                     ollamaReady = true;
@@ -463,7 +477,10 @@ public partial class SetupWindow : Window
                     {
                         SetStatus("Descarga cancelada");
                         SetupInstallOllama.IsEnabled = true;
+                        SetupRepairAllAi.IsEnabled = true;
                         OllamaProgressBorder.Visibility = Visibility.Collapsed;
+                        SetupInstallOllama.Content = "⬇  Instalar todo";
+                        SetupRepairAllAi.Content = "🛠  Reparar IA";
                         return;
                     }
 
@@ -473,7 +490,10 @@ public partial class SetupWindow : Window
                     {
                         SetStatus($"Error: {req} no quedó instalado correctamente.");
                         SetupInstallOllama.IsEnabled = true;
+                        SetupRepairAllAi.IsEnabled = true;
                         OllamaProgressBorder.Visibility = Visibility.Collapsed;
+                        SetupInstallOllama.Content = "⬇  Instalar todo";
+                        SetupRepairAllAi.Content = "🛠  Reparar IA";
                         return;
                     }
                 }
@@ -483,10 +503,11 @@ public partial class SetupWindow : Window
 
             // Done
             SetProgress(1.0);
-            Dispatcher.Invoke(() => SetProgress(1.0));
+            await Dispatcher.InvokeAsync(() => SetProgress(1.0));
             SetStatus($"✓ Ollama + modelos listos ({string.Join(", ", requiredModels)})");
             OllamaInstallStatus.Foreground = (SolidColorBrush)FindResource("AccentBrush");
             SetupInstallOllama.Content = "✓  Instalado";
+            SetupRepairAllAi.Content = "✓  Reparar IA";
 
 
         }
@@ -495,17 +516,21 @@ public partial class SetupWindow : Window
             SetStatus($"Error: {ex.Message}");
             OllamaInstallStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xff, 0x44, 0x44));
             SetupInstallOllama.Content = "⬇  Instalar todo";
+            SetupRepairAllAi.Content = "🛠  Reparar IA";
             SetupInstallOllama.IsEnabled = true;
+            SetupRepairAllAi.IsEnabled = true;
+            return;
         }
+
+        SetupInstallOllama.IsEnabled = true;
+        SetupRepairAllAi.IsEnabled = true;
 
         void SetStatus(string text) => OllamaInstallStatus.Text = text;
 
         void SetProgress(double pct)
         {
-            pct = Math.Clamp(pct, 0, 1);
-            OllamaProgressBorder.UpdateLayout();
-            var totalWidth = Math.Max(0, OllamaProgressBorder.ActualWidth - 2);
-            OllamaProgressFill.Width = totalWidth * pct;
+            _ollamaProgressPct = Math.Clamp(pct, 0, 1);
+            OllamaProgressScale.ScaleX = _ollamaProgressPct;
         }
     }
 

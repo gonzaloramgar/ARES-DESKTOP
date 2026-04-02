@@ -442,13 +442,20 @@
                                     <TextBlock Text="Descarga e instala Ollama y el modelo de IA seleccionado automáticamente"
                                                FontSize="10" Foreground="#606060" FontFamily="Consolas" Margin="0,0,0,12"
                                                TextWrapping="Wrap"/>
-                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel Orientation="Horizontal">
                                         <Button x:Name="SetupInstallOllama" Content="⬇  Instalar todo"
                                                 Style="{StaticResource GhostButton}"
                                                 Height="34" Padding="20,0"
                                                 HorizontalAlignment="Left" Cursor="Hand"
                                                 FontFamily="Consolas" FontSize="12"
                                                 Click="SetupInstallOllama_Click"/>
+                                        <Button x:Name="SetupRepairAllAi" Content="🛠  Reparar IA"
+                                            Style="{StaticResource GhostButton}"
+                                            Height="34" Padding="20,0"
+                                            HorizontalAlignment="Left" Cursor="Hand"
+                                            FontFamily="Consolas" FontSize="12"
+                                            Margin="8,0,0,0"
+                                            Click="SetupRepairAllAi_Click"/>
                                         <TextBlock x:Name="OllamaInstallStatus" Text=""
                                                    FontSize="10" Foreground="#808080" FontFamily="Consolas"
                                                    VerticalAlignment="Center" Margin="14,0,0,0"
@@ -458,8 +465,13 @@
                                     <Border x:Name="OllamaProgressBorder" Visibility="Collapsed"
                                             Background="#0a0a0a" CornerRadius="4" Height="6" Margin="0,10,0,0"
                                             BorderBrush="#1a1a1a" BorderThickness="1">
-                                        <Border x:Name="OllamaProgressFill" HorizontalAlignment="Left"
-                                                Width="0" CornerRadius="3" Background="{DynamicResource AccentBrush}"/>
+                                        <Border x:Name="OllamaProgressFill" HorizontalAlignment="Stretch"
+                                                Width="Auto" CornerRadius="3" Background="{DynamicResource AccentBrush}"
+                                                RenderTransformOrigin="0,0.5">
+                                            <Border.RenderTransform>
+                                                <ScaleTransform x:Name="OllamaProgressScale" ScaleX="0" ScaleY="1"/>
+                                            </Border.RenderTransform>
+                                        </Border>
                                     </Border>
                                 </StackPanel>
                             </Border>

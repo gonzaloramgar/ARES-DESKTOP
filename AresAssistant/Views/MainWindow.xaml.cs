@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private SchedulerService? _scheduler;
     private ClipboardMonitor? _clipboardMonitor;
     private ProductivityTracker? _productivityTracker;
+    private LocalApiServer? _localApiServer;
 
     public static ChatViewModel ChatViewModel { get; private set; } = null!;
     public static AgentLoop AgentLoop { get; private set; } = null!;
@@ -33,6 +34,8 @@ public partial class MainWindow : Window
     public static ScheduledTaskStore ScheduledTaskStore { get; private set; } = null!;
     public static SpeechEngine SpeechEngine { get; private set; } = null!;
     public static ProductivityTracker ProductivityTracker { get; private set; } = null!;
+    public static ReliabilityTelemetryStore ReliabilityTelemetry { get; private set; } = null!;
+    public static SecurityPolicyStore SecurityPolicyStore { get; private set; } = null!;
     public static Task? WarmUpTask { get; private set; }
 
     public MainWindow()
@@ -58,7 +61,8 @@ public partial class MainWindow : Window
 
         var history = new ConversationHistory();
         var registry = new ToolRegistry();
-        var permManager = new PermissionManager
+        var securityPolicyStore = new SecurityPolicyStore("data/security-policy.json");
+        var permManager = new PermissionManager(config.SecurityPolicyEnabled ? securityPolicyStore : null)
         {
             AutoApproveConfirmations = config.AutonomousMode
         };
@@ -66,13 +70,15 @@ public partial class MainWindow : Window
         var processContextProvider = new ProcessContextProvider();
         var scheduledStore = new ScheduledTaskStore("data/scheduled-tasks.json");
         var productivityTracker = new ProductivityTracker("data/productivity.json");
+        var telemetryStore = new ReliabilityTelemetryStore("data/reliability-telemetry.json", config.ReliabilityTelemetryEnabled);
         var logger = new ActionLogger("data/logs");
-        var dispatcher = new ToolDispatcher(registry, permManager, logger);
+        var dispatcher = new ToolDispatcher(registry, permManager, logger, telemetryStore);
 
         // Register built-in tools
         registry.Register(new CloseAppTool());
         registry.Register(new ScreenshotTool());
         registry.Register(new AnalyzeScreenTool(ollamaClient, App.ConfigManager));
+        registry.Register(new ModelBenchmarkTool(ollamaClient, App.ConfigManager));
         registry.Register(new ReadFileTool());
         registry.Register(new WriteFileTool());
         registry.Register(new RunCommandTool());
@@ -95,9 +101,16 @@ public partial class MainWindow : Window
         registry.Register(new ScheduleAddTool(scheduledStore));
         registry.Register(new ScheduleListTool(scheduledStore));
         registry.Register(new ScheduleRemoveTool(scheduledStore));
+        registry.Register(new ScheduleSimulateTool(scheduledStore, permManager));
         registry.Register(new MemoryWriteTool(memoryStore));
         registry.Register(new MemoryReadTool(memoryStore));
         registry.Register(new MemoryForgetTool(memoryStore));
+
+        if (config.PluginToolsEnabled)
+        {
+            var pluginLoader = new PluginToolLoader();
+            pluginLoader.LoadIntoRegistry("data/plugins", registry);
+        }
 
         // Load auto-generated tools from scan (also loads data/custom-apps.json)
         registry.LoadFromJson("data/tools.json");
@@ -113,7 +126,7 @@ public partial class MainWindow : Window
             history.PurgeToolFailures();
         }
 
-        var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config, memoryStore, processContextProvider);
+        var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config, telemetryStore, memoryStore, processContextProvider);
         _ = agentLoop.WarmUpAsync(); // Pre-load model into RAM to eliminate cold-start delay
 
         var speech = new SpeechEngine { Enabled = config.VoiceEnabled, Volume = config.TtsVolume, VoiceGender = config.TtsVoiceGender, SkipLocalFallback = true };
@@ -125,6 +138,8 @@ public partial class MainWindow : Window
         MemoryStore = memoryStore;
         ScheduledTaskStore = scheduledStore;
         ProductivityTracker = productivityTracker;
+        ReliabilityTelemetry = telemetryStore;
+        SecurityPolicyStore = securityPolicyStore;
         AgentLoop = agentLoop;
         ChatViewModel = new ChatViewModel(agentLoop, history, config, registry, speech, scheduledStore, productivityTracker, ollamaClient);
 
@@ -173,6 +188,12 @@ public partial class MainWindow : Window
 
         _productivityTracker = productivityTracker;
         _productivityTracker.Start();
+
+        if (config.LocalApiEnabled)
+        {
+            _localApiServer = new LocalApiServer(config.LocalApiPort, App.ConfigManager, registry);
+            _localApiServer.Start();
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -219,6 +240,8 @@ public partial class MainWindow : Window
             _scheduler.Enabled = cfg.ScheduledAutomationsEnabled;
         if (_clipboardMonitor != null)
             _clipboardMonitor.Enabled = cfg.ClipboardSmartEnabled;
+        if (ReliabilityTelemetry != null)
+            ReliabilityTelemetry.Enabled = cfg.ReliabilityTelemetryEnabled;
         ChatViewModel?.RefreshRuntimeConfig(cfg);
     }
 
@@ -312,6 +335,7 @@ public partial class MainWindow : Window
         _scheduler?.Stop();
         _clipboardMonitor?.Stop();
         _productivityTracker?.Stop();
+        _localApiServer?.Stop();
         _clipboardHintTimer?.Stop();
         // Unload the model so Ollama releases RAM when ARES exits
         _ = _ollamaClient?.UnloadModelAsync(App.ConfigManager.Config.OllamaModel);

@@ -50,6 +50,9 @@ public static class ModelRouter
             }
         }
 
+        if (config.RuntimeAdaptiveRouting)
+            candidates = RuntimeModelAdvisor.ReorderCandidates(candidates);
+
         return candidates;
     }
 

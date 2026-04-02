@@ -38,6 +38,13 @@ public class SettingsViewModel : ViewModelBase
     private bool _processContextEnabled;
     private bool _scheduledAutomationsEnabled;
     private bool _clipboardSmartEnabled;
+    private bool _reliabilityTelemetryEnabled;
+    private bool _autoApplyContextProfilePresets;
+    private bool _runtimeAdaptiveRouting;
+    private bool _securityPolicyEnabled;
+    private bool _pluginToolsEnabled;
+    private bool _localApiEnabled;
+    private int _localApiPort;
     private bool _widgetWeatherEnabled;
     private bool _widgetWorldClockEnabled;
     private bool _widgetSystemLiveEnabled;
@@ -83,6 +90,13 @@ public class SettingsViewModel : ViewModelBase
     public bool ProcessContextEnabled { get => _processContextEnabled; set => SetField(ref _processContextEnabled, value); }
     public bool ScheduledAutomationsEnabled { get => _scheduledAutomationsEnabled; set => SetField(ref _scheduledAutomationsEnabled, value); }
     public bool ClipboardSmartEnabled { get => _clipboardSmartEnabled; set => SetField(ref _clipboardSmartEnabled, value); }
+    public bool ReliabilityTelemetryEnabled { get => _reliabilityTelemetryEnabled; set => SetField(ref _reliabilityTelemetryEnabled, value); }
+    public bool AutoApplyContextProfilePresets { get => _autoApplyContextProfilePresets; set => SetField(ref _autoApplyContextProfilePresets, value); }
+    public bool RuntimeAdaptiveRouting { get => _runtimeAdaptiveRouting; set => SetField(ref _runtimeAdaptiveRouting, value); }
+    public bool SecurityPolicyEnabled { get => _securityPolicyEnabled; set => SetField(ref _securityPolicyEnabled, value); }
+    public bool PluginToolsEnabled { get => _pluginToolsEnabled; set => SetField(ref _pluginToolsEnabled, value); }
+    public bool LocalApiEnabled { get => _localApiEnabled; set => SetField(ref _localApiEnabled, value); }
+    public int LocalApiPort { get => _localApiPort; set => SetField(ref _localApiPort, Math.Clamp(value, 1024, 65535)); }
     public bool WidgetWeatherEnabled { get => _widgetWeatherEnabled; set => SetField(ref _widgetWeatherEnabled, value); }
     public bool WidgetWorldClockEnabled { get => _widgetWorldClockEnabled; set => SetField(ref _widgetWorldClockEnabled, value); }
     public bool WidgetSystemLiveEnabled { get => _widgetSystemLiveEnabled; set => SetField(ref _widgetSystemLiveEnabled, value); }
@@ -151,6 +165,13 @@ public class SettingsViewModel : ViewModelBase
         _processContextEnabled = cfg.ProcessContextEnabled;
         _scheduledAutomationsEnabled = cfg.ScheduledAutomationsEnabled;
         _clipboardSmartEnabled = cfg.ClipboardSmartEnabled;
+        _reliabilityTelemetryEnabled = cfg.ReliabilityTelemetryEnabled;
+        _autoApplyContextProfilePresets = cfg.AutoApplyContextProfilePresets;
+        _runtimeAdaptiveRouting = cfg.RuntimeAdaptiveRouting;
+        _securityPolicyEnabled = cfg.SecurityPolicyEnabled;
+        _pluginToolsEnabled = cfg.PluginToolsEnabled;
+        _localApiEnabled = cfg.LocalApiEnabled;
+        _localApiPort = cfg.LocalApiPort;
         _widgetWeatherEnabled = cfg.WidgetWeatherEnabled;
         _widgetWorldClockEnabled = cfg.WidgetWorldClockEnabled;
         _widgetSystemLiveEnabled = cfg.WidgetSystemLiveEnabled;
@@ -189,6 +210,13 @@ public class SettingsViewModel : ViewModelBase
         ProcessContextEnabled = ProcessContextEnabled,
         ScheduledAutomationsEnabled = ScheduledAutomationsEnabled,
         ClipboardSmartEnabled = ClipboardSmartEnabled,
+        ReliabilityTelemetryEnabled = ReliabilityTelemetryEnabled,
+        AutoApplyContextProfilePresets = AutoApplyContextProfilePresets,
+        RuntimeAdaptiveRouting = RuntimeAdaptiveRouting,
+        SecurityPolicyEnabled = SecurityPolicyEnabled,
+        PluginToolsEnabled = PluginToolsEnabled,
+        LocalApiEnabled = LocalApiEnabled,
+        LocalApiPort = LocalApiPort,
         WidgetWeatherEnabled = WidgetWeatherEnabled,
         WidgetWorldClockEnabled = WidgetWorldClockEnabled,
         WidgetSystemLiveEnabled = WidgetSystemLiveEnabled,
@@ -205,6 +233,7 @@ public class SettingsViewModel : ViewModelBase
     public void Save()
     {
         var config = BuildConfig();
+        config = ApplyContextProfilePresets(config);
         _configManager.Save(config);
         ThemeEngine.Apply(config);
         StartupManager.SetEnabled(LaunchWithWindows);
@@ -219,6 +248,45 @@ public class SettingsViewModel : ViewModelBase
 
         if (Views.MainWindow.PermissionManager is { } perms)
             perms.AutoApproveConfirmations = config.AutonomousMode;
+    }
+
+    private static AppConfig ApplyContextProfilePresets(AppConfig config)
+    {
+        if (!config.AutoApplyContextProfilePresets)
+            return config;
+
+        var profile = (config.ContextProfile ?? "").Trim().ToLowerInvariant();
+        return profile switch
+        {
+            "trabajo" => config with
+            {
+                Personality = "tecnico",
+                ResponseLength = "conciso",
+                AutonomousMode = true,
+                ScheduledAutomationsEnabled = true,
+                WidgetProductivityEnabled = true,
+                WidgetTasksEnabled = true
+            },
+            "estudio" => config with
+            {
+                Personality = "formal",
+                ResponseLength = "detallado",
+                AutonomousMode = false,
+                ScheduledAutomationsEnabled = true,
+                WidgetProductivityEnabled = true,
+                WidgetTasksEnabled = true
+            },
+            "gaming" => config with
+            {
+                Personality = "casual",
+                ResponseLength = "conciso",
+                AutonomousMode = false,
+                ScheduledAutomationsEnabled = false,
+                WidgetProductivityEnabled = false,
+                WidgetTasksEnabled = false
+            },
+            _ => config
+        };
     }
 
     public async Task CheckOllamaAsync()

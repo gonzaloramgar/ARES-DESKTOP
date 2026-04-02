@@ -145,14 +145,35 @@ public partial class SettingsWindow : Window
         var hasAnyVision = installed.Any(ModelRouter.IsLikelyVisionModel);
         var preferredVisionInstalled = installed.Any(m => m.Equals(preferredVision, StringComparison.OrdinalIgnoreCase));
         var needsVisionModel = !hasAnyVision || !preferredVisionInstalled;
+        var healthChecker = new OllamaHealthChecker();
+        var health = await healthChecker.CheckAsync(ollama, _vm.BuildConfig());
 
         var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Diagnóstico generado: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Versión app: {App.AppVersion}");
+        sb.AppendLine($"Modelo base configurado: {_vm.OllamaModel}");
+        sb.AppendLine($"Tool analyze_screen: {(MainWindow.ToolRegistry.Get("analyze_screen") != null ? "✓" : "✗")}");
+        sb.AppendLine($"Tool run_command: {(MainWindow.ToolRegistry.Get("run_command") != null ? "✓" : "✗")}");
+        sb.AppendLine($"Tool memory_read: {(MainWindow.ToolRegistry.Get("memory_read") != null ? "✓" : "✗")}");
+        sb.AppendLine($"Tool schedule_simulate: {(MainWindow.ToolRegistry.Get("schedule_simulate") != null ? "✓" : "✗")}");
+        sb.AppendLine($"Tool model_benchmark: {(MainWindow.ToolRegistry.Get("model_benchmark") != null ? "✓" : "✗")}");
+        sb.AppendLine($"API local: {(_vm.BuildConfig().LocalApiEnabled ? "habilitada" : "deshabilitada")}");
+        sb.AppendLine($"Plugins: {(_vm.BuildConfig().PluginToolsEnabled ? "habilitados" : "deshabilitados")}");
+        sb.AppendLine();
         sb.AppendLine(preview);
+        sb.AppendLine();
+        sb.AppendLine(health.ToCompactText());
         sb.AppendLine();
         sb.AppendLine($"Visión (preferido): {preferredVision} {(preferredVisionInstalled ? "✓" : "✗")}");
         sb.AppendLine($"Visión (cualquier modelo multimodal): {(hasAnyVision ? "✓" : "✗")}");
         if (needsVisionModel)
             sb.AppendLine("⚠ Reparar todo IA también instalará/configurará el modelo de visión recomendado.");
+
+        if (MainWindow.ReliabilityTelemetry != null)
+        {
+            sb.AppendLine();
+            sb.AppendLine(MainWindow.ReliabilityTelemetry.BuildWeeklyTopIssuesReport());
+        }
 
         return (sb.ToString().TrimEnd(), missingRouting, needsVisionModel, preferredVision);
     }
@@ -290,6 +311,15 @@ public partial class SettingsWindow : Window
             _vm.OllamaStatus = "Error en reparación IA";
             AresMessageBox.Show($"No se pudo completar la reparación:\n{ex.Message}", "ARES — Error");
         }
+    }
+
+    private void OpenAutomationStudio_Click(object sender, RoutedEventArgs e)
+    {
+        var studio = new AutomationStudioWindow(MainWindow.ScheduledTaskStore, MainWindow.PermissionManager)
+        {
+            Owner = this
+        };
+        studio.ShowDialog();
     }
 
     private async void TestVision_Click(object sender, RoutedEventArgs e)

@@ -1,0 +1,49 @@
+<Window x:Class="AresAssistant.Views.AutomationStudioWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ARES — Automation Studio"
+        Width="820" Height="620"
+        WindowStartupLocation="CenterOwner"
+        Background="#0b0b12">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Automation Studio (MVP)" FontFamily="Consolas" FontSize="18" FontWeight="Bold" Foreground="#ff6666"/>
+
+        <Border Grid.Row="1" Margin="0,10,0,10" Padding="10" BorderBrush="#333" BorderThickness="1" CornerRadius="8" Background="#12121e">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="TxtTime" Grid.Column="0" Margin="0,0,8,0" Text="09:00"/>
+                <TextBox x:Name="TxtCommand" Grid.Column="1" Margin="0,0,8,0" Text="echo hola"/>
+                <TextBox x:Name="TxtDescription" Grid.Column="2" Margin="0,0,8,0" Text="Ejemplo"/>
+                <Button Grid.Column="3" Content="Añadir" Padding="12,6" Click="Add_Click"/>
+            </Grid>
+        </Border>
+
+        <DataGrid x:Name="GridTasks" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="90"/>
+                <DataGridTextColumn Header="Hora" Binding="{Binding Time}" Width="80"/>
+                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
+                <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="220"/>
+                <DataGridCheckBoxColumn Header="ON" Binding="{Binding Enabled}" Width="60"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="Simular 24h" Margin="0,0,8,0" Padding="12,6" Click="Simulate_Click"/>
+            <Button Content="Eliminar seleccionado" Margin="0,0,8,0" Padding="12,6" Click="Remove_Click"/>
+            <Button Content="Cerrar" Padding="12,6" Click="Close_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

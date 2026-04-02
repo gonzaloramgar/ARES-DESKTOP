@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using AresAssistant.Config;
@@ -16,6 +17,7 @@ public class AgentLoop
     private readonly ToolRegistry _toolRegistry;
     private readonly ToolDispatcher _toolDispatcher;
     private readonly AppConfig _config;
+    private readonly ReliabilityTelemetryStore? _telemetry;
     private readonly PersistentMemoryStore? _memoryStore;
     private readonly ProcessContextProvider? _processContextProvider;
 
@@ -43,6 +45,7 @@ public class AgentLoop
         ToolRegistry toolRegistry,
         ToolDispatcher toolDispatcher,
         AppConfig config,
+        ReliabilityTelemetryStore? telemetry = null,
         PersistentMemoryStore? memoryStore = null,
         ProcessContextProvider? processContextProvider = null)
     {
@@ -51,6 +54,7 @@ public class AgentLoop
         _toolRegistry = toolRegistry;
         _toolDispatcher = toolDispatcher;
         _config = config;
+        _telemetry = telemetry;
         _memoryStore = memoryStore;
         _processContextProvider = processContextProvider;
     }
@@ -117,8 +121,10 @@ public class AgentLoop
         sb.AppendLine("## MEMORIA PERSISTENTE");
         sb.AppendLine("Usa memory_write para recordar hechos útiles del usuario/proyecto entre sesiones.");
         sb.AppendLine("Usa memory_read cuando el usuario pregunte por algo pasado o contexto previo.");
+        var projectScope = PersistentMemoryStore.GetCurrentProjectScope();
+        sb.AppendLine($"Ámbito de proyecto actual: {projectScope}.");
         sb.AppendLine("Memoria actual:");
-        sb.AppendLine(_memoryStore?.BuildPromptContext(8) ?? "(sin memoria persistente disponible)");
+        sb.AppendLine(_memoryStore?.BuildPromptContext(8, projectScope) ?? "(sin memoria persistente disponible)");
         sb.AppendLine();
 
         if (_config.PerformanceMode == "avanzado")
@@ -131,7 +137,7 @@ public class AgentLoop
             sb.AppendLine("  system_info, volume, list_open_windows, minimize_window, maximize_window,");
             sb.AppendLine("  clipboard_read, clipboard_write, remember_app, get_location, get_weather,");
             sb.AppendLine("  memory_write, memory_read, memory_forget, action_history,");
-            sb.AppendLine("  schedule_add, schedule_list, schedule_remove.");
+            sb.AppendLine("  schedule_add, schedule_list, schedule_remove, schedule_simulate.");
             sb.AppendLine("Clima: get_location primero, luego get_weather. App desconocida con ruta: remember_app.");
             sb.AppendLine("Resultado de herramienta → informa brevemente, no repitas la misma herramienta.");
             sb.AppendLine();
@@ -167,6 +173,7 @@ public class AgentLoop
             sb.AppendLine("  - recordar contexto       → memory_write / memory_read / memory_forget");
             sb.AppendLine("  - historial de acciones   → action_history");
             sb.AppendLine("  - automatizaciones diarias→ schedule_add / schedule_list / schedule_remove");
+            sb.AppendLine("  - simular automatizaciones → schedule_simulate (sin ejecutar) ");
             sb.AppendLine("Usa la herramienta PRIMERO. Explica brevemente lo que hiciste DESPUÉS.");
             sb.AppendLine("Cuando la herramienta devuelve un resultado, informa al usuario con una frase breve. NO repitas la misma herramienta.");
             sb.AppendLine("Si open_app no encuentra una app y el usuario da la ruta, usa remember_app para guardarla.");
@@ -227,6 +234,7 @@ public class AgentLoop
         {
             iterations++;
             var activeModel = modelCandidates[Math.Clamp(modelIndex, 0, modelCandidates.Count - 1)];
+            var modelSw = Stopwatch.StartNew();
 
             // If this is a tool-call loop iteration, use non-streaming to get tool_calls
             // For the potential final text response, try streaming first
@@ -270,6 +278,7 @@ public class AgentLoop
                         _history.Add(new OllamaMessage("assistant", content));
                         StatusChanged?.Invoke("");
                         ModelUsed?.Invoke(activeModel);
+                        _telemetry?.RecordModel(activeModel, true, modelSw.ElapsedMilliseconds);
                         ResponseReceived?.Invoke(content);
                         return;
                     }
@@ -293,6 +302,7 @@ public class AgentLoop
             }
             catch (Exception ex)
             {
+                _telemetry?.RecordModel(activeModel, false, modelSw.ElapsedMilliseconds);
                 if (TrySwitchModel(modelCandidates, ref modelIndex))
                     continue;
                 ResponseReceived?.Invoke($"Error al conectar con Ollama: {ex.Message}");
@@ -301,6 +311,7 @@ public class AgentLoop
 
             if (!string.IsNullOrEmpty(response.Error))
             {
+                _telemetry?.RecordModel(activeModel, false, modelSw.ElapsedMilliseconds);
                 if (TrySwitchModel(modelCandidates, ref modelIndex))
                     continue;
                 ResponseReceived?.Invoke($"Error de Ollama: {response.Error}");
@@ -336,6 +347,7 @@ public class AgentLoop
                 _history.Add(new OllamaMessage("assistant", content));
                 StatusChanged?.Invoke("");
                 ModelUsed?.Invoke(activeModel);
+                _telemetry?.RecordModel(activeModel, true, modelSw.ElapsedMilliseconds);
                 ResponseReceived?.Invoke(content);
                 return;
             }

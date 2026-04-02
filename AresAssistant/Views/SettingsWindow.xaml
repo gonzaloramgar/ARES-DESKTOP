@@ -318,6 +318,7 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0" Text="{Binding OllamaStatus}" FontSize="11"
                                                    Foreground="{DynamicResource SubtextBrush}"
@@ -341,6 +342,11 @@
                                             Height="30" Padding="14,0"
                                             Margin="8,0,0,0" Click="QuickRepairAi_Click"
                                             ToolTip="Repara faltantes de routing y modelo de visión en un solo paso"/>
+                                        <Button Grid.Column="5" Content="Automation Studio"
+                                            Style="{StaticResource GhostButton}"
+                                            Height="30" Padding="14,0"
+                                            Margin="8,0,0,0" Click="OpenAutomationStudio_Click"
+                                            ToolTip="Editor visual MVP de automatizaciones"/>
                                     </Grid>
                                 </Border>
                             </Grid>

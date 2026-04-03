@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Threading;
 using AresAssistant.Core;
@@ -284,11 +285,16 @@ public class ChatViewModel : ViewModelBase
     }
 
     private ChatMessage? _streamingMessage;
+    private ChatMessage? _progressMessage;
+    private DateTime _lastProgressMessageUtc = DateTime.MinValue;
+    private string _lastProgressText = "";
 
     private void OnTokenReceived(string token)
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
+            _progressMessage = null;
+
             if (_streamingMessage == null)
             {
                 _streamingMessage = new ChatMessage { Role = "assistant", Content = token };
@@ -307,9 +313,14 @@ public class ChatViewModel : ViewModelBase
         {
             if (_streamingMessage != null)
             {
-                Messages.Remove(_streamingMessage);
+                var partial = (_streamingMessage.Content ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(partial) || LooksLikeInternalToolPreamble(partial))
+                    _streamingMessage.Content = "Estoy ejecutando acciones para completar tu petición...";
+
                 _streamingMessage = null;
             }
+
+            AppendProgressMessage("Ejecutando acciones...");
         });
     }
 
@@ -328,6 +339,9 @@ public class ChatViewModel : ViewModelBase
                 Messages.Add(new ChatMessage { Role = "assistant", Content = response, ModelUsed = _lastModelUsed });
             }
             StatusText = "";
+            _progressMessage = null;
+            _lastProgressText = "";
+            _lastProgressMessageUtc = DateTime.MinValue;
         });
 
         // Speak the response aloud (fire-and-forget, runs on SpeechSynthesizer's own thread)
@@ -336,7 +350,74 @@ public class ChatViewModel : ViewModelBase
 
     private void OnStatusChanged(string status)
     {
-        Application.Current.Dispatcher.Invoke(() => StatusText = status);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            StatusText = status;
+
+            if (!IsBusy || string.IsNullOrWhiteSpace(status))
+                return;
+
+            AppendProgressMessage(NormalizeProgressStatus(status));
+        });
+    }
+
+    private void AppendProgressMessage(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return;
+
+        var now = DateTime.UtcNow;
+        var statusChanged = !string.Equals(status, _lastProgressText, StringComparison.OrdinalIgnoreCase);
+        var enoughTimeElapsed = (now - _lastProgressMessageUtc).TotalMilliseconds >= 1100;
+
+        // Emit frequent, readable progress updates during long operations.
+        if (!statusChanged || !enoughTimeElapsed)
+            return;
+
+        _progressMessage = new ChatMessage
+        {
+            Role = "assistant",
+            Content = status
+        };
+
+        Messages.Add(_progressMessage);
+        _lastProgressText = status;
+        _lastProgressMessageUtc = now;
+    }
+
+    private static string NormalizeProgressStatus(string raw)
+    {
+        var text = (raw ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        if (text.StartsWith("Pensando", StringComparison.OrdinalIgnoreCase))
+            return "Estoy pensando la mejor forma de hacerlo...";
+
+        if (text.StartsWith("Ejecutando:", StringComparison.OrdinalIgnoreCase))
+        {
+            var tool = text.Replace("Ejecutando:", string.Empty, StringComparison.OrdinalIgnoreCase)
+                           .Trim()
+                           .TrimEnd('.');
+            return string.IsNullOrWhiteSpace(tool)
+                ? "Estoy ejecutando una acción..."
+                : $"Estoy ejecutando: {tool}";
+        }
+
+        return text;
+    }
+
+    private static bool LooksLikeInternalToolPreamble(string text)
+    {
+        var t = text.Trim().ToLowerInvariant();
+        if (t.Length <= 12)
+            return true;
+
+        return t.Contains("tool_call")
+            || t.Contains("_icall")
+            || t.Contains("\"name\"")
+            || t.Contains("\"arguments\"")
+            || Regex.IsMatch(t, @"needs to be in english|let'?s try again|call to", RegexOptions.IgnoreCase);
     }
 
     private void OnModelUsed(string model)

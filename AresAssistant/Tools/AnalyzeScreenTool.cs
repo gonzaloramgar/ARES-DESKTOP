@@ -1,7 +1,6 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Diagnostics;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using AresAssistant.Config;
@@ -47,7 +46,6 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
         }
 
         var imagesBase64 = BuildVisionImagesBase64(capturedBmp!);
-        var windowHints = BuildWindowHints();
         capturedBmp?.Dispose();
 
         var cfg = configManager.Config;
@@ -61,8 +59,7 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
 
         var attemptPrompts = new[]
         {
-            BuildAttemptPrompt(question, windowHints, allowInference: false),
-            BuildAttemptPrompt(question, windowHints, allowInference: true)
+            BuildAttemptPrompt(question, allowInference: false)
         };
 
         foreach (var model in candidates)
@@ -177,25 +174,23 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
                t.Contains("não há informação suficiente");
     }
 
-    private static string BuildAttemptPrompt(string question, string windowHints, bool allowInference)
+    private static string BuildAttemptPrompt(string question, bool allowInference)
     {
         var basePrompt =
             $"Pregunta del usuario: {question}\n\n" +
-            "Analiza las imágenes adjuntas (pantalla completa y recortes).\n" +
+            "Analiza SOLO lo visible en las imágenes adjuntas (pantalla completa y recortes).\n" +
+            "No uses memoria previa ni supongas apps no visibles.\n" +
             "Idioma obligatorio de salida: español de España. No mezcles inglés.\n" +
             "Devuelve:\n" +
-            "1) Apps/páginas detectadas (solo relevantes, máximo 5)\n" +
+            "1) Elementos visibles principales (máximo 5)\n" +
             "2) Qué está pasando en las ventanas principales\n" +
             "3) Errores o anomalías visibles\n" +
-            "4) Evidencia textual breve (si hay)\n\n" +
-            (string.IsNullOrWhiteSpace(windowHints)
-                ? ""
-                : $"Contexto de ventanas abiertas (apoyo):\n{windowHints}\n\n");
+            "4) Evidencia textual exacta y breve (si hay)\n\n";
 
         if (!allowInference)
-            return basePrompt + "Si no tienes certeza, dilo; no inventes.";
+            return basePrompt + "Si no tienes certeza, di 'no se aprecia con claridad' y no inventes.";
 
-        return basePrompt + "Haz mejor esfuerzo para identificar apps por iconos/estructura. Si no hay certeza total, marca como 'probable'. Limita tu respuesta a 8 bullets.";
+        return basePrompt + "Si haces una inferencia, márcala como 'probable'. Limita tu respuesta a 8 bullets.";
     }
 
     private static string ForceSpanishOutput(string text)
@@ -272,24 +267,6 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
             : normalized[..hardCap] + "\n\n[Respuesta recortada por límite de seguridad]";
     }
 
-    private static string BuildWindowHints()
-    {
-        try
-        {
-            var hints = Process.GetProcesses()
-                .Where(p => !string.IsNullOrWhiteSpace(p.MainWindowTitle))
-                .Select(p => $"- {p.ProcessName}: {p.MainWindowTitle}")
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Take(12)
-                .ToList();
-
-            return string.Join(Environment.NewLine, hints);
-        }
-        catch
-        {
-            return string.Empty;
-        }
-    }
 
     private static List<string> BuildVisionImagesBase64(Bitmap bmp)
     {

@@ -579,7 +579,7 @@ public class AgentLoop
             || lower.Contains("let's try again");
     }
 
-    private static bool IsSimpleGreeting(string? text)
+    private bool IsSimpleGreeting(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return false;
@@ -589,6 +589,19 @@ public class AgentLoop
                                .Replace("¡", string.Empty).Replace("!", string.Empty)
                                .Replace(",", " ").Replace(".", " ");
         normalized = Regex.Replace(normalized, @"\s+", " ").Trim();
+
+        var assistantName = (_config.AssistantName ?? string.Empty).Trim().ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(assistantName))
+        {
+            // Treat direct invocations like "hola ares" as plain greetings.
+            if (normalized == $"hola {assistantName}"
+                || normalized == $"buenas {assistantName}"
+                || normalized == $"hey {assistantName}"
+                || normalized == $"hi {assistantName}")
+            {
+                return true;
+            }
+        }
 
         return normalized is "hola"
             or "buenas"

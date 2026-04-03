@@ -9,6 +9,10 @@ namespace AresAssistant;
 public partial class App : Application
 {
     public const string CurrentOnboardingVersion = "2.0";
+    private static readonly string DataDirectory = Path.Combine(AppContext.BaseDirectory, "data");
+    private static readonly string LogsDirectory = Path.Combine(DataDirectory, "logs");
+    private static readonly string ConfigPath = Path.Combine(DataDirectory, "config.json");
+    private static readonly string ToolsPath = Path.Combine(DataDirectory, "tools.json");
 
     /// <summary>App version displayed in splash and setup screens.</summary>
     public static string AppVersion =>
@@ -20,7 +24,7 @@ public partial class App : Application
     private System.Windows.Forms.NotifyIcon? _trayIcon;
 
     private static readonly string CrashLogPath =
-        $"data/crash_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log";
+        Path.Combine(DataDirectory, $"crash_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -34,29 +38,29 @@ public partial class App : Application
         try
         {
             // Ensure data directories exist
-            Directory.CreateDirectory("data");
-            Directory.CreateDirectory("data/logs");
+            Directory.CreateDirectory(DataDirectory);
+            Directory.CreateDirectory(LogsDirectory);
 
-            ConfigManager = new ConfigManager("data/config.json");
+            ConfigManager = new ConfigManager(ConfigPath);
             ThemeEngine.Apply(ConfigManager.Config);
 
             if (ConfigManager.Config.CloseToTray)
                 InitTrayIcon();
 
-            // First time? Show full setup. On upgrades, show refreshed onboarding/tutorial.
+            // Show setup only on true first run (or if user reset data).
             if (!ConfigManager.Config.SetupCompleted)
             {
                 var setup = new SetupWindow();
                 setup.Show();
             }
-            else if (!string.Equals(ConfigManager.Config.OnboardingVersionSeen, CurrentOnboardingVersion, StringComparison.Ordinal))
-            {
-                var setup = new SetupWindow(isOnboardingRefresh: true);
-                setup.Show();
-            }
             else
             {
-                bool isFirstLaunch = !File.Exists("data/tools.json");
+                if (!string.Equals(ConfigManager.Config.OnboardingVersionSeen, CurrentOnboardingVersion, StringComparison.Ordinal))
+                {
+                    ConfigManager.Update(c => c with { OnboardingVersionSeen = CurrentOnboardingVersion });
+                }
+
+                bool isFirstLaunch = !File.Exists(ToolsPath);
                 var splash = new SplashWindow(isFirstLaunch);
                 splash.Show();
             }
@@ -203,7 +207,7 @@ public partial class App : Application
     {
         try
         {
-            Directory.CreateDirectory("data");
+            Directory.CreateDirectory(DataDirectory);
             var msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{context}]\n" +
                       $"{ex?.GetType().Name}: {ex?.Message}\n" +
                       $"{ex?.StackTrace}\n" +

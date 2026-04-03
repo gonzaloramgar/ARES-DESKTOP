@@ -734,7 +734,8 @@ public partial class SetupWindow : Window
 
         if (_openSplashOnFinish)
         {
-            var splash = new SplashWindow(isFirstLaunch: !File.Exists("data/tools.json"));
+            var toolsPath = Path.Combine(AppContext.BaseDirectory, "data", "tools.json");
+            var splash = new SplashWindow(isFirstLaunch: !File.Exists(toolsPath));
             splash.Show();
             Close();
             return;

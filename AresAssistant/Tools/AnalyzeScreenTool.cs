@@ -70,7 +70,7 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
                 {
                     var messages = new List<OllamaMessage>
                     {
-                        new("system", "Eres un analista visual local. Responde SIEMPRE en español. Salida breve: máximo 8 bullets y máximo 900 caracteres. Evita listas enormes de procesos internos del sistema."),
+                        new("system", "Eres un analista visual local. Responde SOLO en español de España, sin mezclar inglés. No uses frases en inglés. Salida breve: máximo 8 bullets y máximo 900 caracteres. Evita listas enormes de procesos internos del sistema."),
                         new("user", attemptPrompts[attempt])
                         {
                             Images = imagesBase64
@@ -92,6 +92,8 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
                     // Retry once with a stronger prompt if the answer is too generic.
                     if (LooksLikeLowConfidenceGeneric(text) && attempt < attemptPrompts.Length - 1)
                         continue;
+
+                    text = await ForceSpanishOutputAsync(text, model);
 
                     return new ToolResult(true, $"[modelo: {model}]\n{CompactVisionResponse(text)}");
                 }
@@ -171,6 +173,7 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
         var basePrompt =
             $"Pregunta del usuario: {question}\n\n" +
             "Analiza las imágenes adjuntas (pantalla completa y recortes).\n" +
+            "Idioma obligatorio de salida: español de España. No mezcles inglés.\n" +
             "Devuelve:\n" +
             "1) Apps/páginas detectadas (solo relevantes, máximo 5)\n" +
             "2) Qué está pasando en las ventanas principales\n" +
@@ -186,24 +189,63 @@ public class AnalyzeScreenTool(OllamaClient client, ConfigManager configManager)
         return basePrompt + "Haz mejor esfuerzo para identificar apps por iconos/estructura. Si no hay certeza total, marca como 'probable'. Limita tu respuesta a 8 bullets.";
     }
 
+    private async Task<string> ForceSpanishOutputAsync(string text, string model)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        if (!LooksLikelyEnglishMixed(text))
+            return text;
+
+        try
+        {
+            var rewrite = await client.ChatAsync(
+                new List<OllamaMessage>
+                {
+                    new("system", "Convierte el texto recibido a español de España. Mantén el formato de viñetas y el contenido técnico, sin añadir información nueva. Devuelve solo el texto final en español."),
+                    new("user", text)
+                },
+                new List<ToolDefinition>(),
+                model,
+                keepAlive: "5m");
+
+            var rewritten = rewrite.Message?.Content?.Trim();
+            if (!string.IsNullOrWhiteSpace(rewritten))
+                return rewritten;
+        }
+        catch
+        {
+            // If rewrite fails, keep original response.
+        }
+
+        return text;
+    }
+
+    private static bool LooksLikelyEnglishMixed(string text)
+    {
+        var t = text.ToLowerInvariant();
+        var markers = new[]
+        {
+            " is ", " are ", " the ", " and ", " with ", " open ", " appears ",
+            "display", "shows", "window", "likely", "contains", "including"
+        };
+
+        var hits = markers.Count(m => t.Contains(m, StringComparison.Ordinal));
+        return hits >= 3;
+    }
+
     private static string CompactVisionResponse(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return text;
 
-        const int maxChars = 1400;
         var normalized = text.Replace("\r\n", "\n").Trim();
 
-        // Keep first 12 non-empty lines max to avoid giant modal content.
-        var lines = normalized
-            .Split('\n')
-            .Where(l => !string.IsNullOrWhiteSpace(l))
-            .Take(12)
-            .ToList();
-
-        var compact = string.Join(Environment.NewLine, lines);
-        if (compact.Length <= maxChars) return compact;
-
-        return compact[..maxChars] + "...";
+        // Preserve full response so the scrollable modal can display the entire analysis.
+        // Keep only a high hard ceiling as a safety net for pathological outputs.
+        const int hardCap = 12000;
+        return normalized.Length <= hardCap
+            ? normalized
+            : normalized[..hardCap] + "\n\n[Respuesta recortada por límite de seguridad]";
     }
 
     private static string BuildWindowHints()

@@ -138,8 +138,9 @@ public class AgentLoop
             sb.AppendLine("  clipboard_read, clipboard_write, remember_app, get_location, get_weather,");
             sb.AppendLine("  memory_write, memory_read, memory_forget, action_history,");
             sb.AppendLine("  schedule_add, schedule_list, schedule_remove, schedule_simulate.");
-            sb.AppendLine("Clima: get_location primero, luego get_weather. App desconocida con ruta: remember_app.");
+            sb.AppendLine("Clima: puedes usar get_weather con ciudad o sin parámetros (auto-ubicación). Usa get_location si necesitas mostrar la ubicación exacta primero. App desconocida con ruta: remember_app.");
             sb.AppendLine("Resultado de herramienta → informa brevemente, no repitas la misma herramienta.");
+            sb.AppendLine("Si el usuario solo saluda o charla (ej: 'hola', 'buenas', 'qué tal'), responde breve y NO uses herramientas.");
             sb.AppendLine();
             sb.AppendLine("## CONTEXTO");
             sb.AppendLine("Referencias a acciones previas ('bórrala', 'deshaz eso') → consulta historial, ejecuta la herramienta adecuada.");
@@ -169,7 +170,7 @@ public class AgentLoop
             sb.AppendLine("  - ventanas                → list_open_windows, minimize_window, maximize_window");
             sb.AppendLine("  - portapapeles            → clipboard_read, clipboard_write");
             sb.AppendLine("  - recordar app            → remember_app");
-            sb.AppendLine("  - ubicación/clima         → get_location PRIMERO, luego get_weather");
+            sb.AppendLine("  - ubicación/clima         → get_weather (con ciudad o sin parámetros). Usa get_location si piden ubicación exacta");
             sb.AppendLine("  - recordar contexto       → memory_write / memory_read / memory_forget");
             sb.AppendLine("  - historial de acciones   → action_history");
             sb.AppendLine("  - automatizaciones diarias→ schedule_add / schedule_list / schedule_remove");
@@ -177,6 +178,7 @@ public class AgentLoop
             sb.AppendLine("Usa la herramienta PRIMERO. Explica brevemente lo que hiciste DESPUÉS.");
             sb.AppendLine("Cuando la herramienta devuelve un resultado, informa al usuario con una frase breve. NO repitas la misma herramienta.");
             sb.AppendLine("Si open_app no encuentra una app y el usuario da la ruta, usa remember_app para guardarla.");
+            sb.AppendLine("Si el usuario solo saluda o charla (ej: 'hola', 'buenas', 'qué tal'), NO uses herramientas y responde de forma natural.");
             sb.AppendLine();
             sb.AppendLine("## CONTEXTO CONVERSACIONAL");
             sb.AppendLine("Recuerda las acciones que acabas de realizar. Si el usuario dice 'bórrala', 'deshaz eso' → mira mensajes anteriores, identifica el objetivo y ejecuta la herramienta.");
@@ -214,6 +216,17 @@ public class AgentLoop
 
     public async Task RunAsync(string userMessage)
     {
+        if (IsSimpleGreeting(userMessage))
+        {
+            _history.Add(new OllamaMessage("user", userMessage));
+            var greetingReply = BuildGreetingReply();
+            _history.Add(new OllamaMessage("assistant", greetingReply));
+            StatusChanged?.Invoke("");
+            ModelUsed?.Invoke("rule-based:greeting");
+            ResponseReceived?.Invoke(greetingReply);
+            return;
+        }
+
         if (_config.ProcessContextEnabled && _processContextProvider != null)
         {
             var ctx = _processContextProvider.GetCompactContext();
@@ -542,4 +555,32 @@ public class AgentLoop
         || text.Contains("_ical", StringComparison.OrdinalIgnoreCase)
         || text.TrimStart().StartsWith("{")
         || text.TrimStart().StartsWith("<");
+
+    private static bool IsSimpleGreeting(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+
+        var normalized = text.Trim().ToLowerInvariant();
+        normalized = normalized.Replace("¿", string.Empty).Replace("?", string.Empty)
+                               .Replace("¡", string.Empty).Replace("!", string.Empty)
+                               .Replace(",", " ").Replace(".", " ");
+        normalized = Regex.Replace(normalized, @"\s+", " ").Trim();
+
+        return normalized is "hola"
+            or "buenas"
+            or "buenas tardes"
+            or "buenos dias"
+            or "buenos días"
+            or "buenas noches"
+            or "que tal"
+            or "qué tal"
+            or "ey"
+            or "hey"
+            or "hello"
+            or "hi";
+    }
+
+    private string BuildGreetingReply()
+        => $"Hola. Soy {_config.AssistantName}. Estoy listo para ayudarte.";
 }

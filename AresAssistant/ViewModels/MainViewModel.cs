@@ -7,6 +7,8 @@ namespace AresAssistant.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private bool _isOverlayMode = true;
+    private bool _isInitializingModules;
+    private string _initializationStatus = "Cargando módulos...";
 
     public bool IsOverlayMode
     {
@@ -19,6 +21,18 @@ public class MainViewModel : ViewModelBase
     }
 
     public bool IsFullHudMode => !_isOverlayMode;
+
+    public bool IsInitializingModules
+    {
+        get => _isInitializingModules;
+        set => SetField(ref _isInitializingModules, value);
+    }
+
+    public string InitializationStatus
+    {
+        get => _initializationStatus;
+        set => SetField(ref _initializationStatus, value);
+    }
 
     public void ToggleMode() => IsOverlayMode = !IsOverlayMode;
 }

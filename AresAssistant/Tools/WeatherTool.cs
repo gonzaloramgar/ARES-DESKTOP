@@ -2,6 +2,7 @@ using AresAssistant.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
+using System.Globalization;
 
 namespace AresAssistant.Tools;
 
@@ -13,17 +14,18 @@ public class WeatherTool : ITool
 {
     public string Name => "get_weather";
     public string Description =>
-        "Obtiene el tiempo meteorológico actual y pronóstico de una ubicación usando coordenadas (latitud/longitud). " +
-        "Usa primero get_location para obtener las coordenadas si el usuario no indica una ciudad.";
+        "Obtiene el tiempo meteorológico actual y pronóstico de una ubicación. " +
+        "Acepta latitud/longitud o ciudad. Si no se envía nada, intenta detectar ubicación automáticamente.";
 
     public ToolParameterSchema Parameters { get; } = new()
     {
         Properties = new()
         {
-            ["latitude"] = new() { Type = "number", Description = "Latitud de la ubicación" },
-            ["longitude"] = new() { Type = "number", Description = "Longitud de la ubicación" }
+            ["latitude"] = new() { Type = "number", Description = "Latitud de la ubicación (opcional)" },
+            ["longitude"] = new() { Type = "number", Description = "Longitud de la ubicación (opcional)" },
+            ["city"] = new() { Type = "string", Description = "Ciudad o localidad (opcional)" }
         },
-        Required = new() { "latitude", "longitude" }
+        Required = new()
     };
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
@@ -34,16 +36,31 @@ public class WeatherTool : ITool
         {
             var lat = ReadDouble(args, "latitude", "latitud", "lat");
             var lon = ReadDouble(args, "longitude", "longitud", "lon", "lng");
+            var city = ReadString(args, "city", "ciudad", "location", "ubicacion", "ubicación");
 
+            LocationSnapshot? resolvedLocation = null;
             if (lat == null || lon == null)
-                return new ToolResult(false, "Coordenadas inválidas. Usa get_location primero para obtener lat/lon.");
+            {
+                if (!string.IsNullOrWhiteSpace(city))
+                    resolvedLocation = await LocationResolver.ResolveCityAsync(city).ConfigureAwait(false);
+
+                resolvedLocation ??= await LocationResolver.ResolveByIpAsync().ConfigureAwait(false);
+                if (resolvedLocation == null)
+                    return new ToolResult(false, "No pude resolver una ubicación válida. Prueba indicando una ciudad o usando get_location.");
+
+                lat = resolvedLocation.Latitude;
+                lon = resolvedLocation.Longitude;
+            }
 
             // Open-Meteo — free, no API key, excellent weather data
+            var latText = lat.Value.ToString(CultureInfo.InvariantCulture);
+            var lonText = lon.Value.ToString(CultureInfo.InvariantCulture);
+
             var url = $"https://api.open-meteo.com/v1/forecast?" +
-                      $"latitude={lat.Value}&longitude={lon.Value}" +
+                      $"latitude={latText}&longitude={lonText}" +
                       $"&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m" +
                       $"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max" +
-                      $"&timezone=auto&forecast_days=3&language=es";
+                      $"&timezone=auto&forecast_days=3";
 
             var json = await Http.GetStringAsync(url);
             var data = JObject.Parse(json);
@@ -55,6 +72,13 @@ public class WeatherTool : ITool
 
             var result = new
             {
+                ubicacion = new
+                {
+                    ciudad = resolvedLocation?.City ?? city ?? "Local",
+                    latitud = lat,
+                    longitud = lon,
+                    source = resolvedLocation?.Source ?? "args"
+                },
                 actual = new
                 {
                     condicion = weatherDesc,
@@ -90,6 +114,21 @@ public class WeatherTool : ITool
 
             if (double.TryParse(token.ToString(), out parsed))
                 return parsed;
+        }
+
+        return null;
+    }
+
+    private static string? ReadString(Dictionary<string, JToken> args, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!args.TryGetValue(key, out var token) || token == null)
+                continue;
+
+            var text = token.ToString().Trim();
+            if (!string.IsNullOrWhiteSpace(text))
+                return text;
         }
 
         return null;

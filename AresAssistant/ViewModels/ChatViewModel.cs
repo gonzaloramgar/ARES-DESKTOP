@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -346,6 +347,9 @@ public class ChatViewModel : ViewModelBase
         OnPropertyChanged(nameof(WidgetSystemLiveEnabled));
         OnPropertyChanged(nameof(WidgetTasksEnabled));
         OnPropertyChanged(nameof(WidgetProductivityEnabled));
+
+        // Apply new widget settings immediately instead of waiting for next timer tick.
+        _ = UpdateDashboardAsync();
     }
 
     public async Task RefreshProductivitySummaryAsync()
@@ -398,14 +402,43 @@ public class ChatViewModel : ViewModelBase
     private async Task UpdateDashboardAsync()
     {
         DashboardClock = DateTime.Now.ToString("HH:mm:ss");
-        WorldClockNy = BuildClock("Eastern Standard Time", "NY");
-        WorldClockTokyo = BuildClock("Tokyo Standard Time", "TOK");
 
-        UpdateSystemStats();
-        UpdateUpcomingTasks();
-        UpdateProductivityBars();
+        if (WidgetWorldClockEnabled)
+        {
+            WorldClockNy = BuildClock("Eastern Standard Time", "NY", TimeSpan.FromHours(-4));
+            WorldClockTokyo = BuildClock("Tokyo Standard Time", "TOK", TimeSpan.FromHours(9));
+        }
+        else
+        {
+            WorldClockNy = "NY --:--";
+            WorldClockTokyo = "TOK --:--";
+        }
 
-        if (WidgetWeatherEnabled && !_weatherRefreshInFlight &&
+        if (WidgetSystemLiveEnabled)
+            UpdateSystemStats();
+        else
+        {
+            CpuText = "CPU desactivado";
+            RamText = "RAM desactivada";
+        }
+
+        if (WidgetTasksEnabled)
+            UpdateUpcomingTasks();
+        else
+            UpcomingTasks.Clear();
+
+        if (WidgetProductivityEnabled)
+            UpdateProductivityBars();
+        else
+            ProductivityApps.Clear();
+
+        if (!WidgetWeatherEnabled)
+        {
+            WeatherText = "Clima desactivado";
+            return;
+        }
+
+        if (!_weatherRefreshInFlight &&
             (DateTime.UtcNow - _lastWeatherRefreshUtc) > TimeSpan.FromMinutes(20))
         {
             await RefreshWeatherAsync();
@@ -505,25 +538,27 @@ public class ChatViewModel : ViewModelBase
         _weatherRefreshInFlight = true;
         try
         {
-            var locJson = await _dashboardHttp.GetStringAsync("http://ip-api.com/json/?fields=status,city,lat,lon&lang=es");
-            var loc = JObject.Parse(locJson);
-            if (loc["status"]?.ToString() != "success")
+            var location = await LocationResolver.ResolveByIpAsync();
+            if (location == null)
             {
                 WeatherText = "Clima no disponible";
                 return;
             }
 
-            var city = loc["city"]?.ToString() ?? "Local";
-            var lat = loc["lat"]?.ToObject<double>() ?? 0;
-            var lon = loc["lon"]?.ToObject<double>() ?? 0;
+            var city = string.IsNullOrWhiteSpace(location.City) ? "Local" : location.City;
+            var lat = location.Latitude;
+            var lon = location.Longitude;
+
             if (lat == 0 && lon == 0)
             {
                 WeatherText = "Clima no disponible";
                 return;
             }
 
+            var latText = lat.ToString(CultureInfo.InvariantCulture);
+            var lonText = lon.ToString(CultureInfo.InvariantCulture);
             var wxJson = await _dashboardHttp.GetStringAsync(
-                $"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,weather_code&timezone=auto&language=es");
+                $"https://api.open-meteo.com/v1/forecast?latitude={latText}&longitude={lonText}&current=temperature_2m,weather_code&timezone=auto");
             var wx = JObject.Parse(wxJson);
             var temp = wx["current"]?["temperature_2m"]?.ToObject<double>();
             var code = wx["current"]?["weather_code"]?.ToObject<int>() ?? -1;
@@ -542,7 +577,7 @@ public class ChatViewModel : ViewModelBase
         }
     }
 
-    private static string BuildClock(string timeZoneId, string label)
+    private static string BuildClock(string timeZoneId, string label, TimeSpan fallbackOffset)
     {
         try
         {
@@ -552,7 +587,8 @@ public class ChatViewModel : ViewModelBase
         }
         catch
         {
-            return $"{label} --:--";
+            var value = DateTime.UtcNow + fallbackOffset;
+            return $"{label} {value:HH:mm}";
         }
     }
 

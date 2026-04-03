@@ -96,6 +96,30 @@
                 <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
             </Style>
 
+            <!-- Global tooltip style to avoid default white system popup -->
+            <Style TargetType="ToolTip">
+                <Setter Property="Background" Value="#111522"/>
+                <Setter Property="Foreground" Value="#e8ecff"/>
+                <Setter Property="BorderBrush" Value="#2f3f62"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="8,5"/>
+                <Setter Property="FontFamily" Value="Consolas"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToolTip">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- AresButton — gradient + glow -->
             <Style TargetType="Button" x:Key="AresButton">
                 <Setter Property="Foreground" Value="White"/>

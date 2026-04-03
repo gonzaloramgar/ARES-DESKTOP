@@ -8,7 +8,8 @@
         Background="Transparent"
         ResizeMode="NoResize"
         Topmost="True"
-        ShowInTaskbar="True">
+    ShowInTaskbar="True"
+    PreviewMouseLeftButtonDown="MainWindow_PreviewMouseLeftButtonDown">
 
     <Grid>
         <!-- Overlay mode control -->
@@ -18,5 +19,31 @@
         <!-- Full HUD mode control -->
         <controls:FullHudModeControl x:Name="FullHudControl"
                                      Visibility="Collapsed"/>
+
+        <!-- Deferred startup indicator -->
+        <Border HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,54,0,0" Padding="10,5"
+                CornerRadius="999" BorderThickness="1"
+                BorderBrush="#3a3348" Background="#d9121623"
+                Visibility="{Binding IsInitializingModules, Converter={StaticResource BoolToVisibilityConverter}}"
+                IsHitTestVisible="False">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Ellipse Width="6" Height="6" Fill="{DynamicResource AccentBrush}" Margin="0,0,7,0">
+                    <Ellipse.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="0.25" To="1"
+                                                     Duration="0:0:0.5"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Ellipse.Triggers>
+                </Ellipse>
+                <TextBlock Text="{Binding InitializationStatus}" FontSize="10" FontFamily="Consolas"
+                           Foreground="{DynamicResource SubtextBrush}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

@@ -3,47 +3,193 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="ARES — Automation Studio"
         Width="820" Height="620"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent"
         WindowStartupLocation="CenterOwner"
-        Background="#0b0b12">
-    <Grid Margin="14">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        ResizeMode="NoResize">
+    <Window.Resources>
+        <Style x:Key="StudioTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#0d1322"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
 
-        <TextBlock Text="Automation Studio (MVP)" FontFamily="Consolas" FontSize="18" FontWeight="Bold" Foreground="#ff6666"/>
+        <Style x:Key="StudioDataGrid" TargetType="DataGrid">
+            <Setter Property="Background" Value="#0d1322"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowBackground" Value="#0f1523"/>
+            <Setter Property="AlternatingRowBackground" Value="#10192a"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#26334f"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#26334f"/>
+            <Setter Property="CanUserResizeRows" Value="False"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+        </Style>
 
-        <Border Grid.Row="1" Margin="0,10,0,10" Padding="10" BorderBrush="#333" BorderThickness="1" CornerRadius="8" Background="#12121e">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="120"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox x:Name="TxtTime" Grid.Column="0" Margin="0,0,8,0" Text="09:00"/>
-                <TextBox x:Name="TxtCommand" Grid.Column="1" Margin="0,0,8,0" Text="echo hola"/>
-                <TextBox x:Name="TxtDescription" Grid.Column="2" Margin="0,0,8,0" Text="Ejemplo"/>
-                <Button Grid.Column="3" Content="Añadir" Padding="12,6" Click="Add_Click"/>
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#141d32"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
+            <Setter Property="BorderBrush" Value="#2f3b5c"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="#28314b"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1d2d52"/>
+                    <Setter Property="Foreground" Value="#ffffff"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="RootBorder" CornerRadius="20"
+            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+            Opacity="0">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#0c0c14" Offset="0"/>
+                <GradientStop Color="#06060c" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.RenderTransform>
+            <TranslateTransform x:Name="RootTranslate" Y="16"/>
+        </Border.RenderTransform>
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="45" ShadowDepth="0" Opacity="0.72"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+
+            <Border VerticalAlignment="Top" Height="1" CornerRadius="14,14,0,0"
+                    Margin="80,0" Opacity="0.8" IsHitTestVisible="False" Grid.RowSpan="3">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="Transparent" Offset="0"/>
+                        <GradientStop Color="{DynamicResource AccentMediaColor}" Offset="0.5"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <Border Grid.Row="0" CornerRadius="20,20,0,0" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#10101c" Offset="0"/>
+                        <GradientStop Color="#080812" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid Margin="16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Path Data="M 6,0 L 12,9 L 6,18 L 0,9 Z"
+                              Fill="{DynamicResource AccentBrush}" Width="10" Height="16" Margin="0,0,10,0"
+                              VerticalAlignment="Center">
+                            <Path.Effect>
+                                <DropShadowEffect Color="{DynamicResource AccentMediaColor}" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                            </Path.Effect>
+                        </Path>
+                        <TextBlock Text="AUTOMATION STUDIO" FontFamily="Consolas" FontSize="14"
+                                   FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border CornerRadius="10" Padding="8,3" BorderThickness="1" BorderBrush="#4e2a2f" Background="#221016" Margin="0,0,8,0">
+                            <TextBlock Text="MVP" FontFamily="Consolas" FontSize="10" FontWeight="Bold" Foreground="#ffb8c1"/>
+                        </Border>
+                        <Button Content="✕" Style="{DynamicResource GhostButton}" Width="28" Height="28" Padding="0" Click="Close_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" Margin="16,14,16,10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Programa comandos diarios y simúlalos antes de ejecutar" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource SubtextBrush}"/>
+                </StackPanel>
+
+                <Border Grid.Row="1" Margin="0,12,0,12" Padding="12" BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" CornerRadius="12" Background="{DynamicResource GlassBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TxtTime" Grid.Column="0" Margin="0,0,8,0" Text="09:00" Style="{StaticResource StudioTextBox}" ToolTip="Formato 24h: HH:mm"/>
+                        <TextBox x:Name="TxtCommand" Grid.Column="1" Margin="0,0,8,0" Text="echo hola" Style="{StaticResource StudioTextBox}" ToolTip="Comando a ejecutar"/>
+                        <TextBox x:Name="TxtDescription" Grid.Column="2" Margin="0,0,8,0" Text="Ejemplo" Style="{StaticResource StudioTextBox}" ToolTip="Descripción opcional"/>
+                        <Button Grid.Column="3" Content="Añadir" Style="{DynamicResource AresButton}" Height="36" Padding="14,0" Click="Add_Click"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" CornerRadius="12" Background="{DynamicResource GlassBrush}">
+                    <DataGrid x:Name="GridTasks" Margin="0" Style="{StaticResource StudioDataGrid}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="90"/>
+                            <DataGridTextColumn Header="Hora" Binding="{Binding Time}" Width="80"/>
+                            <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
+                            <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="220"/>
+                            <DataGridCheckBoxColumn Header="ON" Binding="{Binding Enabled}" Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
             </Grid>
-        </Border>
 
-        <DataGrid x:Name="GridTasks" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="90"/>
-                <DataGridTextColumn Header="Hora" Binding="{Binding Time}" Width="80"/>
-                <DataGridTextColumn Header="Comando" Binding="{Binding Command}" Width="*"/>
-                <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="220"/>
-                <DataGridCheckBoxColumn Header="ON" Binding="{Binding Enabled}" Width="60"/>
-            </DataGrid.Columns>
-        </DataGrid>
-
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="Simular 24h" Margin="0,0,8,0" Padding="12,6" Click="Simulate_Click"/>
-            <Button Content="Eliminar seleccionado" Margin="0,0,8,0" Padding="12,6" Click="Remove_Click"/>
-            <Button Content="Cerrar" Padding="12,6" Click="Close_Click"/>
-        </StackPanel>
-    </Grid>
+            <Border Grid.Row="2" CornerRadius="0,0,20,20" BorderBrush="#1a1a2e" BorderThickness="0,1,0,0" Padding="16,10">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#100d1120" Offset="0"/>
+                        <GradientStop Color="#16080a18" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Simular 24h" Margin="0,0,8,0" Style="{DynamicResource GhostButton}" Height="34" Padding="14,0" Click="Simulate_Click"/>
+                    <Button Content="Eliminar seleccionado" Margin="0,0,8,0" Height="34" Padding="14,0" Click="Remove_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                                <Setter Property="Foreground" Value="#ffc8ce"/>
+                                <Setter Property="BorderBrush" Value="#65323a"/>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="Cerrar" Style="{DynamicResource GhostButton}" Height="34" Padding="14,0" Click="Close_Click"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
 </Window>

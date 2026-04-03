@@ -15,6 +15,7 @@ namespace AresAssistant.Views;
 public partial class SetupWindow : Window
 {
     private const int TotalPages = 6;
+    private static System.Windows.Point? _lastSessionPosition;
     private double _ollamaProgressPct;
 
     private string SelectedModel => _selectedPerfMode switch
@@ -58,6 +59,11 @@ public partial class SetupWindow : Window
         _isOnboardingRefresh = isOnboardingRefresh;
         _openSplashOnFinish = openSplashOnFinish;
         InitializeComponent();
+
+        RestoreLastSessionPositionIfAvailable();
+        LocationChanged += (_, _) => SaveLastSessionPosition();
+        Closed += (_, _) => SaveLastSessionPosition();
+
         Loaded += async (_, _) =>
         {
             _personalityCards = [CardFormal, CardCasual, CardSarcastico, CardTecnico];
@@ -87,6 +93,47 @@ public partial class SetupWindow : Window
             if (_isOnboardingRefresh)
                 BtnNext.Content = "CONTINUAR →";
         };
+    }
+
+    private void RestoreLastSessionPositionIfAvailable()
+    {
+        if (_lastSessionPosition is not System.Windows.Point p)
+            return;
+
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        var (left, top) = ClampToVirtualScreen(p.X, p.Y, Width, Height);
+        Left = left;
+        Top = top;
+    }
+
+    private void SaveLastSessionPosition()
+    {
+        if (double.IsNaN(Left) || double.IsNaN(Top))
+            return;
+
+        var w = ActualWidth > 0 ? ActualWidth : Width;
+        var h = ActualHeight > 0 ? ActualHeight : Height;
+        var (left, top) = ClampToVirtualScreen(Left, Top, w, h);
+        _lastSessionPosition = new System.Windows.Point(left, top);
+    }
+
+    private static (double left, double top) ClampToVirtualScreen(double left, double top, double width, double height)
+    {
+        const double margin = 8;
+
+        var minLeft = SystemParameters.VirtualScreenLeft + margin;
+        var minTop = SystemParameters.VirtualScreenTop + margin;
+        var maxLeft = SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - width - margin;
+        var maxTop = SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - height - margin;
+
+        if (maxLeft < minLeft)
+            maxLeft = minLeft;
+        if (maxTop < minTop)
+            maxTop = minTop;
+
+        var clampedLeft = Math.Max(minLeft, Math.Min(left, maxLeft));
+        var clampedTop = Math.Max(minTop, Math.Min(top, maxTop));
+        return (clampedLeft, clampedTop);
     }
 
     private void ApplyConfigToControls(AppConfig cfg)
@@ -223,6 +270,52 @@ public partial class SetupWindow : Window
             foreach (var sub in FindVisualChildren<T>(child))
                 yield return sub;
         }
+    }
+
+    private void SetupWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left)
+            return;
+
+        // Borderless onboarding window: drag from top strip like a normal title bar.
+        var p = e.GetPosition(this);
+        if (p.Y > 56)
+            return;
+
+        if (e.OriginalSource is DependencyObject d && IsInteractiveTopElement(d))
+            return;
+
+        try
+        {
+            DragMove();
+            e.Handled = true;
+        }
+        catch
+        {
+            // Ignore transient DragMove exceptions.
+        }
+    }
+
+    private static bool IsInteractiveTopElement(DependencyObject? source)
+    {
+        while (source != null)
+        {
+            if (source is System.Windows.Controls.Primitives.ButtonBase
+                or System.Windows.Controls.Primitives.TextBoxBase
+                or PasswordBox
+                or System.Windows.Controls.ComboBox
+                or Slider
+                or System.Windows.Controls.Primitives.ScrollBar
+                or ListBoxItem
+                or System.Windows.Controls.Primitives.DataGridColumnHeader)
+            {
+                return true;
+            }
+
+            source = VisualTreeHelper.GetParent(source);
+        }
+
+        return false;
     }
 
     // ═══════════════ Hardware ═══════════════

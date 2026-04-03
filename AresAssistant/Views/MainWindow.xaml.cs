@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using System.Windows.Input;
+using System.Windows.Media;
 using AresAssistant.Config;
 using AresAssistant.Core;
 using AresAssistant.Tools;
@@ -25,6 +27,7 @@ public partial class MainWindow : Window
     private ClipboardMonitor? _clipboardMonitor;
     private ProductivityTracker? _productivityTracker;
     private LocalApiServer? _localApiServer;
+    private bool _servicesInitialized;
 
     public static ChatViewModel ChatViewModel { get; private set; } = null!;
     public static AgentLoop AgentLoop { get; private set; } = null!;
@@ -42,8 +45,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = _vm;
-
-        BuildServices();
+        _vm.IsInitializingModules = true;
+        _vm.InitializationStatus = "Cargando módulos...";
         PositionWindow();
 
         Loaded += OnLoaded;
@@ -198,6 +201,31 @@ public partial class MainWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        if (!_servicesInitialized)
+        {
+            _servicesInitialized = true;
+            // Build services after first paint so Splash can close smoothly without appearing frozen.
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    _vm.InitializationStatus = "Inicializando módulos...";
+                    BuildServices();
+                    PositionWindow();
+                    _vm.InitializationStatus = "Módulos cargados";
+                }
+                catch (Exception ex)
+                {
+                    App.WriteCrash("MainWindow.BuildServices", ex);
+                    AresMessageBox.Show($"Error al inicializar servicios:\n{ex.Message}", "ARES — Error");
+                }
+                finally
+                {
+                    _vm.IsInitializingModules = false;
+                }
+            }), DispatcherPriority.ApplicationIdle);
+        }
+
         var hwnd = new WindowInteropHelper(this).Handle;
         _hotkeyManager.Initialize(hwnd);
 
@@ -344,6 +372,53 @@ public partial class MainWindow : Window
         base.OnClosed(e);
         ((App)Application.Current).CleanupTray();
         Application.Current.Shutdown();
+    }
+
+    private void MainWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left)
+            return;
+
+        // Borderless window: allow dragging from the top strip like a normal title bar.
+        // Keep buttons/textboxes clickable by skipping interactive elements.
+        var p = e.GetPosition(this);
+        if (p.Y > 54)
+            return;
+
+        if (e.OriginalSource is DependencyObject d && IsInteractiveTopElement(d))
+            return;
+
+        try
+        {
+            DragMove();
+            e.Handled = true;
+        }
+        catch
+        {
+            // DragMove can throw if mouse state changes mid-drag; ignore safely.
+        }
+    }
+
+    private static bool IsInteractiveTopElement(DependencyObject? source)
+    {
+        while (source != null)
+        {
+            if (source is System.Windows.Controls.Primitives.ButtonBase
+                or System.Windows.Controls.Primitives.TextBoxBase
+                or System.Windows.Controls.PasswordBox
+                or System.Windows.Controls.ComboBox
+                or System.Windows.Controls.Slider
+                or System.Windows.Controls.Primitives.ScrollBar
+                or System.Windows.Controls.ListBoxItem
+                or System.Windows.Controls.Primitives.DataGridColumnHeader)
+            {
+                return true;
+            }
+
+            source = VisualTreeHelper.GetParent(source);
+        }
+
+        return false;
     }
 
     private void ResetIdleTimer()

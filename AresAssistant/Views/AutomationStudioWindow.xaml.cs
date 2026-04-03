@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media.Animation;
 using AresAssistant.Core;
 using AresAssistant.Tools;
 using Newtonsoft.Json.Linq;
@@ -16,6 +18,33 @@ public partial class AutomationStudioWindow : Window
         _store = store;
         _permission = permission;
         RefreshGrid();
+
+        Loaded += (_, _) =>
+        {
+            var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(240));
+            RootBorder.BeginAnimation(OpacityProperty, fade);
+
+            var slide = new DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(260))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            RootTranslate.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, slide);
+        };
+    }
+
+    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left)
+            return;
+
+        try
+        {
+            DragMove();
+        }
+        catch
+        {
+            // Ignore transient drag exceptions.
+        }
     }
 
     private void RefreshGrid()

@@ -263,27 +263,21 @@ public class SettingsViewModel : ViewModelBase
                 Personality = "tecnico",
                 ResponseLength = "conciso",
                 AutonomousMode = true,
-                ScheduledAutomationsEnabled = true,
-                WidgetProductivityEnabled = true,
-                WidgetTasksEnabled = true
+                ScheduledAutomationsEnabled = true
             },
             "estudio" => config with
             {
                 Personality = "formal",
                 ResponseLength = "detallado",
                 AutonomousMode = false,
-                ScheduledAutomationsEnabled = true,
-                WidgetProductivityEnabled = true,
-                WidgetTasksEnabled = true
+                ScheduledAutomationsEnabled = true
             },
             "gaming" => config with
             {
                 Personality = "casual",
                 ResponseLength = "conciso",
                 AutonomousMode = false,
-                ScheduledAutomationsEnabled = false,
-                WidgetProductivityEnabled = false,
-                WidgetTasksEnabled = false
+                ScheduledAutomationsEnabled = false
             },
             _ => config
         };

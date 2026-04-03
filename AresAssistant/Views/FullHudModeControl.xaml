@@ -6,9 +6,6 @@
     <!-- Outer shell: futuristic glass with accent glow -->
     <Border Background="{DynamicResource OverlayBackgroundBrush}" CornerRadius="20"
             BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
-        <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="60" Opacity="0.55" Color="#ff2222"/>
-        </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"/>
@@ -249,21 +246,6 @@
                                                             </Style>
                                                         </Path.Style>
                                                     </Path>
-                                                    <!-- User dot -->
-                                                    <Ellipse Width="10" Height="10"
-                                                             VerticalAlignment="Center" Margin="0,0,6,0">
-                                                        <Ellipse.Style>
-                                                            <Style TargetType="Ellipse">
-                                                                <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsUser}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Ellipse.Style>
-                                                    </Ellipse>
                                                     <!-- Role name -->
                                                     <TextBlock FontSize="11" FontFamily="Consolas"
                                                                FontWeight="SemiBold" VerticalAlignment="Center">
@@ -280,11 +262,6 @@
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
-                                                    <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="4"
-                                                            Background="#151d2b" BorderBrush="#2f3f62" BorderThickness="1"
-                                                            Visibility="{Binding ModelUsed, Converter={StaticResource StringEmptyToVisibilityConverter}}">
-                                                        <TextBlock Text="{Binding ModelUsed}" FontSize="9" FontFamily="Consolas" Foreground="#9fb0c8"/>
-                                                    </Border>
                                                 </StackPanel>
                                                 <Border Grid.Column="1" VerticalAlignment="Center"
                                                         Margin="10,0,0,0" Padding="6,2"

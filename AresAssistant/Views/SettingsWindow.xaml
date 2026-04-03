@@ -311,43 +311,42 @@
                                         Background="{DynamicResource GlassBrush}" CornerRadius="10"
                                         BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1"
                                         Padding="12,8" Margin="0,2,0,0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding OllamaStatus}" FontSize="11"
-                                                   Foreground="{DynamicResource SubtextBrush}"
-                                                   VerticalAlignment="Center" TextWrapping="Wrap"
-                                                   FontFamily="Consolas"/>
-                                        <Button Grid.Column="1" Content="Verificar"
-                                                Style="{StaticResource GhostButton}"
-                                                Height="30" Padding="14,0"
-                                                Margin="10,0,0,0" Click="CheckOllama_Click"/>
-                                        <Button Grid.Column="2" Content="Diagnóstico routing"
-                                                Style="{StaticResource GhostButton}"
-                                                Height="30" Padding="14,0"
-                                            Margin="8,0,0,0" ToolTip="Muestra cómo enruta modelos sin ejecutar inferencia"
-                                            Click="TestModelRouting_Click"/>
-                                        <Button Grid.Column="3" Content="Probar visión"
-                                                Style="{StaticResource GhostButton}"
-                                                Height="30" Padding="14,0"
-                                                Margin="8,0,0,0" Click="TestVision_Click"/>
-                                        <Button Grid.Column="4" Content="Reparar todo IA"
-                                            Style="{StaticResource AresButton}"
-                                            Height="30" Padding="14,0"
-                                            Margin="8,0,0,0" Click="QuickRepairAi_Click"
-                                            ToolTip="Repara faltantes de routing y modelo de visión en un solo paso"/>
-                                        <Button Grid.Column="5" Content="Automation Studio"
+                                    <StackPanel>
+                                    <TextBlock Text="{Binding OllamaStatus}" FontSize="11"
+                                           Foreground="{DynamicResource SubtextBrush}"
+                                           VerticalAlignment="Center" TextWrapping="Wrap"
+                                           FontFamily="Consolas"/>
+                                    <WrapPanel Margin="0,8,0,0">
+                                        <Button Content="Verificar"
                                             Style="{StaticResource GhostButton}"
                                             Height="30" Padding="14,0"
-                                            Margin="8,0,0,0" Click="OpenAutomationStudio_Click"
+                                            Margin="0,0,8,8" Click="CheckOllama_Click"/>
+                                        <Button Content="Diagnóstico routing"
+                                            Style="{StaticResource GhostButton}"
+                                            Height="30" Padding="14,0"
+                                            Margin="0,0,8,8" ToolTip="Muestra cómo enruta modelos sin ejecutar inferencia"
+                                            Click="TestModelRouting_Click"/>
+                                        <Button Content="Probar visión"
+                                            Style="{StaticResource GhostButton}"
+                                            Height="30" Padding="14,0"
+                                            Margin="0,0,8,8" Click="TestVision_Click"/>
+                                        <Button Content="Probar clima"
+                                            Style="{StaticResource GhostButton}"
+                                            Height="30" Padding="14,0"
+                                            Margin="0,0,8,8" Click="TestWeather_Click"
+                                            ToolTip="Ejecuta get_weather y muestra fuente de ubicación usada"/>
+                                        <Button Content="Reparar todo IA"
+                                            Style="{StaticResource AresButton}"
+                                            Height="30" Padding="14,0"
+                                            Margin="0,0,8,8" Click="QuickRepairAi_Click"
+                                            ToolTip="Repara faltantes de routing y modelo de visión en un solo paso"/>
+                                        <Button Content="Automation Studio"
+                                            Style="{StaticResource GhostButton}"
+                                            Height="30" Padding="14,0"
+                                            Margin="0,0,8,8" Click="OpenAutomationStudio_Click"
                                             ToolTip="Editor visual MVP de automatizaciones"/>
-                                    </Grid>
+                                    </WrapPanel>
+                                    </StackPanel>
                                 </Border>
                             </Grid>
                         </StackPanel>

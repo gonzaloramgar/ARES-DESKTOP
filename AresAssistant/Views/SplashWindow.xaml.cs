@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Threading;
 using AresAssistant.Config;
 using AresAssistant.Core;
 using AresAssistant.ViewModels;
@@ -26,6 +27,15 @@ public partial class SplashWindow : Window
             await RunFirstLaunchScanAsync();
             await EnsureRequiredModelsAsync();
 
+            // Keep progress below 100 while MainWindow is being constructed (heavy init).
+            // This avoids the perception of a frozen "100% listo" splash.
+            UpdateStatus("Abriendo interfaz principal...", 99);
+            await Task.Delay(90);
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+
+            UpdateStatus("ARES iniciado.", 100);
+            await Task.Delay(120);
+
             OpenMainWindow();
         }
         catch (Exception ex)
@@ -49,7 +59,8 @@ public partial class SplashWindow : Window
     {
         var scanner = new SystemScanner();
         int step = 0;
-        var steps = new[] { 10, 30, 50, 65, 75, 90, 100 };
+        // Keep splash below 100% until model checks are also complete.
+        var steps = new[] { 10, 28, 44, 58, 70, 82, 92 };
 
         scanner.StatusChanged += msg =>
         {
@@ -64,8 +75,8 @@ public partial class SplashWindow : Window
         var tools = await scanner.ScanAsync();
         SystemScanner.SaveToJson(tools, "data/tools.json");
 
-        UpdateStatus("ARES listo.", 100);
-        await Task.Delay(600);
+        UpdateStatus("Escaneo completado. Verificando modelos locales...", 94);
+        await Task.Delay(180);
     }
 
     private void UpdateStatus(string text, int progress)
@@ -110,7 +121,10 @@ public partial class SplashWindow : Window
         var installed = await client.GetInstalledModelsAsync();
         var missing = ModelRouter.GetMissingPreferredModels(cfg, installed);
         if (missing.Count == 0)
+        {
+            UpdateStatus("Modelos locales verificados.", 99);
             return;
+        }
 
         var installNow = AresMessageBox.Show(
             "Faltan modelos requeridos para multimodelo:\n\n" +
@@ -139,5 +153,9 @@ public partial class SplashWindow : Window
                 string.Join("\n", stillMissing.Select(m => $"• {m}")),
                 "ARES — Modelos pendientes");
         }
+
+        UpdateStatus(stillMissing.Count == 0
+            ? "Modelos locales verificados."
+            : "Verificación completada con modelos pendientes.", 99);
     }
 }

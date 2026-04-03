@@ -380,6 +380,54 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private async void TestWeather_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var tool = MainWindow.ToolRegistry.Get("get_weather");
+            if (tool == null)
+            {
+                AresMessageBox.Show("La herramienta get_weather no está disponible.", "ARES — Error");
+                return;
+            }
+
+            _vm.OllamaStatus = "Probando clima local...";
+            var result = await tool.ExecuteAsync(new Dictionary<string, JToken>());
+
+            if (!result.Success)
+            {
+                _vm.OllamaStatus = "Prueba de clima con errores";
+                AresMessageBox.Show(result.Message, "ARES — Error clima");
+                return;
+            }
+
+            var source = "desconocida";
+            var city = "Local";
+            var temp = "N/D";
+
+            try
+            {
+                var payload = JObject.Parse(result.Message);
+                source = payload["ubicacion"]?["source"]?.ToString() ?? source;
+                city = payload["ubicacion"]?["ciudad"]?.ToString() ?? city;
+                temp = payload["actual"]?["temperatura"]?.ToString() ?? temp;
+            }
+            catch
+            {
+                // Keep diagnostic fallback values if payload is not JSON.
+            }
+
+            _vm.OllamaStatus = $"Clima OK ({source})";
+            var report = $"Fuente ubicación: {source}\nCiudad: {city}\nTemperatura: {temp}\n\nRespuesta completa:\n{result.Message}";
+            AresMessageBox.Show(report, "ARES — Diagnóstico clima");
+        }
+        catch (Exception ex)
+        {
+            _vm.OllamaStatus = "Error en prueba de clima";
+            AresMessageBox.Show($"No se pudo ejecutar get_weather:\n{ex.Message}", "ARES — Error");
+        }
+    }
+
     private async void TestVoice_Click(object sender, RoutedEventArgs e)
     {
         var speech = MainWindow.SpeechEngine;

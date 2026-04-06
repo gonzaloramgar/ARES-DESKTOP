@@ -19,6 +19,7 @@ public static class AppPaths
     public static string PluginsDirectory => Path.Combine(DataDirectory, "plugins");
     public static string TtsDirectory => Path.Combine(DataDirectory, "tts");
     public static string OllamaDebugLogFile => Path.Combine(LogsDirectory, "ollama_debug.log");
+    public static string RuntimeActionsLogFile => Path.Combine(LogsDirectory, $"runtime_actions_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
 
     public static string DataFile(string fileName) => Path.Combine(DataDirectory, fileName);
 

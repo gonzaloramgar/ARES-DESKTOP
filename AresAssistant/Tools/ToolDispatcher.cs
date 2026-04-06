@@ -1,4 +1,5 @@
 using AresAssistant.Core;
+using AresAssistant;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 
@@ -32,15 +33,22 @@ public class ToolDispatcher
 
     public async Task<string> ExecuteAsync(string toolName, Dictionary<string, JToken> args)
     {
+        args ??= new Dictionary<string, JToken>();
+        App.WriteAction("ToolDispatcher", "Execute.Start", new { toolName, argsCount = args.Count });
+
         var tool = _registry.Get(toolName);
         if (tool == null)
+        {
+            App.WriteAction("ToolDispatcher", "Execute.UnknownTool", new { toolName }, "WARN");
             return "Error: herramienta desconocida.";
+        }
 
         var permission = _permissionManager.GetLevel(toolName, args);
 
         if (permission == PermissionLevel.Blocked)
         {
             _logger.Log(permission, toolName, args);
+            App.WriteAction("ToolDispatcher", "Execute.Blocked", new { toolName, permission = permission.ToString() }, "WARN");
             return "Acción bloqueada por el sistema de seguridad.";
         }
 
@@ -53,6 +61,7 @@ public class ToolDispatcher
             if (!approved)
             {
                 _logger.Log(permission, toolName, new { cancelled = true });
+                App.WriteAction("ToolDispatcher", "Execute.CancelledByUser", new { toolName });
                 return "Acción cancelada por el usuario.";
             }
         }
@@ -64,11 +73,14 @@ public class ToolDispatcher
         {
             var result = await tool.ExecuteAsync(args).ConfigureAwait(false);
             _telemetry?.RecordTool(toolName, result.Success, sw.ElapsedMilliseconds);
+            App.WriteAction("ToolDispatcher", "Execute.Result", new { toolName, result.Success, elapsedMs = sw.ElapsedMilliseconds });
             return result.Message;
         }
         catch (Exception ex)
         {
             _telemetry?.RecordTool(toolName, false, sw.ElapsedMilliseconds);
+            App.WriteAction("ToolDispatcher", "Execute.Exception", new { toolName, elapsedMs = sw.ElapsedMilliseconds, ex.Message }, "ERROR");
+            App.WriteCrash($"ToolDispatcher.Execute.{toolName}", ex);
             return $"Error al ejecutar {toolName}: {ex.Message}";
         }
     }

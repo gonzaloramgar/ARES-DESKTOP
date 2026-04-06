@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace AresAssistant.Core;
@@ -84,7 +85,8 @@ public class OllamaClient
         int numThread = 0,
         int numPredict = 512,
         int numBatch = 512,
-        string keepAlive = "30m")
+        string keepAlive = "30m",
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var options = numThread > 0
             ? (object)new { num_ctx = numCtx, num_thread = numThread, num_predict = numPredict, num_batch = numBatch, temperature = 0.7, repeat_penalty = 1.1 }
@@ -118,15 +120,16 @@ public class OllamaClient
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
-        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var reader = new StreamReader(stream);
 
         while (!reader.EndOfStream)
         {
-            var line = await reader.ReadLineAsync().ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            var line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(line)) continue;
 
             JObject chunk;

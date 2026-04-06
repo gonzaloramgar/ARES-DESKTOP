@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace AresAssistant.Core;
 
@@ -30,4 +31,32 @@ public sealed class ProcessContextProvider
             return "contexto de procesos no disponible";
         }
     }
+
+    public string GetForegroundProcessName()
+    {
+        try
+        {
+            var hwnd = GetForegroundWindow();
+            if (hwnd == IntPtr.Zero)
+                return "desconocido";
+
+            _ = GetWindowThreadProcessId(hwnd, out var pid);
+            if (pid == 0)
+                return "desconocido";
+
+            using var proc = Process.GetProcessById((int)pid);
+            var name = proc.ProcessName;
+            return string.IsNullOrWhiteSpace(name) ? "desconocido" : name;
+        }
+        catch
+        {
+            return "desconocido";
+        }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 }

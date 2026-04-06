@@ -29,8 +29,26 @@ public partial class OverlayModeControl : UserControl
         {
             e.Handled = true;
             await Vm.SendMessageAsync();
+            return;
+        }
+
+        if (e.Key == Key.Up)
+        {
+            e.Handled = Vm.NavigateInputHistory(-1);
+            return;
+        }
+
+        if (e.Key == Key.Down)
+        {
+            e.Handled = Vm.NavigateInputHistory(1);
         }
     }
+
+    private void CancelResponse_Click(object sender, RoutedEventArgs e)
+        => Vm.CancelResponse();
+
+    private void AttachScreen_Click(object sender, RoutedEventArgs e)
+        => Vm.ArmScreenContextNextMessage();
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {

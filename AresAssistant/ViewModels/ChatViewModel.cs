@@ -4,8 +4,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Threading;
 using AresAssistant.Core;
 using AresAssistant.Config;
@@ -91,13 +93,22 @@ public class ChatViewModel : ViewModelBase
     private readonly ScheduledTaskStore? _scheduledTaskStore;
     private readonly ProductivityTracker? _productivityTracker;
     private readonly OllamaClient? _ollamaClient;
+    private readonly ProcessContextProvider? _processContextProvider;
     private readonly DispatcherTimer _dashboardTimer;
     private readonly HttpClient _dashboardHttp = new() { Timeout = TimeSpan.FromSeconds(10) };
     private readonly WeatherCacheStore _weatherCache = new(AppPaths.WeatherCacheFile);
     private readonly PerformanceCounter? _cpuCounter;
+    private readonly DispatcherTimer _typewriterTimer;
+    private readonly StringBuilder _streamBuffer = new();
+    private CancellationTokenSource? _responseCts;
+    private readonly List<string> _inputHistory = new();
+    private int _inputHistoryIndex = -1;
+    private string _historyDraft = "";
 
     private string _inputText = "";
     private bool _isBusy;
+    private bool _attachScreenContextNextMessage;
+    private string _searchText = "";
     private string _statusText = "";
     private string _lastModelUsed = "";
     private string _dashboardClock = DateTime.Now.ToString("HH:mm:ss");
@@ -109,10 +120,12 @@ public class ChatViewModel : ViewModelBase
     private bool _weatherIsCached;
     private string _weatherCacheBadgeText = "CACHE";
     private string _dailyProductivitySummary = "Pulsa 'Resumen IA' para generar el resumen diario.";
+    private string _activeContextProfileText = "Contexto activo: --";
     private bool _weatherRefreshInFlight;
     private DateTime _lastWeatherRefreshUtc = DateTime.MinValue;
 
     public ObservableCollection<ChatMessage> Messages { get; } = new();
+    public ICollectionView MessagesView { get; }
     public ObservableCollection<string> ToolNames { get; } = new();
     public ObservableCollection<DashboardAppBar> ProductivityApps { get; } = new();
     public ObservableCollection<DashboardTaskCard> UpcomingTasks { get; } = new();
@@ -132,7 +145,23 @@ public class ChatViewModel : ViewModelBase
     public bool IsBusy
     {
         get => _isBusy;
-        set => SetField(ref _isBusy, value);
+        set
+        {
+            if (!SetField(ref _isBusy, value)) return;
+            OnPropertyChanged(nameof(IsThinking));
+        }
+    }
+
+    public bool IsThinking => IsBusy;
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (!SetField(ref _searchText, value)) return;
+            MessagesView.Refresh();
+        }
     }
 
     public string StatusText
@@ -195,6 +224,12 @@ public class ChatViewModel : ViewModelBase
         set => SetField(ref _dailyProductivitySummary, value);
     }
 
+    public string ActiveContextProfileText
+    {
+        get => _activeContextProfileText;
+        set => SetField(ref _activeContextProfileText, value);
+    }
+
     public ChatViewModel(
         AgentLoop agentLoop,
         ConversationHistory history,
@@ -203,7 +238,8 @@ public class ChatViewModel : ViewModelBase
         SpeechEngine? speech = null,
         ScheduledTaskStore? scheduledTaskStore = null,
         ProductivityTracker? productivityTracker = null,
-        OllamaClient? ollamaClient = null)
+        OllamaClient? ollamaClient = null,
+        ProcessContextProvider? processContextProvider = null)
     {
         _agentLoop = agentLoop;
         _history = history;
@@ -213,6 +249,7 @@ public class ChatViewModel : ViewModelBase
         _scheduledTaskStore = scheduledTaskStore;
         _productivityTracker = productivityTracker;
         _ollamaClient = ollamaClient;
+        _processContextProvider = processContextProvider;
 
         try
         {
@@ -227,6 +264,9 @@ public class ChatViewModel : ViewModelBase
         _dashboardTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
         _dashboardTimer.Tick += DashboardTimer_Tick;
 
+        _typewriterTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        _typewriterTimer.Tick += TypewriterTimer_Tick;
+
         _agentLoop.ResponseReceived += OnResponseReceived;
         _agentLoop.StatusChanged += OnStatusChanged;
         _agentLoop.TokenReceived += OnTokenReceived;
@@ -234,6 +274,16 @@ public class ChatViewModel : ViewModelBase
         _agentLoop.ModelUsed += OnModelUsed;
 
         _agentLoop.InitSystemPrompt();
+
+        MessagesView = CollectionViewSource.GetDefaultView(Messages);
+        MessagesView.Filter = o =>
+        {
+            if (o is not ChatMessage m) return false;
+            if (string.IsNullOrWhiteSpace(SearchText)) return true;
+            return (m.Content ?? string.Empty).Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                   || (m.Role ?? string.Empty).Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                   || (m.ModelUsed ?? string.Empty).Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+        };
 
         if (_toolRegistry != null)
         {
@@ -254,6 +304,15 @@ public class ChatViewModel : ViewModelBase
         var text = InputText.Trim();
         if (string.IsNullOrEmpty(text) || IsBusy) return;
 
+        App.WriteAction("ChatViewModel", "SendMessage.Start", new
+        {
+            length = text.Length,
+            isSlash = text.StartsWith("/", StringComparison.Ordinal)
+        });
+
+        _historyDraft = "";
+        _inputHistoryIndex = -1;
+
         InputText = "";
         IsBusy = true;
         _streamingMessage = null;
@@ -267,14 +326,48 @@ public class ChatViewModel : ViewModelBase
         // Stop any in-progress speech when the user sends a new message
         _speech?.Stop();
 
+        if (_attachScreenContextNextMessage)
+        {
+            _attachScreenContextNextMessage = false;
+            var shot = await CaptureScreenshotForContextAsync();
+            if (!string.IsNullOrWhiteSpace(shot))
+            {
+                text = $"[Contexto de pantalla adjunto]\n{shot}\n\n{text}";
+            }
+        }
+
+        if (_inputHistory.Count == 0 || !string.Equals(_inputHistory[^1], text, StringComparison.Ordinal))
+            _inputHistory.Add(text);
+
         Messages.Add(new ChatMessage { Role = "user", Content = text });
 
         try
         {
-            await _agentLoop.RunAsync(text);
+            _responseCts = new CancellationTokenSource();
+
+            if (text.StartsWith("/", StringComparison.Ordinal))
+            {
+                await ExecuteSlashCommandAsync(text, _responseCts.Token);
+            }
+            else
+            {
+                await _agentLoop.RunAsync(text, _responseCts.Token);
+            }
+
+            App.WriteAction("ChatViewModel", "SendMessage.Completed");
+        }
+        catch (OperationCanceledException)
+        {
+            App.WriteAction("ChatViewModel", "SendMessage.Cancelled", null, "WARN");
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Messages.Add(new ChatMessage { Role = "assistant", Content = "Respuesta cancelada." });
+            });
         }
         catch (Exception ex)
         {
+            App.WriteAction("ChatViewModel", "SendMessage.Error", new { ex.Message }, "ERROR");
+            App.WriteCrash("ChatViewModel.SendMessageAsync", ex);
             Application.Current.Dispatcher.Invoke(() =>
             {
                 Messages.Add(new ChatMessage { Role = "assistant", Content = $"Error inesperado: {ex.Message}" });
@@ -282,10 +375,13 @@ public class ChatViewModel : ViewModelBase
         }
         finally
         {
+            _responseCts?.Dispose();
+            _responseCts = null;
             if (_config.SaveChatHistory)
                 _history.SaveToJson(AppPaths.ChatHistoryFile);
 
             IsBusy = false;
+            StatusText = "";
         }
     }
 
@@ -298,6 +394,7 @@ public class ChatViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.WriteCrash("ChatViewModel.UpdateDashboard", ex);
+            App.WriteAction("ChatViewModel", "UpdateDashboard.Error", new { ex.Message }, "ERROR");
         }
     }
 
@@ -323,13 +420,13 @@ public class ChatViewModel : ViewModelBase
 
             if (_streamingMessage == null)
             {
-                _streamingMessage = new ChatMessage { Role = "assistant", Content = token };
+                _streamingMessage = new ChatMessage { Role = "assistant", Content = string.Empty };
                 Messages.Add(_streamingMessage);
             }
-            else
-            {
-                _streamingMessage.Content += token;
-            }
+
+            _streamBuffer.Append(token);
+            if (!_typewriterTimer.IsEnabled)
+                _typewriterTimer.Start();
         });
     }
 
@@ -356,6 +453,7 @@ public class ChatViewModel : ViewModelBase
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
+            _typewriterTimer.Stop();
             if (_streamingMessage != null)
             {
                 _streamingMessage.Content = response;
@@ -372,6 +470,10 @@ public class ChatViewModel : ViewModelBase
             _progressMessage = null;
             _lastProgressText = "";
             _lastProgressMessageUtc = DateTime.MinValue;
+            _streamBuffer.Clear();
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+                MessagesView.Refresh();
         });
 
         // Speak the response aloud (fire-and-forget, runs on SpeechSynthesizer's own thread)
@@ -472,6 +574,162 @@ public class ChatViewModel : ViewModelBase
 
     public void RemoveMessage(ChatMessage msg) => Messages.Remove(msg);
 
+    public void ArmScreenContextNextMessage()
+    {
+        _attachScreenContextNextMessage = true;
+        StatusText = "Se adjuntará una captura en tu próximo mensaje.";
+    }
+
+    public void CancelResponse()
+    {
+        App.WriteAction("ChatViewModel", "CancelResponse");
+        _responseCts?.Cancel();
+        _agentLoop.CancelCurrentRun();
+        _typewriterTimer.Stop();
+        _streamBuffer.Clear();
+        StatusText = "Cancelando respuesta...";
+    }
+
+    public bool NavigateInputHistory(int direction)
+    {
+        if (_inputHistory.Count == 0)
+            return false;
+
+        if (_inputHistoryIndex < 0)
+            _historyDraft = InputText;
+
+        if (direction < 0)
+        {
+            _inputHistoryIndex = _inputHistoryIndex < 0
+                ? _inputHistory.Count - 1
+                : Math.Max(0, _inputHistoryIndex - 1);
+        }
+        else
+        {
+            if (_inputHistoryIndex < 0)
+                return false;
+
+            _inputHistoryIndex++;
+            if (_inputHistoryIndex >= _inputHistory.Count)
+            {
+                _inputHistoryIndex = -1;
+                InputText = _historyDraft;
+                return true;
+            }
+        }
+
+        InputText = _inputHistory[_inputHistoryIndex];
+        return true;
+    }
+
+    private async Task ExecuteSlashCommandAsync(string raw, CancellationToken ct)
+    {
+        App.WriteAction("ChatViewModel", "Slash.Start", new { raw });
+
+        if (_toolRegistry == null)
+        {
+            Messages.Add(new ChatMessage { Role = "assistant", Content = "No hay registro de herramientas disponible para comandos rápidos." });
+            App.WriteAction("ChatViewModel", "Slash.NoRegistry", null, "WARN");
+            return;
+        }
+
+        var trimmed = raw.Trim();
+        var parts = trimmed.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var cmd = parts[0].ToLowerInvariant();
+        var arg = parts.Length > 1 ? parts[1] : string.Empty;
+
+        string toolName;
+        var toolArgs = new Dictionary<string, JToken>();
+
+        switch (cmd)
+        {
+            case "/clima":
+                toolName = "get_weather";
+                if (!string.IsNullOrWhiteSpace(arg))
+                    toolArgs["city"] = arg;
+                break;
+            case "/captura":
+                toolName = "take_screenshot";
+                break;
+            case "/volumen":
+                toolName = "set_volume";
+                if (!int.TryParse(arg, out var vol))
+                    vol = 50;
+                toolArgs["level"] = Math.Clamp(vol, 0, 100);
+                break;
+            default:
+                Messages.Add(new ChatMessage
+                {
+                    Role = "assistant",
+                    Content = "Comando rápido no reconocido. Usa /clima [ciudad], /captura o /volumen [0-100]."
+                });
+                App.WriteAction("ChatViewModel", "Slash.Unknown", new { cmd }, "WARN");
+                return;
+        }
+
+        StatusText = $"Ejecutando {cmd}...";
+        ct.ThrowIfCancellationRequested();
+
+        var tool = _toolRegistry.Get(toolName);
+        if (tool == null)
+        {
+            Messages.Add(new ChatMessage { Role = "assistant", Content = $"La herramienta {toolName} no está disponible." });
+            App.WriteAction("ChatViewModel", "Slash.ToolUnavailable", new { cmd, toolName }, "WARN");
+            return;
+        }
+
+        var result = await tool.ExecuteAsync(toolArgs);
+        ct.ThrowIfCancellationRequested();
+        Messages.Add(new ChatMessage
+        {
+            Role = "assistant",
+            Content = result.Success ? result.Message : $"Error: {result.Message}"
+        });
+
+        App.WriteAction("ChatViewModel", "Slash.Result", new { cmd, toolName, result.Success });
+    }
+
+    private async Task<string?> CaptureScreenshotForContextAsync()
+    {
+        try
+        {
+            if (_toolRegistry?.Get("take_screenshot") is not { } shotTool)
+                return null;
+
+            var result = await shotTool.ExecuteAsync(new Dictionary<string, JToken>());
+            return result.Success ? result.Message : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void TypewriterTimer_Tick(object? sender, EventArgs e)
+    {
+        if (_streamingMessage == null)
+        {
+            _streamBuffer.Clear();
+            _typewriterTimer.Stop();
+            return;
+        }
+
+        if (_streamBuffer.Length == 0)
+        {
+            _typewriterTimer.Stop();
+            return;
+        }
+
+        const int charsPerFrame = 4;
+        var take = Math.Min(charsPerFrame, _streamBuffer.Length);
+        var chunk = _streamBuffer.ToString(0, take);
+        _streamBuffer.Remove(0, take);
+        _streamingMessage.Content += chunk;
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+            MessagesView.Refresh();
+    }
+
     public void RefreshRuntimeConfig(AppConfig config)
     {
         _config = config;
@@ -534,6 +792,9 @@ public class ChatViewModel : ViewModelBase
 
     private async Task UpdateDashboardAsync()
     {
+        if (_processContextProvider != null)
+            ActiveContextProfileText = $"Contexto activo: {_processContextProvider.GetForegroundProcessName()}";
+
         DashboardClock = DateTime.Now.ToString("HH:mm:ss");
 
         if (WidgetWorldClockEnabled)

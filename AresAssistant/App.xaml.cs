@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using System.Text.Json;
 using AresAssistant.Config;
 using AresAssistant.Core;
 using AresAssistant.Views;
@@ -21,6 +22,8 @@ public partial class App : Application
 
     private static readonly string CrashLogPath =
         Path.Combine(AppPaths.DataDirectory, $"crash_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
+    private static readonly string RuntimeActionsLogPath = AppPaths.RuntimeActionsLogFile;
+    private static readonly object LogSync = new();
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -179,6 +182,27 @@ public partial class App : Application
         }
     }
 
+    public void ShowTrayNotification(string title, string message)
+    {
+        if (_trayIcon == null || !ConfigManager.Config.CloseToTray)
+            return;
+
+        try
+        {
+            var text = string.IsNullOrWhiteSpace(message) ? "Tarea completada." : message;
+            if (text.Length > 220)
+                text = text[..220] + "...";
+
+            _trayIcon.BalloonTipTitle = title;
+            _trayIcon.BalloonTipText = text;
+            _trayIcon.ShowBalloonTip(3500);
+        }
+        catch
+        {
+            // Best-effort notification only.
+        }
+    }
+
     private void OnDispatcherException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         WriteCrash("UI Thread", e.Exception);
@@ -203,13 +227,51 @@ public partial class App : Application
         try
         {
             AppPaths.EnsureDataDirectories();
+            var details = ex == null
+                ? "Exception nula"
+                : string.Join(
+                    Environment.NewLine + "--- INNER ---" + Environment.NewLine,
+                    FlattenExceptions(ex).Select(e =>
+                        $"{e.GetType().Name}: {e.Message}{Environment.NewLine}{e.StackTrace}"));
+
             var msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{context}]\n" +
-                      $"{ex?.GetType().Name}: {ex?.Message}\n" +
-                      $"{ex?.StackTrace}\n" +
-                      $"Inner: {ex?.InnerException?.Message}\n" +
+                      details + "\n" +
                       new string('-', 60) + "\n";
-            File.AppendAllText(CrashLogPath, msg);
+
+            lock (LogSync)
+            {
+                File.AppendAllText(CrashLogPath, msg);
+            }
         }
         catch { /* if crash log fails, nothing we can do */ }
+    }
+
+    public static void WriteAction(string context, string action, object? data = null, string level = "INFO")
+    {
+        try
+        {
+            AppPaths.EnsureDataDirectories();
+            var payload = data == null ? "{}" : JsonSerializer.Serialize(data);
+            var line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] [{context}] {action} | {payload}{Environment.NewLine}";
+
+            lock (LogSync)
+            {
+                File.AppendAllText(RuntimeActionsLogPath, line);
+            }
+        }
+        catch
+        {
+            // Never throw from logging.
+        }
+    }
+
+    private static IEnumerable<Exception> FlattenExceptions(Exception ex)
+    {
+        var current = ex;
+        while (current != null)
+        {
+            yield return current;
+            current = current.InnerException;
+        }
     }
 }

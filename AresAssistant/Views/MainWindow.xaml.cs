@@ -48,8 +48,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = _vm;
-        _vm.IsInitializingModules = true;
-        _vm.InitializationStatus = "Cargando módulos...";
+        _vm.IsInitializingModules = false;
+        _vm.InitializationStatus = string.Empty;
 
         _idleTimer = new DispatcherTimer();
         _idleTimer.Tick += IdleTimer_Tick;
@@ -61,7 +61,7 @@ public partial class MainWindow : Window
         Loaded += OnLoaded;
     }
 
-    private void BuildServices()
+    private async Task BuildServicesAsync()
     {
         var config = App.ConfigManager.Config;
         AppPaths.EnsureDataDirectories();
@@ -119,6 +119,8 @@ public partial class MainWindow : Window
         registry.Register(new MemoryReadTool(memoryStore));
         registry.Register(new MemoryForgetTool(memoryStore));
 
+        await Dispatcher.Yield(DispatcherPriority.Background);
+
         if (config.PluginToolsEnabled)
         {
             var pluginLoader = new PluginToolLoader();
@@ -139,6 +141,8 @@ public partial class MainWindow : Window
             history.PurgeToolFailures();
         }
 
+        await Dispatcher.Yield(DispatcherPriority.Background);
+
         var agentLoop = new AgentLoop(ollamaClient, history, registry, dispatcher, config, telemetryStore, memoryStore, processContextProvider);
         _ = agentLoop.WarmUpAsync(); // Pre-load model into RAM to eliminate cold-start delay
 
@@ -154,10 +158,12 @@ public partial class MainWindow : Window
         ReliabilityTelemetry = telemetryStore;
         SecurityPolicyStore = securityPolicyStore;
         AgentLoop = agentLoop;
-        ChatViewModel = new ChatViewModel(agentLoop, history, config, registry, speech, scheduledStore, productivityTracker, ollamaClient);
+        ChatViewModel = new ChatViewModel(agentLoop, history, config, registry, speech, scheduledStore, productivityTracker, ollamaClient, processContextProvider);
 
         OverlayControl.DataContext = ChatViewModel;
         FullHudControl.DataContext = ChatViewModel;
+
+        await Dispatcher.Yield(DispatcherPriority.Background);
 
         // Reset inactivity timer every time the agent produces a response
         AgentLoop.ResponseReceived += OnAgentResponseReceived;
@@ -195,7 +201,7 @@ public partial class MainWindow : Window
         _productivityTracker = productivityTracker;
 
         // Non-critical services are started after first frame so the main UI appears sooner.
-        Dispatcher.BeginInvoke(new Action(StartDeferredServices), DispatcherPriority.ContextIdle);
+        _ = Dispatcher.BeginInvoke(new Action(StartDeferredServices), DispatcherPriority.ContextIdle);
     }
 
     private void StartDeferredServices()
@@ -204,6 +210,7 @@ public partial class MainWindow : Window
             return;
 
         _deferredServicesStarted = true;
+        App.WriteAction("MainWindow", "DeferredServices.Start");
         try
         {
             _clipboardMonitor?.Start();
@@ -215,10 +222,13 @@ public partial class MainWindow : Window
                 _localApiServer = new LocalApiServer(cfg.LocalApiPort, App.ConfigManager, ToolRegistry);
                 _localApiServer.Start();
             }
+
+            App.WriteAction("MainWindow", "DeferredServices.Ready", new { localApi = cfg.LocalApiEnabled });
         }
         catch (Exception ex)
         {
             App.WriteCrash("MainWindow.StartDeferredServices", ex);
+            App.WriteAction("MainWindow", "DeferredServices.Error", new { ex.Message }, "ERROR");
         }
     }
 
@@ -227,32 +237,32 @@ public partial class MainWindow : Window
         if (!_servicesInitialized)
         {
             _servicesInitialized = true;
-            // Build services after first paint so Splash can close smoothly without appearing frozen.
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                try
-                {
-                    _vm.InitializationStatus = "Inicializando módulos...";
-                    BuildServices();
-                    PositionWindow();
-                    _vm.InitializationStatus = "Módulos cargados";
-                }
-                catch (Exception ex)
-                {
-                    App.WriteCrash("MainWindow.BuildServices", ex);
-                    AresMessageBox.Show($"Error al inicializar servicios:\n{ex.Message}", "ARES — Error");
-                }
-                finally
-                {
-                    _vm.IsInitializingModules = false;
-                }
-            }), DispatcherPriority.ApplicationIdle);
+            _ = InitializeServicesAsync();
         }
 
         var hwnd = new WindowInteropHelper(this).Handle;
         _hotkeyManager.Initialize(hwnd);
 
         RegisterHotkeys();
+    }
+
+    private async Task InitializeServicesAsync()
+    {
+        try
+        {
+            App.WriteAction("MainWindow", "InitializeServices.Start");
+            // Let the window render fully before expensive setup.
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            await BuildServicesAsync();
+            PositionWindow();
+            App.WriteAction("MainWindow", "InitializeServices.Ready");
+        }
+        catch (Exception ex)
+        {
+            App.WriteCrash("MainWindow.BuildServices", ex);
+            App.WriteAction("MainWindow", "InitializeServices.Error", new { ex.Message }, "ERROR");
+            AresMessageBox.Show($"Error al inicializar servicios:\n{ex.Message}", "ARES — Error");
+        }
     }
 
     private void RegisterHotkeys()
@@ -299,6 +309,7 @@ public partial class MainWindow : Window
     private void ToggleVisibility()
     {
         _isVisible = !_isVisible;
+        App.WriteAction("MainWindow", "ToggleVisibility", new { visible = _isVisible });
         if (_isVisible)
             Show();
         else
@@ -308,19 +319,32 @@ public partial class MainWindow : Window
     public void ToggleMode()
     {
         bool toFullHud = OverlayControl.Visibility == Visibility.Visible;
+        App.WriteAction("MainWindow", "ToggleMode", new { toFullHud });
+        var fromControl = toFullHud ? (FrameworkElement)OverlayControl : FullHudControl;
+        var toControl = toFullHud ? (FrameworkElement)FullHudControl : OverlayControl;
+
+        toControl.Opacity = 0;
+        toControl.Visibility = Visibility.Visible;
 
         if (toFullHud)
         {
             AnimateSizeChange(1200, 800);
-            OverlayControl.Visibility = Visibility.Collapsed;
-            FullHudControl.Visibility = Visibility.Visible;
         }
         else
         {
             AnimateSizeChange(380, 600);
-            FullHudControl.Visibility = Visibility.Collapsed;
-            OverlayControl.Visibility = Visibility.Visible;
         }
+
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(170));
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        fadeOut.Completed += (_, _) =>
+        {
+            fromControl.Visibility = Visibility.Collapsed;
+            fromControl.Opacity = 1;
+        };
+
+        fromControl.BeginAnimation(OpacityProperty, fadeOut);
+        toControl.BeginAnimation(OpacityProperty, fadeIn);
 
         _vm.ToggleMode();
         PositionWindow();
@@ -465,7 +489,21 @@ public partial class MainWindow : Window
     }
 
     private void OnAgentResponseReceived(string _)
-        => Dispatcher.BeginInvoke(new Action(ResetIdleTimer));
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            ResetIdleTimer();
+
+            if (!IsVisible && ChatViewModel.Messages.Count > 0)
+            {
+                var lastAssistant = ChatViewModel.Messages
+                    .LastOrDefault(m => m.IsAssistant && !string.IsNullOrWhiteSpace(m.Content));
+
+                if (lastAssistant != null)
+                    ((App)Application.Current).ShowTrayNotification("ARES terminó una tarea", lastAssistant.Content);
+            }
+        }));
+    }
 
     private async void IdleTimer_Tick(object? sender, EventArgs e)
     {

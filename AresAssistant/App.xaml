@@ -12,6 +12,7 @@
             <helpers:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter"/>
             <helpers:HexToColorBrushConverter x:Key="HexToColorBrushConverter"/>
             <helpers:StringEmptyToVisibilityConverter x:Key="StringEmptyToVisibilityConverter"/>
+            <helpers:MarkdownToFlowDocumentConverter x:Key="MarkdownToFlowDocumentConverter"/>
 
             <!-- Dynamic accent resources — set by ThemeEngine at runtime -->
             <SolidColorBrush x:Key="AccentBrush" Color="#ff2222"/>

@@ -46,6 +46,24 @@
                             <Path Data="M 10,0 L 20,14 L 10,28 L 0,14 Z"
                                   Fill="{DynamicResource AccentBrush}" Width="20" Height="28"
                                   Margin="0,0,12,0">
+                                <Path.Style>
+                                    <Style TargetType="Path">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard x:Name="HudPulseDiamond">
+                                                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0.58" To="1" Duration="0:0:0.65"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <StopStoryboard BeginStoryboardName="HudPulseDiamond"/>
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Path.Style>
                                 <Path.Effect>
                                     <DropShadowEffect ShadowDepth="0" BlurRadius="10" Opacity="0.6" Color="#ff2222"/>
                                 </Path.Effect>
@@ -80,6 +98,15 @@
                     </Grid>
                 </Grid>
             </Border>
+
+            <ProgressBar Grid.Row="0" Grid.ColumnSpan="3"
+                         Height="2"
+                         VerticalAlignment="Bottom"
+                         Margin="16,0,16,0"
+                         IsIndeterminate="True"
+                         Foreground="{DynamicResource AccentBrush}"
+                         Background="#1a1a2d"
+                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
             <!-- Left panel: Tool list -->
             <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="0"
@@ -147,10 +174,28 @@
             </Border>
 
             <!-- Center: Chat messages -->
+            <TextBox Grid.Row="1" Grid.Column="1" Height="30" Margin="20,10,20,0"
+                     VerticalAlignment="Top"
+                     Style="{StaticResource AresTextBox}"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="Buscar en este chat"/>
             <ScrollViewer Grid.Row="1" Grid.Column="1" x:Name="ChatScroll"
                           VerticalScrollBarVisibility="Auto"
-                          Padding="20,14">
-                <ItemsControl ItemsSource="{Binding Messages}">
+                          Padding="20,44,20,14">
+                <ScrollViewer.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource {x:Type ScrollBar}}">
+                        <Setter Property="Opacity" Value="0.2"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ScrollViewer.Resources>
+                <ItemsControl ItemsSource="{Binding MessagesView}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Margin="0,8,0,0" Loaded="MessageBubble_Loaded"
@@ -347,6 +392,9 @@
                         <TextBlock Text="{Binding DashboardClock}" FontSize="11"
                                    FontFamily="Consolas" Foreground="{DynamicResource TextBrush}"
                                    Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding ActiveContextProfileText}" FontSize="10"
+                                   FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"
+                                   Margin="0,3,0,0" TextWrapping="Wrap"/>
                         <TextBlock Text="{Binding StatusText, FallbackValue='Esperando...'}"
                                    FontSize="10" FontFamily="Consolas"
                                    Foreground="{DynamicResource SubtextBrush}"
@@ -485,12 +533,28 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <!-- Unified input container — glass style -->
-                <Border Background="{DynamicResource GlassBrush}"
+                <Border x:Name="HudInputContainer"
+                        Background="{DynamicResource GlassBrush}"
                         BorderBrush="{DynamicResource GlassBorderBrush}"
                         BorderThickness="1" CornerRadius="14">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Effect" Value="{x:Null}"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentGlowBrush}"/>
+                                </Trigger>
+                                <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=InputBox}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
@@ -547,6 +611,23 @@
                                 VerticalAlignment="Center"
                                 Click="Export_Click"/>
                         <Button Grid.Column="2"
+                            Style="{StaticResource GhostButton}"
+                            Margin="4,0,0,0" Height="34" Width="34"
+                            Padding="0" ToolTip="Adjuntar captura al próximo mensaje"
+                            VerticalAlignment="Center"
+                            Click="AttachScreen_Click">
+                            <TextBlock Text="◇" FontSize="12"/>
+                        </Button>
+                        <Button Grid.Column="3"
+                            Style="{StaticResource GhostButton}"
+                            Margin="4,0,0,0" Height="34" Width="34"
+                            Padding="0" ToolTip="Cancelar respuesta"
+                            VerticalAlignment="Center"
+                            Click="CancelResponse_Click"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="■" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                        </Button>
+                        <Button Grid.Column="4"
                                 Style="{StaticResource AresButton}"
                                 Margin="6,0,4,0" Height="34" Width="42"
                                 Padding="0"

@@ -2,6 +2,8 @@ using System.Net.Http;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using AresAssistant;
 using AresAssistant.Config;
 using AresAssistant.Tools;
 using Newtonsoft.Json.Linq;
@@ -38,6 +40,7 @@ public class AgentLoop
     private string? _lastPerformanceMode;
     private string? _lastContextProfile;
     private int _lastMemoryVersion = -1;
+    private CancellationTokenSource? _runCts;
 
     public AgentLoop(
         OllamaClient ollamaClient,
@@ -214,40 +217,54 @@ public class AgentLoop
         return _cachedSystemPrompt;
     }
 
-    public async Task RunAsync(string userMessage)
+    public async Task RunAsync(string userMessage, CancellationToken cancellationToken = default)
     {
-        if (IsSimpleGreeting(userMessage))
+        userMessage ??= string.Empty;
+        App.WriteAction("AgentLoop", "Run.Start", new { length = userMessage.Length });
+
+        var localCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var previous = Interlocked.Exchange(ref _runCts, localCts);
+        previous?.Cancel();
+        previous?.Dispose();
+
+        var ct = localCts.Token;
+
+        try
         {
-            _history.Add(new OllamaMessage("user", userMessage));
-            var greetingReply = BuildGreetingReply();
-            _history.Add(new OllamaMessage("assistant", greetingReply));
-            StatusChanged?.Invoke("");
-            ModelUsed?.Invoke("rule-based:greeting");
-            ResponseReceived?.Invoke(greetingReply);
-            return;
-        }
+            if (IsSimpleGreeting(userMessage))
+            {
+                _history.Add(new OllamaMessage("user", userMessage!));
+                var greetingReply = BuildGreetingReply();
+                _history.Add(new OllamaMessage("assistant", greetingReply));
+                StatusChanged?.Invoke("");
+                ModelUsed?.Invoke("rule-based:greeting");
+                ResponseReceived?.Invoke(greetingReply);
+                App.WriteAction("AgentLoop", "Run.GreetingReply");
+                return;
+            }
 
-        if (_config.ProcessContextEnabled && _processContextProvider != null)
-        {
-            var ctx = _processContextProvider.GetCompactContext();
-            userMessage = $"[Contexto apps activas: {ctx}]\n\n{userMessage}";
-        }
+            if (_config.ProcessContextEnabled && _processContextProvider != null)
+            {
+                var ctx = _processContextProvider.GetCompactContext();
+                userMessage = $"[Contexto apps activas: {ctx}]\n\n{userMessage}";
+            }
 
-        var (numCtx, numThread, historyLimit, numPredict, numBatch) = _config.GetPerformanceParams();
-        var keepAlive = _config.ModelKeepAliveMinutes > 0 ? $"{_config.ModelKeepAliveMinutes}m" : "-1";
-        var modelCandidates = await ResolveModelCandidatesAsync(userMessage).ConfigureAwait(false);
-        var modelIndex = 0;
+            var (numCtx, numThread, historyLimit, numPredict, numBatch) = _config.GetPerformanceParams();
+            var keepAlive = _config.ModelKeepAliveMinutes > 0 ? $"{_config.ModelKeepAliveMinutes}m" : "-1";
+            var modelCandidates = await ResolveModelCandidatesAsync(userMessage!).ConfigureAwait(false);
+            var modelIndex = 0;
 
-        _history.Add(new OllamaMessage("user", userMessage));
-        _history.TrimToLast(historyLimit);
+            _history.Add(new OllamaMessage("user", userMessage!));
+            _history.TrimToLast(historyLimit);
 
-        int iterations = 0;
+            int iterations = 0;
 
-        while (iterations < MaxIterations)
-        {
-            iterations++;
-            var activeModel = modelCandidates[Math.Clamp(modelIndex, 0, modelCandidates.Count - 1)];
-            var modelSw = Stopwatch.StartNew();
+            while (iterations < MaxIterations)
+            {
+                ct.ThrowIfCancellationRequested();
+                iterations++;
+                var activeModel = modelCandidates[Math.Clamp(modelIndex, 0, modelCandidates.Count - 1)];
+                var modelSw = Stopwatch.StartNew();
 
             // If this is a tool-call loop iteration, use non-streaming to get tool_calls
             // For the potential final text response, try streaming first
@@ -256,7 +273,7 @@ public class AgentLoop
             if (useStreaming)
             {
                 // Attempt streaming — gives instant token-by-token feedback
-                var streamed = await TryStreamResponseAsync(activeModel, numCtx, numThread, numPredict, numBatch, keepAlive).ConfigureAwait(false);
+                var streamed = await TryStreamResponseAsync(activeModel, numCtx, numThread, numPredict, numBatch, keepAlive, ct).ConfigureAwait(false);
                 if (streamed.HasValue)
                 {
                     if (streamed.Value.toolResponse != null)
@@ -268,7 +285,7 @@ public class AgentLoop
                         {
                             ToolCalls = resp.Message.ToolCalls
                         });
-                        await ExecuteToolCallsAsync(resp.Message.ToolCalls!).ConfigureAwait(false);
+                            await ExecuteToolCallsAsync(resp.Message.ToolCalls!, ct).ConfigureAwait(false);
                         continue; // loop back
                     }
                     else
@@ -284,7 +301,7 @@ public class AgentLoop
                             {
                                 ToolCalls = textCalls
                             });
-                            await ExecuteToolCallsAsync(textCalls).ConfigureAwait(false);
+                            await ExecuteToolCallsAsync(textCalls, ct).ConfigureAwait(false);
                             continue; // loop back for the tool result response
                         }
 
@@ -299,75 +316,95 @@ public class AgentLoop
             }
 
             // Fallback to non-streaming (for tool iterations or if streaming failed)
-            OllamaResponse response;
-            try
-            {
-                StatusChanged?.Invoke($"Pensando... ({activeModel})");
-                response = await _ollamaClient.ChatAsync(
-                    _history.ToList(),
-                    _toolRegistry.GetToolDefinitions(),
-                    activeModel,
-                    numCtx,
-                    numThread,
-                    numPredict,
-                    numBatch,
-                    keepAlive).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _telemetry?.RecordModel(activeModel, false, modelSw.ElapsedMilliseconds);
-                if (TrySwitchModel(modelCandidates, ref modelIndex))
-                    continue;
-                ResponseReceived?.Invoke($"Error al conectar con Ollama: {ex.Message}");
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(response.Error))
-            {
-                _telemetry?.RecordModel(activeModel, false, modelSw.ElapsedMilliseconds);
-                if (TrySwitchModel(modelCandidates, ref modelIndex))
-                    continue;
-                ResponseReceived?.Invoke($"Error de Ollama: {response.Error}");
-                return;
-            }
-
-            if (response.Message.ToolCalls?.Count > 0)
-            {
-                ToolExecuting?.Invoke();
-                _history.Add(new OllamaMessage("assistant", response.Message.Content ?? "")
+                OllamaResponse response;
+                try
                 {
-                    ToolCalls = response.Message.ToolCalls
-                });
-                await ExecuteToolCallsAsync(response.Message.ToolCalls).ConfigureAwait(false);
-            }
-            else
-            {
-                var content = response.Message.Content ?? "";
-
-                // Fallback: detect tool calls embedded as text
-                var (textCalls, cleanedText) = TryParseTextToolCalls(content);
-                if (textCalls.Count > 0)
+                    StatusChanged?.Invoke($"Pensando... ({activeModel})");
+                    response = await _ollamaClient.ChatAsync(
+                        _history.ToList(),
+                        _toolRegistry.GetToolDefinitions(),
+                        activeModel,
+                        numCtx,
+                        numThread,
+                        numPredict,
+                        numBatch,
+                        keepAlive,
+                        ct).ConfigureAwait(false);
+                }
+                catch (Exception ex)
                 {
-                    ToolExecuting?.Invoke();
-                    _history.Add(new OllamaMessage("assistant", cleanedText)
-                    {
-                        ToolCalls = textCalls
-                    });
-                    await ExecuteToolCallsAsync(textCalls).ConfigureAwait(false);
-                    continue; // loop back
+                    _telemetry?.RecordModel(activeModel, false, modelSw.ElapsedMilliseconds);
+                    if (TrySwitchModel(modelCandidates, ref modelIndex))
+                        continue;
+                    App.WriteAction("AgentLoop", "Run.ChatException", new { activeModel, ex.Message }, "ERROR");
+                    App.WriteCrash("AgentLoop.ChatAsync", ex);
+                    ResponseReceived?.Invoke($"Error al conectar con Ollama: {ex.Message}");
+                    return;
                 }
 
-                _history.Add(new OllamaMessage("assistant", content));
-                StatusChanged?.Invoke("");
-                ModelUsed?.Invoke(activeModel);
-                _telemetry?.RecordModel(activeModel, true, modelSw.ElapsedMilliseconds);
-                ResponseReceived?.Invoke(content);
-                return;
-            }
-        }
+                if (!string.IsNullOrEmpty(response.Error))
+                {
+                    _telemetry?.RecordModel(activeModel, false, modelSw.ElapsedMilliseconds);
+                    if (TrySwitchModel(modelCandidates, ref modelIndex))
+                        continue;
+                    App.WriteAction("AgentLoop", "Run.ChatError", new { activeModel, response.Error }, "WARN");
+                    ResponseReceived?.Invoke($"Error de Ollama: {response.Error}");
+                    return;
+                }
 
-        var fallback = "ARES: He alcanzado el límite de acciones consecutivas. Por favor, reformula tu petición.";
-        ResponseReceived?.Invoke(fallback);
+                if (response.Message.ToolCalls?.Count > 0)
+                {
+                    ToolExecuting?.Invoke();
+                    _history.Add(new OllamaMessage("assistant", response.Message.Content ?? "")
+                    {
+                        ToolCalls = response.Message.ToolCalls
+                    });
+                    await ExecuteToolCallsAsync(response.Message.ToolCalls, ct).ConfigureAwait(false);
+                }
+                else
+                {
+                    var content = response.Message.Content ?? "";
+
+                // Fallback: detect tool calls embedded as text
+                    var (textCalls, cleanedText) = TryParseTextToolCalls(content);
+                    if (textCalls.Count > 0)
+                    {
+                        ToolExecuting?.Invoke();
+                        _history.Add(new OllamaMessage("assistant", cleanedText)
+                        {
+                            ToolCalls = textCalls
+                        });
+                        await ExecuteToolCallsAsync(textCalls, ct).ConfigureAwait(false);
+                        continue; // loop back
+                    }
+
+                    _history.Add(new OllamaMessage("assistant", content));
+                    StatusChanged?.Invoke("");
+                    ModelUsed?.Invoke(activeModel);
+                    _telemetry?.RecordModel(activeModel, true, modelSw.ElapsedMilliseconds);
+                    ResponseReceived?.Invoke(content);
+                    return;
+                }
+            }
+
+            var fallback = "ARES: He alcanzado el límite de acciones consecutivas. Por favor, reformula tu petición.";
+            App.WriteAction("AgentLoop", "Run.MaxIterationsReached", new { max = MaxIterations }, "WARN");
+            ResponseReceived?.Invoke(fallback);
+        }
+        finally
+        {
+            Interlocked.CompareExchange(ref _runCts, null, localCts);
+            localCts.Dispose();
+            App.WriteAction("AgentLoop", "Run.End");
+        }
+    }
+
+    public void CancelCurrentRun()
+    {
+        App.WriteAction("AgentLoop", "Run.CancelRequested");
+        var cts = Interlocked.Exchange(ref _runCts, null);
+        cts?.Cancel();
+        cts?.Dispose();
     }
 
     private static bool TrySwitchModel(List<string> candidates, ref int index)
@@ -453,10 +490,11 @@ public class AgentLoop
     /// <summary>
     /// Process a list of tool calls (either from structured API or text fallback).
     /// </summary>
-    private async Task ExecuteToolCallsAsync(List<OllamaToolCall> toolCalls)
+    private async Task ExecuteToolCallsAsync(List<OllamaToolCall> toolCalls, CancellationToken cancellationToken)
     {
         foreach (var call in toolCalls)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             StatusChanged?.Invoke($"Ejecutando: {call.Function.Name}...");
             var result = await _toolDispatcher.ExecuteAsync(call.Function.Name, call.Function.Arguments)
                 .ConfigureAwait(false);
@@ -469,7 +507,7 @@ public class AgentLoop
     /// Returns null if streaming fails (caller should fall back to non-streaming).
     /// Buffers initial tokens to detect text-based tool calls before emitting to the UI.
     /// </summary>
-    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync(string model, int numCtx, int numThread, int numPredict, int numBatch, string keepAlive)
+    private async Task<(string? text, OllamaResponse? toolResponse)?> TryStreamResponseAsync(string model, int numCtx, int numThread, int numPredict, int numBatch, string keepAlive, CancellationToken cancellationToken)
     {
         try
         {
@@ -489,8 +527,10 @@ public class AgentLoop
                 numThread,
                 numPredict,
                 numBatch,
-                keepAlive))
+                keepAlive,
+                cancellationToken))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (chunk.IsToolCall)
                     return (null, chunk.ToolResponse);
 
@@ -538,11 +578,11 @@ public class AgentLoop
 
             return (fullText.ToString(), null);
         }
-        catch (HttpRequestException)
+        catch (OperationCanceledException)
         {
-            return null;
+            throw;
         }
-        catch (TaskCanceledException)
+        catch (HttpRequestException)
         {
             return null;
         }

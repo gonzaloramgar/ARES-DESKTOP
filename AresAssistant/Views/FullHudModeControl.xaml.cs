@@ -30,6 +30,18 @@ public partial class FullHudModeControl : UserControl
         {
             e.Handled = true;
             await Vm.SendMessageAsync();
+            return;
+        }
+
+        if (e.Key == Key.Up)
+        {
+            e.Handled = Vm.NavigateInputHistory(-1);
+            return;
+        }
+
+        if (e.Key == Key.Down)
+        {
+            e.Handled = Vm.NavigateInputHistory(1);
         }
     }
 
@@ -63,13 +75,30 @@ public partial class FullHudModeControl : UserControl
     {
         var dlg = new SaveFileDialog
         {
-            Filter = "Texto|*.txt",
-            FileName = $"ares_chat_{DateTime.Now:yyyyMMddHHmmss}.txt"
+            Filter = "Markdown|*.md|Texto|*.txt|HTML|*.html",
+            FileName = $"ares_chat_{DateTime.Now:yyyyMMddHHmmss}.md"
         };
         if (dlg.ShowDialog() == true)
         {
-            var lines = Vm.Messages.Select(m => $"[{m.Role.ToUpper()}]: {m.Content}");
-            System.IO.File.WriteAllLines(dlg.FileName, lines);
+            var ext = System.IO.Path.GetExtension(dlg.FileName).ToLowerInvariant();
+            if (ext == ".html")
+            {
+                var body = string.Join("\n", Vm.Messages.Select(m =>
+                    $"<article class=\"msg {(m.IsUser ? "user" : "assistant")}\"><header>{System.Net.WebUtility.HtmlEncode(m.Role.ToUpper())} · {m.Timestamp:HH:mm}</header><pre>{System.Net.WebUtility.HtmlEncode(m.Content)}</pre></article>"));
+                var html = "<!doctype html><html><head><meta charset=\"utf-8\"><style>body{font-family:Segoe UI;background:#0b0d14;color:#edf2ff;margin:24px}.msg{border:1px solid #2a3146;border-radius:10px;padding:12px;margin-bottom:10px;background:#13192a}.msg.user{border-color:#5a2a2a;background:#251616}header{font-size:12px;color:#9fb0c8;margin-bottom:8px}pre{white-space:pre-wrap;word-break:break-word;margin:0;font-family:Consolas,monospace}</style></head><body>" + body + "</body></html>";
+                System.IO.File.WriteAllText(dlg.FileName, html);
+            }
+            else if (ext == ".md")
+            {
+                var md = string.Join("\n\n", Vm.Messages.Select(m =>
+                    $"## {(m.IsUser ? "TÚ" : "ARES")} ({m.Timestamp:HH:mm})\n\n{m.Content}"));
+                System.IO.File.WriteAllText(dlg.FileName, md);
+            }
+            else
+            {
+                var lines = Vm.Messages.Select(m => $"[{m.Role.ToUpper()} {m.Timestamp:HH:mm}]: {m.Content}");
+                System.IO.File.WriteAllLines(dlg.FileName, lines);
+            }
             AresMessageBox.Show("Chat exportado correctamente.", "ARES");
         }
     }
@@ -117,4 +146,10 @@ public partial class FullHudModeControl : UserControl
     {
         await Vm.RefreshProductivitySummaryAsync();
     }
+
+    private void CancelResponse_Click(object sender, RoutedEventArgs e)
+        => Vm.CancelResponse();
+
+    private void AttachScreen_Click(object sender, RoutedEventArgs e)
+        => Vm.ArmScreenContextNextMessage();
 }

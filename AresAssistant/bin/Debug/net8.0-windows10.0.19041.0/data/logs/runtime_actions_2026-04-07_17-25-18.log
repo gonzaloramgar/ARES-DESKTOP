@@ -1,4 +1,0 @@
-[2026-04-07 17:25:53.870] [INFO] [MainWindow] InitializeServices.Start | {}
-[2026-04-07 17:26:02.811] [INFO] [MainWindow] DeferredServices.Start | {}
-[2026-04-07 17:26:02.896] [INFO] [MainWindow] DeferredServices.Ready | {"localApi":true}
-[2026-04-07 17:26:02.916] [INFO] [MainWindow] InitializeServices.Ready | {}

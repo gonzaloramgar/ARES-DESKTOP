@@ -1,5 +1,0 @@
-[2026-04-03 12:24:22] [Task]
-AggregateException: A Task's exception(s) were not observed either by Waiting on the Task or accessing its Exception property. As a result, the unobserved exception was rethrown by the finalizer thread. (Sequence contains no elements)
-
-Inner: Sequence contains no elements
-------------------------------------------------------------

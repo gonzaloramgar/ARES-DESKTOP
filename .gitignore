@@ -1,0 +1,30 @@
+# =========================
+# ARES Desktop - Git Ignore
+# =========================
+
+# ---------- .NET / Visual Studio ----------
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ---------- Build artifacts ----------
+Build/
+AresAssistant/bin/
+AresAssistant/obj/
+
+# ---------- Runtime local data (personal / machine-specific) ----------
+# Ignore all local runtime data to avoid publishing personal machine state.
+AresAssistant/data/
+
+# Extra safety for runtime noise (if folders are moved/renamed)
+**/data/logs/
+**/data/plugins/
+**/data/tts/
+**/data/*.log
+
+# ---------- Optional local release packaging ----------
+releases/
